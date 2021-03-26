@@ -11,12 +11,15 @@ import salt.states.boto_apigateway as boto_apigateway
 import salt.utils.files
 import salt.utils.yaml
 from salt.utils.versions import LooseVersion
+
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
-from tests.support.unit import TestCase, skipIf
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
+from tests.support.unit import skipIf
+from tests.support.unit import TestCase
+from tests.unit.modules.test_boto_apigateway import BotoApiGatewayTestCaseMixin
 
 # pylint: disable=import-error,no-name-in-module
-from tests.unit.modules.test_boto_apigateway import BotoApiGatewayTestCaseMixin
 
 try:
     import boto3
@@ -45,9 +48,7 @@ conn_parameters = {
     "keyid": secret_key,
     "profile": {},
 }
-error_message = (
-    "An error occurred (101) when calling the {0} operation: Test-defined error"
-)
+error_message = "An error occurred (101) when calling the {0} operation: Test-defined error"
 error_content = {"Error": {"Code": 101, "Message": "Test-defined error"}}
 
 api_ret = dict(
@@ -399,9 +400,7 @@ class TempSwaggerFile:
                 "post": {
                     "responses": {
                         "200": {
-                            "headers": {
-                                "Access-Control-Allow-Origin": {"type": "string"}
-                            },
+                            "headers": {"Access-Control-Allow-Origin": {"type": "string"}},
                             "description": "The username of the new user",
                             "schema": {"$ref": "#/definitions/User"},
                         }
@@ -541,9 +540,7 @@ class BotoApiGatewayStateTestCaseBase(TestCase, LoaderModuleMockMixin):
     "The boto3 module must be greater than"
     " or equal to version {}".format(required_boto3_version),
 )
-class BotoApiGatewayTestCase(
-    BotoApiGatewayStateTestCaseBase, BotoApiGatewayTestCaseMixin
-):
+class BotoApiGatewayTestCase(BotoApiGatewayStateTestCaseBase, BotoApiGatewayTestCaseMixin):
     """
     TestCase for salt.modules.boto_apigateway state.module
     """
@@ -564,7 +561,7 @@ class BotoApiGatewayTestCase(
                 **conn_parameters
             )
 
-        self.assertFalse(result.get("result", True))
+        assert not result.get("result", True)
 
     def test_present_when_stage_is_already_at_desired_deployment(self):
         """
@@ -588,10 +585,10 @@ class BotoApiGatewayTestCase(
                 "arn:aws:iam::1234:role/apigatewayrole",
                 **conn_parameters
             )
-        self.assertFalse(result.get("abort"))
-        self.assertTrue(result.get("current"))
-        self.assertIs(result.get("result"), True)
-        self.assertNotIn("update_stage should not be called", result.get("comment", ""))
+        assert not result.get("abort")
+        assert result.get("current")
+        assert result.get("result") is True
+        assert "update_stage should not be called" not in result.get("comment", "")
 
     def test_present_when_stage_is_already_at_desired_deployment_and_needs_stage_variables_update(
         self,
@@ -617,9 +614,9 @@ class BotoApiGatewayTestCase(
                 **conn_parameters
             )
 
-        self.assertFalse(result.get("abort"))
-        self.assertTrue(result.get("current"))
-        self.assertIs(result.get("result"), True)
+        assert not result.get("abort")
+        assert result.get("current")
+        assert result.get("result") is True
 
     def test_present_when_stage_exists_and_is_to_associate_to_existing_deployment(self):
         """
@@ -634,9 +631,7 @@ class BotoApiGatewayTestCase(
 
         # should never get to the following calls
         self.conn.create_stage.side_effect = ClientError(error_content, "create_stage")
-        self.conn.create_deployment.side_effect = ClientError(
-            error_content, "create_deployment"
-        )
+        self.conn.create_deployment.side_effect = ClientError(error_content, "create_deployment")
 
         result = {}
         with TempSwaggerFile() as swagger_file:
@@ -650,10 +645,10 @@ class BotoApiGatewayTestCase(
                 **conn_parameters
             )
 
-        self.assertTrue(result.get("publish"))
-        self.assertIs(result.get("result"), True)
-        self.assertFalse(result.get("abort"))
-        self.assertTrue(result.get("changes", {}).get("new", [{}])[0])
+        assert result.get("publish")
+        assert result.get("result") is True
+        assert not result.get("abort")
+        assert result.get("changes", {}).get("new", [{}])[0]
 
     @pytest.mark.slow_test
     def test_present_when_stage_is_to_associate_to_new_deployment(self):
@@ -671,9 +666,7 @@ class BotoApiGatewayTestCase(
         # various paths/resources already created
         self.conn.get_resources.return_value = resources_ret
         # the following should never be called
-        self.conn.create_resource.side_effect = ClientError(
-            error_content, "create_resource"
-        )
+        self.conn.create_resource.side_effect = ClientError(error_content, "create_resource")
 
         # create api method for POST
         self.conn.put_method.return_value = method_ret
@@ -682,18 +675,12 @@ class BotoApiGatewayTestCase(
         # create api method response for POST/200
         self.conn.put_method_response.return_value = method_response_200_ret
         # create api method integration response for POST
-        self.conn.put_intgration_response.return_value = (
-            method_integration_response_200_ret
-        )
+        self.conn.put_intgration_response.return_value = method_integration_response_200_ret
 
         result = {}
         with patch.dict(
             self.funcs,
-            {
-                "boto_lambda.describe_function": MagicMock(
-                    return_value={"function": function_ret}
-                )
-            },
+            {"boto_lambda.describe_function": MagicMock(return_value={"function": function_ret})},
         ):
             with TempSwaggerFile() as swagger_file:
                 result = self.salt_states["boto_apigateway.present"](
@@ -706,8 +693,8 @@ class BotoApiGatewayTestCase(
                     **conn_parameters
                 )
 
-        self.assertIs(result.get("result"), True)
-        self.assertIs(result.get("abort"), None)
+        assert result.get("result") is True
+        assert result.get("abort") is None
 
     def test_present_when_stage_associating_to_new_deployment_errored_on_api_creation(
         self,
@@ -719,9 +706,7 @@ class BotoApiGatewayTestCase(
         # no api existed
         self.conn.get_rest_apis.return_value = no_apis_ret
         # create top level api
-        self.conn.create_rest_api.side_effect = ClientError(
-            error_content, "create_rest_api"
-        )
+        self.conn.create_rest_api.side_effect = ClientError(error_content, "create_rest_api")
 
         result = {}
         with TempSwaggerFile() as swagger_file:
@@ -735,9 +720,9 @@ class BotoApiGatewayTestCase(
                 **conn_parameters
             )
 
-        self.assertIs(result.get("abort"), True)
-        self.assertIs(result.get("result"), False)
-        self.assertIn("create_rest_api", result.get("comment", ""))
+        assert result.get("abort") is True
+        assert result.get("result") is False
+        assert "create_rest_api" in result.get("comment", "")
 
     def test_present_when_stage_associating_to_new_deployment_errored_on_model_creation(
         self,
@@ -767,9 +752,9 @@ class BotoApiGatewayTestCase(
                 **conn_parameters
             )
 
-        self.assertIs(result.get("abort"), True)
-        self.assertIs(result.get("result"), False)
-        self.assertIn("create_model", result.get("comment", ""))
+        assert result.get("abort") is True
+        assert result.get("result") is False
+        assert "create_model" in result.get("comment", "")
 
     def test_present_when_stage_associating_to_new_deployment_errored_on_resource_creation(
         self,
@@ -790,9 +775,7 @@ class BotoApiGatewayTestCase(
         # get resources has nothing intiially except to the root path '/'
         self.conn.get_resources.return_value = root_resources_ret
         # create resources return error
-        self.conn.create_resource.side_effect = ClientError(
-            error_content, "create_resource"
-        )
+        self.conn.create_resource.side_effect = ClientError(error_content, "create_resource")
         result = {}
         with TempSwaggerFile() as swagger_file:
             result = self.salt_states["boto_apigateway.present"](
@@ -804,9 +787,9 @@ class BotoApiGatewayTestCase(
                 "arn:aws:iam::1234:role/apigatewayrole",
                 **conn_parameters
             )
-        self.assertIs(result.get("abort"), True)
-        self.assertIs(result.get("result"), False)
-        self.assertIn("create_resource", result.get("comment", ""))
+        assert result.get("abort") is True
+        assert result.get("result") is False
+        assert "create_resource" in result.get("comment", "")
 
     @pytest.mark.slow_test
     def test_present_when_stage_associating_to_new_deployment_errored_on_put_method(
@@ -828,9 +811,7 @@ class BotoApiGatewayTestCase(
         # various paths/resources already created
         self.conn.get_resources.return_value = resources_ret
         # the following should never be called
-        self.conn.create_resource.side_effect = ClientError(
-            error_content, "create_resource"
-        )
+        self.conn.create_resource.side_effect = ClientError(error_content, "create_resource")
 
         # create api method for POST
         self.conn.put_method.side_effect = ClientError(error_content, "put_method")
@@ -838,11 +819,7 @@ class BotoApiGatewayTestCase(
         result = {}
         with patch.dict(
             self.funcs,
-            {
-                "boto_lambda.describe_function": MagicMock(
-                    return_value={"function": function_ret}
-                )
-            },
+            {"boto_lambda.describe_function": MagicMock(return_value={"function": function_ret})},
         ):
             with TempSwaggerFile() as swagger_file:
                 result = self.salt_states["boto_apigateway.present"](
@@ -855,9 +832,9 @@ class BotoApiGatewayTestCase(
                     **conn_parameters
                 )
 
-        self.assertIs(result.get("abort"), True)
-        self.assertIs(result.get("result"), False)
-        self.assertIn("put_method", result.get("comment", ""))
+        assert result.get("abort") is True
+        assert result.get("result") is False
+        assert "put_method" in result.get("comment", "")
 
     @pytest.mark.slow_test
     def test_present_when_stage_associating_to_new_deployment_errored_on_lambda_function_lookup(
@@ -879,9 +856,7 @@ class BotoApiGatewayTestCase(
         # various paths/resources already created
         self.conn.get_resources.return_value = resources_ret
         # the following should never be called
-        self.conn.create_resource.side_effect = ClientError(
-            error_content, "create_resource"
-        )
+        self.conn.create_resource.side_effect = ClientError(error_content, "create_resource")
         # create api method for POST
         self.conn.put_method.return_value = method_ret
         # create api method integration for POST
@@ -892,11 +867,7 @@ class BotoApiGatewayTestCase(
         result = {}
         with patch.dict(
             self.funcs,
-            {
-                "boto_lambda.describe_function": MagicMock(
-                    return_value={"error": "no such lambda"}
-                )
-            },
+            {"boto_lambda.describe_function": MagicMock(return_value={"error": "no such lambda"})},
         ):
             with TempSwaggerFile() as swagger_file:
                 result = self.salt_states["boto_apigateway.present"](
@@ -909,11 +880,9 @@ class BotoApiGatewayTestCase(
                     **conn_parameters
                 )
 
-        self.assertIs(result.get("result"), False)
-        self.assertNotIn(
-            "put_integration should not be invoked", result.get("comment", "")
-        )
-        self.assertIn("not find lambda function", result.get("comment", ""))
+        assert result.get("result") is False
+        assert "put_integration should not be invoked" not in result.get("comment", "")
+        assert "not find lambda function" in result.get("comment", "")
 
     @pytest.mark.slow_test
     def test_present_when_stage_associating_to_new_deployment_errored_on_put_integration(
@@ -935,25 +904,17 @@ class BotoApiGatewayTestCase(
         # various paths/resources already created
         self.conn.get_resources.return_value = resources_ret
         # the following should never be called
-        self.conn.create_resource.side_effect = ClientError(
-            error_content, "create_resource"
-        )
+        self.conn.create_resource.side_effect = ClientError(error_content, "create_resource")
 
         # create api method for POST
         self.conn.put_method.return_value = method_ret
         # create api method integration for POST
-        self.conn.put_integration.side_effect = ClientError(
-            error_content, "put_integration"
-        )
+        self.conn.put_integration.side_effect = ClientError(error_content, "put_integration")
 
         result = {}
         with patch.dict(
             self.funcs,
-            {
-                "boto_lambda.describe_function": MagicMock(
-                    return_value={"function": function_ret}
-                )
-            },
+            {"boto_lambda.describe_function": MagicMock(return_value={"function": function_ret})},
         ):
             with TempSwaggerFile() as swagger_file:
                 result = self.salt_states["boto_apigateway.present"](
@@ -966,9 +927,9 @@ class BotoApiGatewayTestCase(
                     **conn_parameters
                 )
 
-        self.assertIs(result.get("abort"), True)
-        self.assertIs(result.get("result"), False)
-        self.assertIn("put_integration", result.get("comment", ""))
+        assert result.get("abort") is True
+        assert result.get("result") is False
+        assert "put_integration" in result.get("comment", "")
 
     @pytest.mark.slow_test
     def test_present_when_stage_associating_to_new_deployment_errored_on_put_method_response(
@@ -990,9 +951,7 @@ class BotoApiGatewayTestCase(
         # various paths/resources already created
         self.conn.get_resources.return_value = resources_ret
         # the following should never be called
-        self.conn.create_resource.side_effect = ClientError(
-            error_content, "create_resource"
-        )
+        self.conn.create_resource.side_effect = ClientError(error_content, "create_resource")
 
         # create api method for POST
         self.conn.put_method.return_value = method_ret
@@ -1006,11 +965,7 @@ class BotoApiGatewayTestCase(
         result = {}
         with patch.dict(
             self.funcs,
-            {
-                "boto_lambda.describe_function": MagicMock(
-                    return_value={"function": function_ret}
-                )
-            },
+            {"boto_lambda.describe_function": MagicMock(return_value={"function": function_ret})},
         ):
             with TempSwaggerFile() as swagger_file:
                 result = self.salt_states["boto_apigateway.present"](
@@ -1023,9 +978,9 @@ class BotoApiGatewayTestCase(
                     **conn_parameters
                 )
 
-        self.assertIs(result.get("abort"), True)
-        self.assertIs(result.get("result"), False)
-        self.assertIn("put_method_response", result.get("comment", ""))
+        assert result.get("abort") is True
+        assert result.get("result") is False
+        assert "put_method_response" in result.get("comment", "")
 
     @pytest.mark.slow_test
     def test_present_when_stage_associating_to_new_deployment_errored_on_put_integration_response(
@@ -1047,9 +1002,7 @@ class BotoApiGatewayTestCase(
         # various paths/resources already created
         self.conn.get_resources.return_value = resources_ret
         # the following should never be called
-        self.conn.create_resource.side_effect = ClientError(
-            error_content, "create_resource"
-        )
+        self.conn.create_resource.side_effect = ClientError(error_content, "create_resource")
 
         # create api method for POST
         self.conn.put_method.return_value = method_ret
@@ -1065,11 +1018,7 @@ class BotoApiGatewayTestCase(
         result = {}
         with patch.dict(
             self.funcs,
-            {
-                "boto_lambda.describe_function": MagicMock(
-                    return_value={"function": function_ret}
-                )
-            },
+            {"boto_lambda.describe_function": MagicMock(return_value={"function": function_ret})},
         ):
             with TempSwaggerFile() as swagger_file:
                 result = self.salt_states["boto_apigateway.present"](
@@ -1082,9 +1031,9 @@ class BotoApiGatewayTestCase(
                     **conn_parameters
                 )
 
-        self.assertIs(result.get("abort"), True)
-        self.assertIs(result.get("result"), False)
-        self.assertIn("put_integration_response", result.get("comment", ""))
+        assert result.get("abort") is True
+        assert result.get("result") is False
+        assert "put_integration_response" in result.get("comment", "")
 
     def test_absent_when_rest_api_does_not_exist(self):
         """
@@ -1097,16 +1046,12 @@ class BotoApiGatewayTestCase(
         )
 
         result = self.salt_states["boto_apigateway.absent"](
-            "api present",
-            "no_such_rest_api",
-            "no_such_stage",
-            nuke_api=False,
-            **conn_parameters
+            "api present", "no_such_rest_api", "no_such_stage", nuke_api=False, **conn_parameters
         )
 
-        self.assertIs(result.get("result"), True)
-        self.assertNotIn("get_stage should not be called", result.get("comment", ""))
-        self.assertEqual(result.get("changes"), {})
+        assert result.get("result") is True
+        assert "get_stage should not be called" not in result.get("comment", "")
+        assert result.get("changes") == {}
 
     def test_absent_when_stage_is_invalid(self):
         """
@@ -1117,14 +1062,10 @@ class BotoApiGatewayTestCase(
         self.conn.delete_stage.side_effect = ClientError(error_content, "delete_stage")
 
         result = self.salt_states["boto_apigateway.absent"](
-            "api present",
-            "unit test api",
-            "no_such_stage",
-            nuke_api=False,
-            **conn_parameters
+            "api present", "unit test api", "no_such_stage", nuke_api=False, **conn_parameters
         )
 
-        self.assertTrue(result.get("abort", False))
+        assert result.get("abort", False)
 
     def test_absent_when_stage_is_valid_and_only_one_stage_is_associated_to_deployment(
         self,
@@ -1152,7 +1093,7 @@ class BotoApiGatewayTestCase(
             "api present", "unit test api", "test", nuke_api=False, **conn_parameters
         )
 
-        self.assertTrue(result.get("result", False))
+        assert result.get("result", False)
 
     def test_absent_when_stage_is_valid_and_two_stages_are_associated_to_deployment(
         self,
@@ -1174,7 +1115,7 @@ class BotoApiGatewayTestCase(
             "api present", "unit test api", "test", nuke_api=False, **conn_parameters
         )
 
-        self.assertTrue(result.get("result", False))
+        assert result.get("result", False)
 
     def test_absent_when_failing_to_delete_a_deployment_no_longer_associated_with_any_stages(
         self,
@@ -1192,15 +1133,13 @@ class BotoApiGatewayTestCase(
             }
         }
         self.conn.get_stages.return_value = no_stages_ret
-        self.conn.delete_deployment.side_effect = ClientError(
-            error_content, "delete_deployment"
-        )
+        self.conn.delete_deployment.side_effect = ClientError(error_content, "delete_deployment")
 
         result = self.salt_states["boto_apigateway.absent"](
             "api present", "unit test api", "test", nuke_api=False, **conn_parameters
         )
 
-        self.assertTrue(result.get("abort", False))
+        assert result.get("abort", False)
 
     def test_absent_when_nuke_api_and_no_more_stages_deployments_remain(self):
         """
@@ -1228,14 +1167,11 @@ class BotoApiGatewayTestCase(
             "api present", "unit test api", "test", nuke_api=True, **conn_parameters
         )
 
-        self.assertIs(result.get("result"), True)
-        self.assertIsNot(result.get("abort"), True)
-        self.assertIs(
-            result.get("changes", {})
-            .get("new", [{}])[0]
-            .get("delete_api", {})
-            .get("deleted"),
-            True,
+        assert result.get("result") is True
+        assert result.get("abort") is not True
+        assert (
+            result.get("changes", {}).get("new", [{}])[0].get("delete_api", {}).get("deleted")
+            is True
         )
 
     def test_absent_when_nuke_api_and_other_stages_deployments_exist(self):
@@ -1253,16 +1189,14 @@ class BotoApiGatewayTestCase(
         }
         self.conn.get_stages.return_value = stages_stage2_ret
         self.conn.get_deployments.return_value = deployments_ret
-        self.conn.delete_rest_api.side_effect = ClientError(
-            error_content, "unexpected_api_delete"
-        )
+        self.conn.delete_rest_api.side_effect = ClientError(error_content, "unexpected_api_delete")
 
         result = self.salt_states["boto_apigateway.absent"](
             "api present", "unit test api", "test", nuke_api=True, **conn_parameters
         )
 
-        self.assertIs(result.get("result"), True)
-        self.assertIsNot(result.get("abort"), True)
+        assert result.get("result") is True
+        assert result.get("abort") is not True
 
 
 @skipIf(HAS_BOTO is False, "The boto module must be installed.")
@@ -1276,9 +1210,7 @@ class BotoApiGatewayTestCase(
     "The botocore module must be greater than"
     " or equal to version {}".format(required_botocore_version),
 )
-class BotoApiGatewayUsagePlanTestCase(
-    BotoApiGatewayStateTestCaseBase, BotoApiGatewayTestCaseMixin
-):
+class BotoApiGatewayUsagePlanTestCase(BotoApiGatewayStateTestCaseBase, BotoApiGatewayTestCaseMixin):
     """
     TestCase for salt.modules.boto_apigateway state.module, usage_plans portion
     """
@@ -1290,29 +1222,19 @@ class BotoApiGatewayUsagePlanTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    return_value={"error": "error"}
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(return_value={"error": "error"})},
         ):
-            result = boto_apigateway.usage_plan_present(
-                "name", "plan_name", **conn_parameters
-            )
+            result = boto_apigateway.usage_plan_present("name", "plan_name", **conn_parameters)
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(
-                result["comment"], "Failed to describe existing usage plans"
-            )
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"] == "Failed to describe existing usage plans"
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
-    def test_usage_plan_present_if_there_is_no_such_plan_and_test_option_is_set(
-        self, *args
-    ):
+    def test_usage_plan_present_if_there_is_no_such_plan_and_test_option_is_set(self, *args):
         """
         TestCse for salt.modules.boto_apigateway state.module, checking that if __opts__['test'] is set
         and usage plan does not exist, correct diagnostic will be returned
@@ -1320,21 +1242,13 @@ class BotoApiGatewayUsagePlanTestCase(
         with patch.dict(boto_apigateway.__opts__, {"test": True}):
             with patch.dict(
                 boto_apigateway.__salt__,
-                {
-                    "boto_apigateway.describe_usage_plans": MagicMock(
-                        return_value={"plans": []}
-                    )
-                },
+                {"boto_apigateway.describe_usage_plans": MagicMock(return_value={"plans": []})},
             ):
-                result = boto_apigateway.usage_plan_present(
-                    "name", "plan_name", **conn_parameters
-                )
-                self.assertIn("comment", result)
-                self.assertEqual(
-                    result["comment"], "a new usage plan plan_name would be created"
-                )
-                self.assertIn("result", result)
-                self.assertEqual(result["result"], None)
+                result = boto_apigateway.usage_plan_present("name", "plan_name", **conn_parameters)
+                assert "comment" in result
+                assert result["comment"] == "a new usage plan plan_name would be created"
+                assert "result" in result
+                assert result["result"] == None
 
     @pytest.mark.slow_test
     def test_usage_plan_present_if_create_usage_plan_fails(self, *args):
@@ -1345,26 +1259,18 @@ class BotoApiGatewayUsagePlanTestCase(
             with patch.dict(
                 boto_apigateway.__salt__,
                 {
-                    "boto_apigateway.describe_usage_plans": MagicMock(
-                        return_value={"plans": []}
-                    ),
-                    "boto_apigateway.create_usage_plan": MagicMock(
-                        return_value={"error": "error"}
-                    ),
+                    "boto_apigateway.describe_usage_plans": MagicMock(return_value={"plans": []}),
+                    "boto_apigateway.create_usage_plan": MagicMock(return_value={"error": "error"}),
                 },
             ):
-                result = boto_apigateway.usage_plan_present(
-                    "name", "plan_name", **conn_parameters
-                )
+                result = boto_apigateway.usage_plan_present("name", "plan_name", **conn_parameters)
 
-                self.assertIn("result", result)
-                self.assertEqual(result["result"], False)
-                self.assertIn("comment", result)
-                self.assertEqual(
-                    result["comment"], "Failed to create a usage plan plan_name, error"
-                )
-                self.assertIn("changes", result)
-                self.assertEqual(result["changes"], {})
+                assert "result" in result
+                assert result["result"] == False
+                assert "comment" in result
+                assert result["comment"] == "Failed to create a usage plan plan_name, error"
+                assert "changes" in result
+                assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_present_if_plan_is_there_and_needs_no_updates(self, *args):
@@ -1381,31 +1287,19 @@ class BotoApiGatewayUsagePlanTestCase(
                     "boto_apigateway.update_usage_plan": MagicMock(),
                 },
             ):
-                result = boto_apigateway.usage_plan_present(
-                    "name", "plan_name", **conn_parameters
-                )
+                result = boto_apigateway.usage_plan_present("name", "plan_name", **conn_parameters)
 
-                self.assertIn("result", result)
-                self.assertEqual(result["result"], True)
-                self.assertIn("comment", result)
-                self.assertEqual(
-                    result["comment"],
-                    "usage plan plan_name is already in a correct state",
-                )
-                self.assertIn("changes", result)
-                self.assertEqual(result["changes"], {})
+                assert "result" in result
+                assert result["result"] == True
+                assert "comment" in result
+                assert result["comment"] == "usage plan plan_name is already in a correct state"
+                assert "changes" in result
+                assert result["changes"] == {}
 
-                self.assertTrue(
-                    boto_apigateway.__salt__[
-                        "boto_apigateway.update_usage_plan"
-                    ].call_count
-                    == 0
-                )
+                assert boto_apigateway.__salt__["boto_apigateway.update_usage_plan"].call_count == 0
 
     @pytest.mark.slow_test
-    def test_usage_plan_present_if_plan_is_there_and_needs_updates_but_test_is_set(
-        self, *args
-    ):
+    def test_usage_plan_present_if_plan_is_there_and_needs_updates_but_test_is_set(self, *args):
         """
         Tests behavior when usage plan needs to be updated by tests option is set
         """
@@ -1427,27 +1321,16 @@ class BotoApiGatewayUsagePlanTestCase(
                     "boto_apigateway.update_usage_plan": MagicMock(),
                 },
             ):
-                result = boto_apigateway.usage_plan_present(
-                    "name", "plan_name", **conn_parameters
-                )
+                result = boto_apigateway.usage_plan_present("name", "plan_name", **conn_parameters)
 
-                self.assertIn("comment", result)
-                self.assertEqual(
-                    result["comment"], "a new usage plan plan_name would be updated"
-                )
-                self.assertIn("result", result)
-                self.assertEqual(result["result"], None)
-                self.assertTrue(
-                    boto_apigateway.__salt__[
-                        "boto_apigateway.update_usage_plan"
-                    ].call_count
-                    == 0
-                )
+                assert "comment" in result
+                assert result["comment"] == "a new usage plan plan_name would be updated"
+                assert "result" in result
+                assert result["result"] == None
+                assert boto_apigateway.__salt__["boto_apigateway.update_usage_plan"].call_count == 0
 
     @pytest.mark.slow_test
-    def test_usage_plan_present_if_plan_is_there_and_needs_updates_but_update_fails(
-        self, *args
-    ):
+    def test_usage_plan_present_if_plan_is_there_and_needs_updates_but_update_fails(self, *args):
         """
         Tests error processing for the case when updating an existing usage plan fails
         """
@@ -1466,21 +1349,15 @@ class BotoApiGatewayUsagePlanTestCase(
                             ]
                         }
                     ),
-                    "boto_apigateway.update_usage_plan": MagicMock(
-                        return_value={"error": "error"}
-                    ),
+                    "boto_apigateway.update_usage_plan": MagicMock(return_value={"error": "error"}),
                 },
             ):
-                result = boto_apigateway.usage_plan_present(
-                    "name", "plan_name", **conn_parameters
-                )
+                result = boto_apigateway.usage_plan_present("name", "plan_name", **conn_parameters)
 
-                self.assertIn("result", result)
-                self.assertEqual(result["result"], False)
-                self.assertIn("comment", result)
-                self.assertEqual(
-                    result["comment"], "Failed to update a usage plan plan_name, error"
-                )
+                assert "result" in result
+                assert result["result"] == False
+                assert "comment" in result
+                assert result["comment"] == "Failed to update a usage plan plan_name, error"
 
     @pytest.mark.slow_test
     def test_usage_plan_present_if_plan_has_been_created(self, *args):
@@ -1494,23 +1371,17 @@ class BotoApiGatewayUsagePlanTestCase(
                     "boto_apigateway.describe_usage_plans": MagicMock(
                         side_effect=[{"plans": []}, {"plans": [{"id": "id"}]}]
                     ),
-                    "boto_apigateway.create_usage_plan": MagicMock(
-                        return_value={"created": True}
-                    ),
+                    "boto_apigateway.create_usage_plan": MagicMock(return_value={"created": True}),
                 },
             ):
-                result = boto_apigateway.usage_plan_present(
-                    "name", "plan_name", **conn_parameters
-                )
+                result = boto_apigateway.usage_plan_present("name", "plan_name", **conn_parameters)
 
-                self.assertIn("result", result)
-                self.assertEqual(result["result"], True)
-                self.assertIn("comment", result)
-                self.assertEqual(
-                    result["comment"], "A new usage plan plan_name has been created"
-                )
-                self.assertEqual(result["changes"]["old"], {"plan": None})
-                self.assertEqual(result["changes"]["new"], {"plan": {"id": "id"}})
+                assert "result" in result
+                assert result["result"] == True
+                assert "comment" in result
+                assert result["comment"] == "A new usage plan plan_name has been created"
+                assert result["changes"]["old"] == {"plan": None}
+                assert result["changes"]["new"] == {"plan": {"id": "id"}}
 
     @pytest.mark.slow_test
     def test_usage_plan_present_if_plan_has_been_updated(self, *args):
@@ -1534,9 +1405,7 @@ class BotoApiGatewayUsagePlanTestCase(
                             },
                         ]
                     ),
-                    "boto_apigateway.update_usage_plan": MagicMock(
-                        return_value={"updated": True}
-                    ),
+                    "boto_apigateway.update_usage_plan": MagicMock(return_value={"updated": True}),
                 },
             ):
                 result = boto_apigateway.usage_plan_present(
@@ -1546,22 +1415,17 @@ class BotoApiGatewayUsagePlanTestCase(
                     **conn_parameters
                 )
 
-                self.assertIn("result", result)
-                self.assertEqual(result["result"], True)
-                self.assertIn("comment", result)
-                self.assertEqual(
-                    result["comment"], "usage plan plan_name has been updated"
-                )
-                self.assertEqual(result["changes"]["old"], {"plan": {"id": "id"}})
-                self.assertEqual(
-                    result["changes"]["new"],
-                    {
-                        "plan": {
-                            "id": "id",
-                            "throttle": {"rateLimit": throttle_rateLimit},
-                        }
-                    },
-                )
+                assert "result" in result
+                assert result["result"] == True
+                assert "comment" in result
+                assert result["comment"] == "usage plan plan_name has been updated"
+                assert result["changes"]["old"] == {"plan": {"id": "id"}}
+                assert result["changes"]["new"] == {
+                    "plan": {
+                        "id": "id",
+                        "throttle": {"rateLimit": throttle_rateLimit},
+                    }
+                }
 
     @pytest.mark.slow_test
     def test_usage_plan_present_if_ValueError_is_raised(self, *args):
@@ -1570,23 +1434,16 @@ class BotoApiGatewayUsagePlanTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    side_effect=ValueError("error")
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(side_effect=ValueError("error"))},
         ):
             result = boto_apigateway.usage_plan_present(
-                "name",
-                "plan_name",
-                throttle={"rateLimit": throttle_rateLimit},
-                **conn_parameters
+                "name", "plan_name", throttle={"rateLimit": throttle_rateLimit}, **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(result["comment"], repr(("error",)))
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"] == repr(("error",))
 
     @pytest.mark.slow_test
     def test_usage_plan_present_if_IOError_is_raised(self, *args):
@@ -1595,23 +1452,16 @@ class BotoApiGatewayUsagePlanTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    side_effect=IOError("error")
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(side_effect=IOError("error"))},
         ):
             result = boto_apigateway.usage_plan_present(
-                "name",
-                "plan_name",
-                throttle={"rateLimit": throttle_rateLimit},
-                **conn_parameters
+                "name", "plan_name", throttle={"rateLimit": throttle_rateLimit}, **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(result["comment"], repr(("error",)))
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"] == repr(("error",))
 
     @pytest.mark.slow_test
     def test_usage_plan_absent_if_describe_fails(self, *args):
@@ -1620,26 +1470,18 @@ class BotoApiGatewayUsagePlanTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    return_value={"error": "error"}
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(return_value={"error": "error"})},
         ):
             result = {}
 
-            result = boto_apigateway.usage_plan_absent(
-                "name", "plan_name", **conn_parameters
-            )
+            result = boto_apigateway.usage_plan_absent("name", "plan_name", **conn_parameters)
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(
-                result["comment"], "Failed to describe existing usage plans"
-            )
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"] == "Failed to describe existing usage plans"
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_absent_if_plan_is_not_present(self, *args):
@@ -1648,26 +1490,18 @@ class BotoApiGatewayUsagePlanTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    return_value={"plans": []}
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(return_value={"plans": []})},
         ):
             result = {}
 
-            result = boto_apigateway.usage_plan_absent(
-                "name", "plan_name", **conn_parameters
-            )
+            result = boto_apigateway.usage_plan_absent("name", "plan_name", **conn_parameters)
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], True)
-            self.assertIn("comment", result)
-            self.assertEqual(
-                result["comment"], "Usage plan plan_name does not exist already"
-            )
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == True
+            assert "comment" in result
+            assert result["comment"] == "Usage plan plan_name does not exist already"
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_absent_if_plan_is_present_but_test_option_is_set(self, *args):
@@ -1685,19 +1519,14 @@ class BotoApiGatewayUsagePlanTestCase(
             ):
                 result = {}
 
-                result = boto_apigateway.usage_plan_absent(
-                    "name", "plan_name", **conn_parameters
-                )
+                result = boto_apigateway.usage_plan_absent("name", "plan_name", **conn_parameters)
 
-                self.assertIn("result", result)
-                self.assertEqual(result["result"], None)
-                self.assertIn("comment", result)
-                self.assertEqual(
-                    result["comment"],
-                    "Usage plan plan_name exists and would be deleted",
-                )
-                self.assertIn("changes", result)
-                self.assertEqual(result["changes"], {})
+                assert "result" in result
+                assert result["result"] == None
+                assert "comment" in result
+                assert result["comment"] == "Usage plan plan_name exists and would be deleted"
+                assert "changes" in result
+                assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_absent_if_plan_is_present_but_delete_fails(self, *args):
@@ -1711,25 +1540,19 @@ class BotoApiGatewayUsagePlanTestCase(
                     "boto_apigateway.describe_usage_plans": MagicMock(
                         return_value={"plans": [{"id": "id"}]}
                     ),
-                    "boto_apigateway.delete_usage_plan": MagicMock(
-                        return_value={"error": "error"}
-                    ),
+                    "boto_apigateway.delete_usage_plan": MagicMock(return_value={"error": "error"}),
                 },
             ):
-                result = boto_apigateway.usage_plan_absent(
-                    "name", "plan_name", **conn_parameters
-                )
+                result = boto_apigateway.usage_plan_absent("name", "plan_name", **conn_parameters)
 
-                self.assertIn("result", result)
-                self.assertEqual(result["result"], False)
-                self.assertIn("comment", result)
-                self.assertEqual(
-                    result["comment"],
-                    "Failed to delete usage plan plan_name, "
-                    + repr({"error": "error"}),
+                assert "result" in result
+                assert result["result"] == False
+                assert "comment" in result
+                assert result["comment"] == "Failed to delete usage plan plan_name, " + repr(
+                    {"error": "error"}
                 )
-                self.assertIn("changes", result)
-                self.assertEqual(result["changes"], {})
+                assert "changes" in result
+                assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_absent_if_plan_has_been_deleted(self, *args):
@@ -1743,26 +1566,17 @@ class BotoApiGatewayUsagePlanTestCase(
                     "boto_apigateway.describe_usage_plans": MagicMock(
                         return_value={"plans": [{"id": "id"}]}
                     ),
-                    "boto_apigateway.delete_usage_plan": MagicMock(
-                        return_value={"deleted": True}
-                    ),
+                    "boto_apigateway.delete_usage_plan": MagicMock(return_value={"deleted": True}),
                 },
             ):
-                result = boto_apigateway.usage_plan_absent(
-                    "name", "plan_name", **conn_parameters
-                )
+                result = boto_apigateway.usage_plan_absent("name", "plan_name", **conn_parameters)
 
-                self.assertIn("result", result)
-                self.assertEqual(result["result"], True)
-                self.assertIn("comment", result)
-                self.assertEqual(
-                    result["comment"], "Usage plan plan_name has been deleted"
-                )
-                self.assertIn("changes", result)
-                self.assertEqual(
-                    result["changes"],
-                    {"new": {"plan": None}, "old": {"plan": {"id": "id"}}},
-                )
+                assert "result" in result
+                assert result["result"] == True
+                assert "comment" in result
+                assert result["comment"] == "Usage plan plan_name has been deleted"
+                assert "changes" in result
+                assert result["changes"] == {"new": {"plan": None}, "old": {"plan": {"id": "id"}}}
 
     @pytest.mark.slow_test
     def test_usage_plan_absent_if_ValueError_is_raised(self, *args):
@@ -1771,20 +1585,14 @@ class BotoApiGatewayUsagePlanTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    side_effect=ValueError("error")
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(side_effect=ValueError("error"))},
         ):
-            result = boto_apigateway.usage_plan_absent(
-                "name", "plan_name", **conn_parameters
-            )
+            result = boto_apigateway.usage_plan_absent("name", "plan_name", **conn_parameters)
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(result["comment"], repr(("error",)))
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"] == repr(("error",))
 
     @pytest.mark.slow_test
     def test_usage_plan_absent_if_IOError_is_raised(self, *args):
@@ -1793,20 +1601,14 @@ class BotoApiGatewayUsagePlanTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    side_effect=IOError("error")
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(side_effect=IOError("error"))},
         ):
-            result = boto_apigateway.usage_plan_absent(
-                "name", "plan_name", **conn_parameters
-            )
+            result = boto_apigateway.usage_plan_absent("name", "plan_name", **conn_parameters)
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(result["comment"], repr(("error",)))
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"] == repr(("error",))
 
 
 @skipIf(HAS_BOTO is False, "The boto module must be installed.")
@@ -1834,24 +1636,18 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    return_value={"error": "error"}
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(return_value={"error": "error"})},
         ):
             result = boto_apigateway.usage_plan_association_present(
                 "name", "plan_name", [association_stage_1], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(
-                result["comment"], "Failed to describe existing usage plans"
-            )
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"] == "Failed to describe existing usage plans"
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_association_present_if_plan_is_not_present(self, *args):
@@ -1860,27 +1656,21 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    return_value={"plans": []}
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(return_value={"plans": []})},
         ):
             result = boto_apigateway.usage_plan_association_present(
                 "name", "plan_name", [association_stage_1], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(result["comment"], "Usage plan plan_name does not exist")
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"] == "Usage plan plan_name does not exist"
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
-    def test_usage_plan_association_present_if_multiple_plans_with_the_same_name_exist(
-        self, *args
-    ):
+    def test_usage_plan_association_present_if_multiple_plans_with_the_same_name_exist(self, *args):
         """
         Tests correct error processing for the case when multiple plans with the same name exist
         """
@@ -1896,15 +1686,15 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
                 "name", "plan_name", [association_stage_1], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(
-                result["comment"],
-                "There are multiple usage plans with the same name - it is not supported",
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert (
+                result["comment"]
+                == "There are multiple usage plans with the same name - it is not supported"
             )
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_association_present_if_association_already_exists(self, *args):
@@ -1915,9 +1705,7 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
             boto_apigateway.__salt__,
             {
                 "boto_apigateway.describe_usage_plans": MagicMock(
-                    return_value={
-                        "plans": [{"id": "id1", "apiStages": [association_stage_1]}]
-                    }
+                    return_value={"plans": [{"id": "id1", "apiStages": [association_stage_1]}]}
                 )
             },
         ):
@@ -1925,14 +1713,12 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
                 "name", "plan_name", [association_stage_1], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], True)
-            self.assertIn("comment", result)
-            self.assertEqual(
-                result["comment"], "Usage plan is already asssociated to all api stages"
-            )
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == True
+            assert "comment" in result
+            assert result["comment"] == "Usage plan is already asssociated to all api stages"
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_association_present_if_update_fails(self, *args):
@@ -1943,9 +1729,7 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
             boto_apigateway.__salt__,
             {
                 "boto_apigateway.describe_usage_plans": MagicMock(
-                    return_value={
-                        "plans": [{"id": "id1", "apiStages": [association_stage_1]}]
-                    }
+                    return_value={"plans": [{"id": "id1", "apiStages": [association_stage_1]}]}
                 ),
                 "boto_apigateway.attach_usage_plan_to_apis": MagicMock(
                     return_value={"error": "error"}
@@ -1956,14 +1740,12 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
                 "name", "plan_name", [association_stage_2], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertTrue(
-                result["comment"].startswith("Failed to associate a usage plan")
-            )
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"].startswith("Failed to associate a usage plan")
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_association_present_success(self, *args):
@@ -1974,15 +1756,11 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
             boto_apigateway.__salt__,
             {
                 "boto_apigateway.describe_usage_plans": MagicMock(
-                    return_value={
-                        "plans": [{"id": "id1", "apiStages": [association_stage_1]}]
-                    }
+                    return_value={"plans": [{"id": "id1", "apiStages": [association_stage_1]}]}
                 ),
                 "boto_apigateway.attach_usage_plan_to_apis": MagicMock(
                     return_value={
-                        "result": {
-                            "apiStages": [association_stage_1, association_stage_2]
-                        }
+                        "result": {"apiStages": [association_stage_1, association_stage_2]}
                     }
                 ),
             },
@@ -1991,20 +1769,15 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
                 "name", "plan_name", [association_stage_2], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], True)
-            self.assertIn("comment", result)
-            self.assertEqual(
-                result["comment"], "successfully associated usage plan to apis"
-            )
-            self.assertIn("changes", result)
-            self.assertEqual(
-                result["changes"],
-                {
-                    "new": [association_stage_1, association_stage_2],
-                    "old": [association_stage_1],
-                },
-            )
+            assert "result" in result
+            assert result["result"] == True
+            assert "comment" in result
+            assert result["comment"] == "successfully associated usage plan to apis"
+            assert "changes" in result
+            assert result["changes"] == {
+                "new": [association_stage_1, association_stage_2],
+                "old": [association_stage_1],
+            }
 
     @pytest.mark.slow_test
     def test_usage_plan_association_present_if_value_error_is_thrown(self, *args):
@@ -2013,22 +1786,18 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    side_effect=ValueError("error")
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(side_effect=ValueError("error"))},
         ):
             result = boto_apigateway.usage_plan_association_present(
                 "name", "plan_name", [], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(result["comment"], repr(("error",)))
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"] == repr(("error",))
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_association_present_if_io_error_is_thrown(self, *args):
@@ -2037,22 +1806,18 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    side_effect=IOError("error")
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(side_effect=IOError("error"))},
         ):
             result = boto_apigateway.usage_plan_association_present(
                 "name", "plan_name", [], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(result["comment"], repr(("error",)))
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"] == repr(("error",))
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_association_absent_if_describe_fails(self, *args):
@@ -2061,23 +1826,17 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    return_value={"error": "error"}
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(return_value={"error": "error"})},
         ):
             result = boto_apigateway.usage_plan_association_absent(
                 "name", "plan_name", [association_stage_1], **conn_parameters
             )
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(
-                result["comment"], "Failed to describe existing usage plans"
-            )
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"] == "Failed to describe existing usage plans"
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_association_absent_if_plan_is_not_present(self, *args):
@@ -2086,27 +1845,21 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    return_value={"plans": []}
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(return_value={"plans": []})},
         ):
             result = boto_apigateway.usage_plan_association_absent(
                 "name", "plan_name", [association_stage_1], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(result["comment"], "Usage plan plan_name does not exist")
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"] == "Usage plan plan_name does not exist"
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
-    def test_usage_plan_association_absent_if_multiple_plans_with_the_same_name_exist(
-        self, *args
-    ):
+    def test_usage_plan_association_absent_if_multiple_plans_with_the_same_name_exist(self, *args):
         """
         Tests the case when there are multiple plans with the same name but different Ids
         """
@@ -2122,15 +1875,15 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
                 "name", "plan_name", [association_stage_1], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(
-                result["comment"],
-                "There are multiple usage plans with the same name - it is not supported",
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert (
+                result["comment"]
+                == "There are multiple usage plans with the same name - it is not supported"
             )
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_association_absent_if_plan_has_no_associations(self, *args):
@@ -2149,20 +1902,15 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
                 "name", "plan_name", [association_stage_1], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], True)
-            self.assertIn("comment", result)
-            self.assertEqual(
-                result["comment"],
-                "Usage plan plan_name has no associated stages already",
-            )
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == True
+            assert "comment" in result
+            assert result["comment"] == "Usage plan plan_name has no associated stages already"
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
-    def test_usage_plan_association_absent_if_plan_has_no_specific_association(
-        self, *args
-    ):
+    def test_usage_plan_association_absent_if_plan_has_no_specific_association(self, *args):
         """
         Tests the case when requested association is not present already
         """
@@ -2170,9 +1918,7 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
             boto_apigateway.__salt__,
             {
                 "boto_apigateway.describe_usage_plans": MagicMock(
-                    return_value={
-                        "plans": [{"id": "id1", "apiStages": [association_stage_1]}]
-                    }
+                    return_value={"plans": [{"id": "id1", "apiStages": [association_stage_1]}]}
                 )
             },
         ):
@@ -2180,15 +1926,12 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
                 "name", "plan_name", [association_stage_2], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], True)
-            self.assertIn("comment", result)
-            self.assertEqual(
-                result["comment"],
-                "Usage plan is already not asssociated to any api stages",
-            )
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == True
+            assert "comment" in result
+            assert result["comment"] == "Usage plan is already not asssociated to any api stages"
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_association_absent_if_detaching_association_fails(self, *args):
@@ -2217,16 +1960,14 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
                 "name", "plan_name", [association_stage_2], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertTrue(
-                result["comment"].startswith(
-                    "Failed to disassociate a usage plan plan_name from the apis"
-                )
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"].startswith(
+                "Failed to disassociate a usage plan plan_name from the apis"
             )
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_association_absent_success(self, *args):
@@ -2255,20 +1996,15 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
                 "name", "plan_name", [association_stage_2], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], True)
-            self.assertIn("comment", result)
-            self.assertEqual(
-                result["comment"], "successfully disassociated usage plan from apis"
-            )
-            self.assertIn("changes", result)
-            self.assertEqual(
-                result["changes"],
-                {
-                    "new": [association_stage_1],
-                    "old": [association_stage_1, association_stage_2],
-                },
-            )
+            assert "result" in result
+            assert result["result"] == True
+            assert "comment" in result
+            assert result["comment"] == "successfully disassociated usage plan from apis"
+            assert "changes" in result
+            assert result["changes"] == {
+                "new": [association_stage_1],
+                "old": [association_stage_1, association_stage_2],
+            }
 
     @pytest.mark.slow_test
     def test_usage_plan_association_absent_if_ValueError_is_raised(self, *args):
@@ -2277,22 +2013,18 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    side_effect=ValueError("error")
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(side_effect=ValueError("error"))},
         ):
             result = boto_apigateway.usage_plan_association_absent(
                 "name", "plan_name", [association_stage_1], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(result["comment"], repr(("error",)))
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"] == repr(("error",))
+            assert "changes" in result
+            assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_usage_plan_association_absent_if_IOError_is_raised(self, *args):
@@ -2301,19 +2033,15 @@ class BotoApiGatewayUsagePlanAssociationTestCase(
         """
         with patch.dict(
             boto_apigateway.__salt__,
-            {
-                "boto_apigateway.describe_usage_plans": MagicMock(
-                    side_effect=IOError("error")
-                )
-            },
+            {"boto_apigateway.describe_usage_plans": MagicMock(side_effect=IOError("error"))},
         ):
             result = boto_apigateway.usage_plan_association_absent(
                 "name", "plan_name", [association_stage_1], **conn_parameters
             )
 
-            self.assertIn("result", result)
-            self.assertEqual(result["result"], False)
-            self.assertIn("comment", result)
-            self.assertEqual(result["comment"], repr(("error",)))
-            self.assertIn("changes", result)
-            self.assertEqual(result["changes"], {})
+            assert "result" in result
+            assert result["result"] == False
+            assert "comment" in result
+            assert result["comment"] == repr(("error",))
+            assert "changes" in result
+            assert result["changes"] == {}

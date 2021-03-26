@@ -1,7 +1,6 @@
 """
 Support for the Amazon Simple Queue Service.
 """
-
 import logging
 
 import salt.utils.json

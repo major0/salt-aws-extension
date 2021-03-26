@@ -40,8 +40,6 @@ Connection module for Amazon SNS
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 
 import salt.utils.versions
@@ -245,9 +243,7 @@ def set_topic_attributes(
         return False
 
 
-def list_subscriptions_by_topic(
-    TopicArn, region=None, key=None, keyid=None, profile=None
-):
+def list_subscriptions_by_topic(TopicArn, region=None, key=None, keyid=None, profile=None):
     """
     Returns a list of the subscriptions to a specific topic
 
@@ -262,9 +258,7 @@ def list_subscriptions_by_topic(
     res = []
     try:
         while NextToken is not None:
-            ret = conn.list_subscriptions_by_topic(
-                TopicArn=TopicArn, NextToken=NextToken
-            )
+            ret = conn.list_subscriptions_by_topic(TopicArn=TopicArn, NextToken=NextToken)
             NextToken = ret.get("NextToken", None)
             subs = ret.get("Subscriptions", [])
             res += subs
@@ -299,9 +293,7 @@ def list_subscriptions(region=None, key=None, keyid=None, profile=None):
     return res
 
 
-def get_subscription_attributes(
-    SubscriptionArn, region=None, key=None, keyid=None, profile=None
-):
+def get_subscription_attributes(SubscriptionArn, region=None, key=None, keyid=None, profile=None):
     """
     Returns all of the properties of a subscription.
 
@@ -316,9 +308,7 @@ def get_subscription_attributes(
         ret = conn.get_subscription_attributes(SubscriptionArn=SubscriptionArn)
         return ret["Attributes"]
     except botocore.exceptions.ClientError as e:
-        log.error(
-            "Failed to list attributes for SNS subscription %s: %s", SubscriptionArn, e
-        )
+        log.error("Failed to list attributes for SNS subscription %s: %s", SubscriptionArn, e)
         return None
     except KeyError:
         log.error("Failed to list attributes for SNS subscription %s", SubscriptionArn)
@@ -368,9 +358,7 @@ def set_subscription_attributes(
         return False
 
 
-def subscribe(
-    TopicArn, Protocol, Endpoint, region=None, key=None, keyid=None, profile=None
-):
+def subscribe(TopicArn, Protocol, Endpoint, region=None, key=None, keyid=None, profile=None):
     """
     Subscribe to a Topic.
 

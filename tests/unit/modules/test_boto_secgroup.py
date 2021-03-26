@@ -6,21 +6,21 @@ from copy import deepcopy
 import salt.config
 import salt.loader
 import salt.modules.boto_secgroup as boto_secgroup
-
-# pylint: disable=import-error
 from salt.ext.six.moves import range  # pylint: disable=redefined-builtin
 from salt.utils.odict import OrderedDict
 from salt.utils.versions import LooseVersion
+
 from tests.support.mixins import LoaderModuleMockMixin
 from tests.support.runtests import RUNTIME_VARS
-from tests.support.unit import TestCase, skipIf
+from tests.support.unit import skipIf
+from tests.support.unit import TestCase
+
+# pylint: disable=import-error
 
 try:
     import boto
 
-    boto.ENDPOINTS_PATH = os.path.join(
-        RUNTIME_VARS.TESTS_DIR, "unit/files/endpoints.json"
-    )
+    boto.ENDPOINTS_PATH = os.path.join(RUNTIME_VARS.TESTS_DIR, "unit/files/endpoints.json")
     import boto.ec2  # pylint: enable=unused-import
 
     HAS_BOTO = True
@@ -97,8 +97,7 @@ def _has_required_boto():
 @skipIf(HAS_MOTO is False, "The moto module must be installed.")
 @skipIf(
     _has_required_boto() is False,
-    "The boto module must be greater than"
-    " or equal to version {}".format(required_boto_version),
+    "The boto module must be greater than" " or equal to version {}".format(required_boto_version),
 )
 class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
     """
@@ -107,13 +106,9 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
 
     def setup_loader_modules(self):
         opts = salt.config.DEFAULT_MASTER_OPTS.copy()
-        utils = salt.loader.utils(
-            opts, whitelist=["boto", "args", "systemd", "path", "platform"]
-        )
+        utils = salt.loader.utils(opts, whitelist=["boto", "args", "systemd", "path", "platform"])
         funcs = salt.loader.minion_mods(opts, utils=utils)
-        return {
-            boto_secgroup: {"__opts__": opts, "__utils__": utils, "__salt__": funcs}
-        }
+        return {boto_secgroup: {"__opts__": opts, "__utils__": utils, "__salt__": funcs}}
 
     def setUp(self):
         super().setUp()
@@ -156,7 +151,7 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
                 "cidr_ip": "0.0.0.0/0",
             },
         ]
-        self.assertEqual(boto_secgroup._split_rules(rules), split_rules)
+        assert boto_secgroup._split_rules(rules) == split_rules
 
     @mock_ec2_deprecated
     def test_create_ec2_classic(self):
@@ -176,7 +171,7 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
             secgroup_created_group[0].description,
             secgroup_created_group[0].vpc_id,
         ]
-        self.assertEqual(expected_create_result, secgroup_create_result)
+        assert expected_create_result == secgroup_create_result
 
     @mock_ec2_deprecated
     def test_create_ec2_vpc(self):
@@ -187,9 +182,7 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
         group_name = _random_group_name()
         group_description = "test_create_ec2_vpc"
         # create a group using boto_secgroup
-        boto_secgroup.create(
-            group_name, group_description, vpc_id=vpc_id, **conn_parameters
-        )
+        boto_secgroup.create(group_name, group_description, vpc_id=vpc_id, **conn_parameters)
         # confirm that the group actually exists
         conn = boto.ec2.connect_to_region(region, **boto_conn_parameters)
         group_filter = {"group-name": group_name, "vpc-id": vpc_id}
@@ -200,7 +193,7 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
             secgroup_created_group[0].description,
             secgroup_created_group[0].vpc_id,
         ]
-        self.assertEqual(expected_create_result, secgroup_create_result)
+        assert expected_create_result == secgroup_create_result
 
     @mock_ec2_deprecated
     def test_get_group_id_ec2_classic(self):
@@ -211,16 +204,14 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
         group_name = _random_group_name()
         group_description = "test_get_group_id_ec2_classic"
         conn = boto.ec2.connect_to_region(region, **boto_conn_parameters)
-        group_classic = conn.create_security_group(
-            name=group_name, description=group_description
-        )
+        group_classic = conn.create_security_group(name=group_name, description=group_description)
         # note that the vpc_id does not need to be created in order to create
         # a security group within the vpc when using moto
         group_vpc = conn.create_security_group(
             name=group_name, description=group_description, vpc_id=vpc_id
         )
         retrieved_group_id = boto_secgroup.get_group_id(group_name, **conn_parameters)
-        self.assertEqual(group_classic.id, retrieved_group_id)
+        assert group_classic.id == retrieved_group_id
 
     @skipIf(
         True,
@@ -236,18 +227,14 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
         group_name = _random_group_name()
         group_description = "test_get_group_id_ec2_vpc"
         conn = boto.ec2.connect_to_region(region, **boto_conn_parameters)
-        group_classic = conn.create_security_group(
-            name=group_name, description=group_description
-        )
+        group_classic = conn.create_security_group(name=group_name, description=group_description)
         # note that the vpc_id does not need to be created in order to create
         # a security group within the vpc when using moto
         group_vpc = conn.create_security_group(
             name=group_name, description=group_description, vpc_id=vpc_id
         )
-        retrieved_group_id = boto_secgroup.get_group_id(
-            group_name, group_vpc, **conn_parameters
-        )
-        self.assertEqual(group_vpc.id, retrieved_group_id)
+        retrieved_group_id = boto_secgroup.get_group_id(group_name, group_vpc, **conn_parameters)
+        assert group_vpc.id == retrieved_group_id
 
     @mock_ec2_deprecated
     def test_get_config_single_rule_group_name(self):
@@ -298,10 +285,8 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
                 ("rules_egress", rules_egress),
             ]
         )
-        secgroup_get_config_result = boto_secgroup.get_config(
-            group_id=group.id, **conn_parameters
-        )
-        self.assertEqual(expected_get_config_result, secgroup_get_config_result)
+        secgroup_get_config_result = boto_secgroup.get_config(group_id=group.id, **conn_parameters)
+        assert expected_get_config_result == secgroup_get_config_result
 
     @mock_ec2_deprecated
     def test_exists_true_name_classic(self):
@@ -312,11 +297,9 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
         group_description = "test_exists_true_ec2_classic"
         conn = boto.ec2.connect_to_region(region, **boto_conn_parameters)
         group_classic = conn.create_security_group(group_name, group_description)
-        group_vpc = conn.create_security_group(
-            group_name, group_description, vpc_id=vpc_id
-        )
+        group_vpc = conn.create_security_group(group_name, group_description, vpc_id=vpc_id)
         salt_exists_result = boto_secgroup.exists(name=group_name, **conn_parameters)
-        self.assertTrue(salt_exists_result)
+        assert salt_exists_result
 
     @mock_ec2_deprecated
     def test_exists_false_name_classic(self):
@@ -331,10 +314,8 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
         group_description = "test_exists_true_ec2_vpc"
         conn = boto.ec2.connect_to_region(region, **boto_conn_parameters)
         conn.create_security_group(group_name, group_description, vpc_id=vpc_id)
-        salt_exists_result = boto_secgroup.exists(
-            name=group_name, vpc_id=vpc_id, **conn_parameters
-        )
-        self.assertTrue(salt_exists_result)
+        salt_exists_result = boto_secgroup.exists(name=group_name, vpc_id=vpc_id, **conn_parameters)
+        assert salt_exists_result
 
     @mock_ec2_deprecated
     def test_exists_false_name_vpc(self):
@@ -342,10 +323,8 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
         tests 'false' existence of a group in vpc when given name and vpc_id
         """
         group_name = _random_group_name()
-        salt_exists_result = boto_secgroup.exists(
-            group_name, vpc_id=vpc_id, **conn_parameters
-        )
-        self.assertFalse(salt_exists_result)
+        salt_exists_result = boto_secgroup.exists(group_name, vpc_id=vpc_id, **conn_parameters)
+        assert not salt_exists_result
 
     @mock_ec2_deprecated
     def test_exists_true_group_id(self):
@@ -357,7 +336,7 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
         conn = boto.ec2.connect_to_region(region, **boto_conn_parameters)
         group = conn.create_security_group(group_name, group_description)
         salt_exists_result = boto_secgroup.exists(group_id=group.id, **conn_parameters)
-        self.assertTrue(salt_exists_result)
+        assert salt_exists_result
 
     @mock_ec2_deprecated
     def test_exists_false_group_id(self):
@@ -366,7 +345,7 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
         """
         group_id = _random_group_id()
         salt_exists_result = boto_secgroup.exists(group_id=group_id, **conn_parameters)
-        self.assertFalse(salt_exists_result)
+        assert not salt_exists_result
 
     @mock_ec2_deprecated
     def test_delete_group_ec2_classic(self):
@@ -383,9 +362,7 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
         group_description = "test_delete_group_ec2_classic"
         # create two groups using boto, one in EC2-Classic and one in EC2-VPC
         conn = boto.ec2.connect_to_region(region, **boto_conn_parameters)
-        group_classic = conn.create_security_group(
-            name=group_name, description=group_description
-        )
+        group_classic = conn.create_security_group(name=group_name, description=group_description)
         group_vpc = conn.create_security_group(
             name=group_name, description=group_description, vpc_id=vpc_id
         )
@@ -396,7 +373,7 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
         expected_groups = deepcopy(all_groups)
         expected_groups.remove(group_classic.id)
         actual_groups = [group.id for group in conn.get_all_security_groups()]
-        self.assertEqual(expected_groups, actual_groups)
+        assert expected_groups == actual_groups
 
     @mock_ec2_deprecated
     def test_delete_group_name_ec2_vpc(self):
@@ -409,4 +386,4 @@ class BotoSecgroupTestCase(TestCase, LoaderModuleMockMixin):
         """
         conn = boto.ec2.connect_to_region(region, **boto_conn_parameters)
         salt_conn = boto_secgroup._get_conn(**conn_parameters)
-        self.assertEqual(conn.__class__, salt_conn.__class__)
+        assert conn.__class__ == salt_conn.__class__

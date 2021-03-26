@@ -7,14 +7,17 @@ import salt.config
 import salt.loader
 import salt.states.boto_cognitoidentity as boto_cognitoidentity
 from salt.utils.versions import LooseVersion
-from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
-from tests.support.unit import TestCase, skipIf
 
-# pylint: disable=import-error,no-name-in-module
+from tests.support.mixins import LoaderModuleMockMixin
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
+from tests.support.unit import skipIf
+from tests.support.unit import TestCase
 from tests.unit.modules.test_boto_cognitoidentity import (
     BotoCognitoIdentityTestCaseMixin,
 )
+
+# pylint: disable=import-error,no-name-in-module
 
 try:
     import boto3
@@ -41,9 +44,7 @@ conn_parameters = {
     "keyid": secret_key,
     "profile": {},
 }
-error_message = (
-    "An error occurred (101) when calling the {0} operation: Test-defined error"
-)
+error_message = "An error occurred (101) when calling the {0} operation: Test-defined error"
 error_content = {"Error": {"Code": 101, "Message": "Test-defined error"}}
 
 first_pool_id = "first_pool_id"
@@ -81,9 +82,7 @@ first_pool_ret = dict(
 
 first_pool_role_ret = dict(
     IdentityPoolId=first_pool_id,
-    Roles=dict(
-        authenticated="first_pool_auth_role", unauthenticated="first_pool_unauth_role"
-    ),
+    Roles=dict(authenticated="first_pool_auth_role", unauthenticated="first_pool_unauth_role"),
 )
 
 second_pool_ret = dict(
@@ -236,8 +235,8 @@ class BotoCognitoIdentityTestCase(
             AuthenticatedRole="my_auth_role",
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("error on describe identity pool" in result.get("comment", {}))
+        assert result.get("result") == False
+        assert "error on describe identity pool" in result.get("comment", {})
 
     def test_present_when_multiple_pools_with_same_name_exist(self):
         """
@@ -245,19 +244,15 @@ class BotoCognitoIdentityTestCase(
         multiple pools.  The result should fail.
         """
         self.conn.list_identity_pools.return_value = identity_pools_ret
-        self.conn.describe_identity_pool.side_effect = (
-            self._describe_identity_pool_side_effect
-        )
+        self.conn.describe_identity_pool.side_effect = self._describe_identity_pool_side_effect
         result = self.salt_states["boto_cognitoidentity.pool_present"](
             name="test pool present",
             IdentityPoolName=first_pool_name,
             AuthenticatedRole="my_auth_role",
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertIn(
-            "{}".format([first_pool_ret, third_pool_ret]), result.get("comment", "")
-        )
+        assert result.get("result") == False
+        assert "{}".format([first_pool_ret, third_pool_ret]) in result.get("comment", "")
 
     def test_present_when_failing_to_create_a_new_identity_pool(self):
         """
@@ -265,9 +260,7 @@ class BotoCognitoIdentityTestCase(
         an error is thrown on creation.
         """
         self.conn.list_identity_pools.return_value = identity_pools_ret
-        self.conn.describe_identity_pool.side_effect = (
-            self._describe_identity_pool_side_effect
-        )
+        self.conn.describe_identity_pool.side_effect = self._describe_identity_pool_side_effect
         self.conn.create_identity_pool.side_effect = ClientError(
             error_content, "error on create_identity_pool"
         )
@@ -277,9 +270,9 @@ class BotoCognitoIdentityTestCase(
             AuthenticatedRole="my_auth_role",
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("error on create_identity_pool" in result.get("comment", ""))
-        self.assertTrue(self.conn.update_identity_pool.call_count == 0)
+        assert result.get("result") == False
+        assert "error on create_identity_pool" in result.get("comment", "")
+        assert self.conn.update_identity_pool.call_count == 0
 
     def test_present_when_failing_to_update_an_existing_identity_pool(self):
         """
@@ -287,9 +280,7 @@ class BotoCognitoIdentityTestCase(
         IdentityPoolName, and an error is thrown on updating the pool properties.
         """
         self.conn.list_identity_pools.return_value = identity_pools_ret
-        self.conn.describe_identity_pool.side_effect = (
-            self._describe_identity_pool_side_effect
-        )
+        self.conn.describe_identity_pool.side_effect = self._describe_identity_pool_side_effect
         self.conn.update_identity_pool.side_effect = ClientError(
             error_content, "error on update_identity_pool"
         )
@@ -300,9 +291,9 @@ class BotoCognitoIdentityTestCase(
             AllowUnauthenticatedIdentities=True,
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("error on update_identity_pool" in result.get("comment", ""))
-        self.assertTrue(self.conn.create_identity_pool.call_count == 0)
+        assert result.get("result") == False
+        assert "error on update_identity_pool" in result.get("comment", "")
+        assert self.conn.create_identity_pool.call_count == 0
 
     def _get_identity_pool_roles_side_effect(self, *args, **kwargs):
         if kwargs.get("IdentityPoolId") == first_pool_id:
@@ -321,9 +312,7 @@ class BotoCognitoIdentityTestCase(
         is thrown on getting the identity pool role prior to setting the roles.
         """
         self.conn.list_identity_pools.return_value = identity_pools_ret
-        self.conn.describe_identity_pool.side_effect = (
-            self._describe_identity_pool_side_effect
-        )
+        self.conn.describe_identity_pool.side_effect = self._describe_identity_pool_side_effect
         self.conn.update_identity_pool.return_value = second_pool_update_ret
         self.conn.get_identity_pool_roles.side_effect = ClientError(
             error_content, "error on get_identity_pool_roles"
@@ -335,10 +324,10 @@ class BotoCognitoIdentityTestCase(
             AllowUnauthenticatedIdentities=True,
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("error on get_identity_pool_roles" in result.get("comment", ""))
-        self.assertTrue(self.conn.create_identity_pool.call_count == 0)
-        self.assertTrue(self.conn.set_identity_pool_roles.call_count == 0)
+        assert result.get("result") == False
+        assert "error on get_identity_pool_roles" in result.get("comment", "")
+        assert self.conn.create_identity_pool.call_count == 0
+        assert self.conn.set_identity_pool_roles.call_count == 0
 
     @pytest.mark.slow_test
     def test_present_when_failing_to_set_identity_pool_roles(self):
@@ -348,9 +337,7 @@ class BotoCognitoIdentityTestCase(
         is thrown on setting the identity pool role.
         """
         self.conn.list_identity_pools.return_value = identity_pools_ret
-        self.conn.describe_identity_pool.side_effect = (
-            self._describe_identity_pool_side_effect
-        )
+        self.conn.describe_identity_pool.side_effect = self._describe_identity_pool_side_effect
         self.conn.update_identity_pool.return_value = second_pool_update_ret
         self.conn.get_identity_pool_roles.return_value = second_pool_role_ret
         self.conn.set_identity_pool_roles.side_effect = ClientError(
@@ -358,11 +345,7 @@ class BotoCognitoIdentityTestCase(
         )
         with patch.dict(
             self.funcs,
-            {
-                "boto_iam.describe_role": MagicMock(
-                    return_value={"arn": "my_auth_role_arn"}
-                )
-            },
+            {"boto_iam.describe_role": MagicMock(return_value={"arn": "my_auth_role_arn"})},
         ):
             result = self.salt_states["boto_cognitoidentity.pool_present"](
                 name="test pool present",
@@ -371,19 +354,15 @@ class BotoCognitoIdentityTestCase(
                 AllowUnauthenticatedIdentities=True,
                 **conn_parameters
             )
-            self.assertEqual(result.get("result"), False)
-            self.assertTrue(
-                "error on set_identity_pool_roles" in result.get("comment", "")
-            )
+            assert result.get("result") == False
+            assert "error on set_identity_pool_roles" in result.get("comment", "")
             expected_call_args = (
                 dict(
                     IdentityPoolId=second_pool_id,
                     Roles={"authenticated": "my_auth_role_arn"},
                 ),
             )
-            self.assertTrue(
-                self.conn.set_identity_pool_roles.call_args == expected_call_args
-            )
+            assert self.conn.set_identity_pool_roles.call_args == expected_call_args
 
     @pytest.mark.slow_test
     def test_present_when_pool_name_does_not_exist(self):
@@ -392,18 +371,12 @@ class BotoCognitoIdentityTestCase(
         roles
         """
         self.conn.list_identity_pools.return_value = identity_pools_ret
-        self.conn.create_identity_pool.side_effect = (
-            self._describe_identity_pool_side_effect
-        )
+        self.conn.create_identity_pool.side_effect = self._describe_identity_pool_side_effect
         self.conn.get_identity_pool_roles.return_value = default_pool_role_ret
         self.conn.set_identity_pool_roles.return_value = None
         with patch.dict(
             self.funcs,
-            {
-                "boto_iam.describe_role": MagicMock(
-                    return_value={"arn": "my_auth_role_arn"}
-                )
-            },
+            {"boto_iam.describe_role": MagicMock(return_value={"arn": "my_auth_role_arn"})},
         ):
             result = self.salt_states["boto_cognitoidentity.pool_present"](
                 name="test pool present",
@@ -413,7 +386,7 @@ class BotoCognitoIdentityTestCase(
                 DeveloperProviderName=default_dev_provider,
                 **conn_parameters
             )
-            self.assertEqual(result.get("result"), True)
+            assert result.get("result") == True
             expected_call_args = (
                 dict(
                     AllowUnauthenticatedIdentities=True,
@@ -423,19 +396,15 @@ class BotoCognitoIdentityTestCase(
                     OpenIdConnectProviderARNs=[],
                 ),
             )
-            self.assertTrue(
-                self.conn.create_identity_pool.call_args == expected_call_args
-            )
+            assert self.conn.create_identity_pool.call_args == expected_call_args
             expected_call_args = (
                 dict(
                     IdentityPoolId=default_pool_id,
                     Roles={"authenticated": "my_auth_role_arn"},
                 ),
             )
-            self.assertTrue(
-                self.conn.set_identity_pool_roles.call_args == expected_call_args
-            )
-            self.assertTrue(self.conn.update_identity_pool.call_count == 0)
+            assert self.conn.set_identity_pool_roles.call_args == expected_call_args
+            assert self.conn.update_identity_pool.call_count == 0
 
     @pytest.mark.slow_test
     def test_present_when_pool_name_exists(self):
@@ -444,19 +413,13 @@ class BotoCognitoIdentityTestCase(
         IdentityPoolName and its roles.
         """
         self.conn.list_identity_pools.return_value = identity_pools_ret
-        self.conn.describe_identity_pool.side_effect = (
-            self._describe_identity_pool_side_effect
-        )
+        self.conn.describe_identity_pool.side_effect = self._describe_identity_pool_side_effect
         self.conn.update_identity_pool.return_value = second_pool_update_ret
         self.conn.get_identity_pool_roles.return_value = second_pool_role_ret
         self.conn.set_identity_pool_roles.return_value = None
         with patch.dict(
             self.funcs,
-            {
-                "boto_iam.describe_role": MagicMock(
-                    return_value={"arn": "my_auth_role_arn"}
-                )
-            },
+            {"boto_iam.describe_role": MagicMock(return_value={"arn": "my_auth_role_arn"})},
         ):
             result = self.salt_states["boto_cognitoidentity.pool_present"](
                 name="test pool present",
@@ -465,7 +428,7 @@ class BotoCognitoIdentityTestCase(
                 AllowUnauthenticatedIdentities=True,
                 **conn_parameters
             )
-            self.assertEqual(result.get("result"), True)
+            assert result.get("result") == True
             expected_call_args = (
                 dict(
                     AllowUnauthenticatedIdentities=True,
@@ -473,19 +436,15 @@ class BotoCognitoIdentityTestCase(
                     IdentityPoolName=second_pool_name,
                 ),
             )
-            self.assertTrue(
-                self.conn.update_identity_pool.call_args == expected_call_args
-            )
+            assert self.conn.update_identity_pool.call_args == expected_call_args
             expected_call_args = (
                 dict(
                     IdentityPoolId=second_pool_id,
                     Roles={"authenticated": "my_auth_role_arn"},
                 ),
             )
-            self.assertTrue(
-                self.conn.set_identity_pool_roles.call_args == expected_call_args
-            )
-            self.assertTrue(self.conn.create_identity_pool.call_count == 0)
+            assert self.conn.set_identity_pool_roles.call_args == expected_call_args
+            assert self.conn.create_identity_pool.call_count == 0
 
     def test_absent_when_pool_does_not_exist(self):
         """
@@ -498,8 +457,8 @@ class BotoCognitoIdentityTestCase(
             RemoveAllMatched=False,
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), True)
-        self.assertEqual(result["changes"], {})
+        assert result.get("result") == True
+        assert result["changes"] == {}
 
     def test_absent_when_removeallmatched_is_false_and_multiple_pools_matched(self):
         """
@@ -508,20 +467,16 @@ class BotoCognitoIdentityTestCase(
         first_pool_name is matched to first and third pool with different id's
         """
         self.conn.list_identity_pools.return_value = identity_pools_ret
-        self.conn.describe_identity_pool.side_effect = (
-            self._describe_identity_pool_side_effect
-        )
+        self.conn.describe_identity_pool.side_effect = self._describe_identity_pool_side_effect
         result = self.salt_states["boto_cognitoidentity.pool_absent"](
             name="test pool absent",
             IdentityPoolName=first_pool_name,
             RemoveAllMatched=False,
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertEqual(result["changes"], {})
-        self.assertTrue(
-            "{}".format([first_pool_ret, third_pool_ret]) in result.get("comment", "")
-        )
+        assert result.get("result") == False
+        assert result["changes"] == {}
+        assert "{}".format([first_pool_ret, third_pool_ret]) in result.get("comment", "")
 
     def test_absent_when_failing_to_describe_identity_pools(self):
         """
@@ -537,17 +492,15 @@ class BotoCognitoIdentityTestCase(
             RemoveAllMatched=False,
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("error on describe identity pool" in result.get("comment", {}))
+        assert result.get("result") == False
+        assert "error on describe identity pool" in result.get("comment", {})
 
     def test_absent_when_erroring_on_delete_identity_pool(self):
         """
         Tests error due to delete_identity_pools
         """
         self.conn.list_identity_pools.return_value = identity_pools_ret
-        self.conn.describe_identity_pool.side_effect = (
-            self._describe_identity_pool_side_effect
-        )
+        self.conn.describe_identity_pool.side_effect = self._describe_identity_pool_side_effect
         self.conn.delete_identity_pool.side_effect = ClientError(
             error_content, "error on delete identity pool"
         )
@@ -557,9 +510,9 @@ class BotoCognitoIdentityTestCase(
             RemoveAllMatched=True,
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertEqual(result["changes"], {})
-        self.assertTrue("error on delete identity pool" in result.get("comment", ""))
+        assert result.get("result") == False
+        assert result["changes"] == {}
+        assert "error on delete identity pool" in result.get("comment", "")
 
     def test_absent_when_a_single_pool_exists(self):
         """
@@ -575,12 +528,12 @@ class BotoCognitoIdentityTestCase(
             RemoveAllMatched=False,
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), True)
+        assert result.get("result") == True
         expected_changes = {
             "new": {"Identity Pool Id {}".format(second_pool_id): None},
             "old": {"Identity Pool Id {}".format(second_pool_id): second_pool_name},
         }
-        self.assertEqual(result["changes"], expected_changes)
+        assert result["changes"] == expected_changes
 
     def test_absent_when_multiple_pool_exists_and_removeallmatched_flag_is_true(self):
         """
@@ -590,9 +543,7 @@ class BotoCognitoIdentityTestCase(
         first_pool_name should match to first_pool_id and third_pool_id
         """
         self.conn.list_identity_pools.return_value = identity_pools_ret
-        self.conn.describe_identity_pool.side_effect = (
-            self._describe_identity_pool_side_effect
-        )
+        self.conn.describe_identity_pool.side_effect = self._describe_identity_pool_side_effect
         self.conn.delete_identity_pool.return_value = None
         result = self.salt_states["boto_cognitoidentity.pool_absent"](
             name="test pool absent",
@@ -600,7 +551,7 @@ class BotoCognitoIdentityTestCase(
             RemoveAllMatched=True,
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), True)
+        assert result.get("result") == True
         expected_changes = {
             "new": {
                 "Identity Pool Id {}".format(first_pool_id): None,
@@ -611,4 +562,4 @@ class BotoCognitoIdentityTestCase(
                 "Identity Pool Id {}".format(third_pool_id): third_pool_name,
             },
         }
-        self.assertEqual(result["changes"], expected_changes)
+        assert result["changes"] == expected_changes

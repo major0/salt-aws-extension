@@ -49,8 +49,6 @@ The dependencies listed above can be installed via package or pip.
 # pylint: disable=E0602
 #  disable complaints about perfectly valid non-assignment code
 # pylint: disable=W0106
-
-
 import logging
 
 import salt.utils.compat
@@ -164,19 +162,13 @@ def create(
             "GrantWriteACP",
         ):
             if locals()[arg] is not None:
-                kwargs[arg] = str(
-                    locals()[arg]
-                )  # future lint: disable=blacklisted-function
+                kwargs[arg] = str(locals()[arg])  # future lint: disable=blacklisted-function
         if LocationConstraint:
-            kwargs["CreateBucketConfiguration"] = {
-                "LocationConstraint": LocationConstraint
-            }
+            kwargs["CreateBucketConfiguration"] = {"LocationConstraint": LocationConstraint}
         location = conn.create_bucket(Bucket=Bucket, **kwargs)
         conn.get_waiter("bucket_exists").wait(Bucket=Bucket)
         if location:
-            log.info(
-                "The newly created bucket name is located at %s", location["Location"]
-            )
+            log.info("The newly created bucket name is located at %s", location["Location"])
 
             return {"created": True, "name": Bucket, "Location": location["Location"]}
         else:
@@ -348,9 +340,7 @@ def describe(Bucket, region=None, key=None, keyid=None, profile=None):
         return {"error": __utils__["boto3.get_error"](e)}
 
 
-def empty(
-    Bucket, MFA=None, RequestPayer=None, region=None, key=None, keyid=None, profile=None
-):
+def empty(Bucket, MFA=None, RequestPayer=None, region=None, key=None, keyid=None, profile=None):
     """
     Delete all objects in a given S3 bucket.
 
@@ -365,17 +355,13 @@ def empty(
 
     """
 
-    stuff = list_object_versions(
-        Bucket, region=region, key=key, keyid=keyid, profile=profile
-    )
+    stuff = list_object_versions(Bucket, region=region, key=key, keyid=keyid, profile=profile)
     Delete = {}
     Delete["Objects"] = [
-        {"Key": v["Key"], "VersionId": v["VersionId"]}
-        for v in stuff.get("Versions", [])
+        {"Key": v["Key"], "VersionId": v["VersionId"]} for v in stuff.get("Versions", [])
     ]
     Delete["Objects"] += [
-        {"Key": v["Key"], "VersionId": v["VersionId"]}
-        for v in stuff.get("DeleteMarkers", [])
+        {"Key": v["Key"], "VersionId": v["VersionId"]} for v in stuff.get("DeleteMarkers", [])
     ]
     if Delete["Objects"]:
         ret = delete_objects(
@@ -559,9 +545,7 @@ def put_acl(
             "GrantWriteACP",
         ):
             if locals()[arg] is not None:
-                kwargs[arg] = str(
-                    locals()[arg]
-                )  # future lint: disable=blacklisted-function
+                kwargs[arg] = str(locals()[arg])  # future lint: disable=blacklisted-function
         conn.put_bucket_acl(Bucket=Bucket, **kwargs)
         return {"updated": True, "name": Bucket}
     except ClientError as e:
@@ -599,9 +583,7 @@ def put_cors(Bucket, CORSRules, region=None, key=None, keyid=None, profile=None)
         return {"updated": False, "error": __utils__["boto3.get_error"](e)}
 
 
-def put_lifecycle_configuration(
-    Bucket, Rules, region=None, key=None, keyid=None, profile=None
-):
+def put_lifecycle_configuration(Bucket, Rules, region=None, key=None, keyid=None, profile=None):
     """
     Given a valid config, update the Lifecycle rules for a bucket.
 
@@ -723,9 +705,7 @@ def put_notification_configuration(
         if LambdaFunctionConfigurations is None:
             LambdaFunctionConfigurations = []
         elif isinstance(LambdaFunctionConfigurations, str):
-            LambdaFunctionConfigurations = salt.utils.json.loads(
-                LambdaFunctionConfigurations
-            )
+            LambdaFunctionConfigurations = salt.utils.json.loads(LambdaFunctionConfigurations)
         # TODO allow the user to use simple names & substitute ARNs for those names
         conn.put_bucket_notification_configuration(
             Bucket=Bucket,
@@ -781,9 +761,7 @@ def _get_role_arn(name, region=None, key=None, keyid=None, profile=None):
     return "arn:aws:iam::{}:role/{}".format(account_id, name)
 
 
-def put_replication(
-    Bucket, Role, Rules, region=None, key=None, keyid=None, profile=None
-):
+def put_replication(Bucket, Role, Rules, region=None, key=None, keyid=None, profile=None):
     """
     Given a valid config, update the replication configuration for a bucket.
 
@@ -800,9 +778,7 @@ def put_replication(
 
     try:
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-        Role = _get_role_arn(
-            name=Role, region=region, key=key, keyid=keyid, profile=profile
-        )
+        Role = _get_role_arn(name=Role, region=region, key=key, keyid=keyid, profile=profile)
         if Rules is None:
             Rules = []
         elif isinstance(Rules, str):
@@ -832,9 +808,7 @@ def put_request_payment(Bucket, Payer, region=None, key=None, keyid=None, profil
 
     try:
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-        conn.put_bucket_request_payment(
-            Bucket=Bucket, RequestPaymentConfiguration={"Payer": Payer}
-        )
+        conn.put_bucket_request_payment(Bucket=Bucket, RequestPaymentConfiguration={"Payer": Payer})
         return {"updated": True, "name": Bucket}
     except ClientError as e:
         return {"updated": False, "error": __utils__["boto3.get_error"](e)}
@@ -948,9 +922,7 @@ def put_website(
                     WebsiteConfiguration[key] = salt.utils.json.loads(val)
                 else:
                     WebsiteConfiguration[key] = val
-        conn.put_bucket_website(
-            Bucket=Bucket, WebsiteConfiguration=WebsiteConfiguration
-        )
+        conn.put_bucket_website(Bucket=Bucket, WebsiteConfiguration=WebsiteConfiguration)
         return {"updated": True, "name": Bucket}
     except ClientError as e:
         return {"updated": False, "error": __utils__["boto3.get_error"](e)}
@@ -979,9 +951,7 @@ def delete_cors(Bucket, region=None, key=None, keyid=None, profile=None):
         return {"deleted": False, "error": __utils__["boto3.get_error"](e)}
 
 
-def delete_lifecycle_configuration(
-    Bucket, region=None, key=None, keyid=None, profile=None
-):
+def delete_lifecycle_configuration(Bucket, region=None, key=None, keyid=None, profile=None):
     """
     Delete the lifecycle configuration for the given bucket
 

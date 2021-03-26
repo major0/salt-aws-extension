@@ -43,18 +43,16 @@ Execution module for Amazon Route53 written against Boto 3
 
 :depends: boto3
 """
-
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602,W0106
-
-
 import logging
 import re
 import time
 
 import salt.utils.compat
 import salt.utils.versions
-from salt.exceptions import CommandExecutionError, SaltInvocationError
+from salt.exceptions import CommandExecutionError
+from salt.exceptions import SaltInvocationError
 
 log = logging.getLogger(__name__)
 
@@ -172,19 +170,13 @@ def find_hosted_zone(
     if not _exactly_one((Id, Name)):
         raise SaltInvocationError("Exactly one of either Id or Name is required.")
     if PrivateZone is not None and not isinstance(PrivateZone, bool):
-        raise SaltInvocationError(
-            "If set, PrivateZone must be a bool (e.g. True / False)."
-        )
+        raise SaltInvocationError("If set, PrivateZone must be a bool (e.g. True / False).")
     if Id:
         ret = get_hosted_zone(Id, region=region, key=key, keyid=keyid, profile=profile)
     else:
-        ret = get_hosted_zones_by_domain(
-            Name, region=region, key=key, keyid=keyid, profile=profile
-        )
+        ret = get_hosted_zones_by_domain(Name, region=region, key=key, keyid=keyid, profile=profile)
     if PrivateZone is not None:
-        ret = [
-            m for m in ret if m["HostedZone"]["Config"]["PrivateZone"] is PrivateZone
-        ]
+        ret = [m for m in ret if m["HostedZone"]["Config"]["PrivateZone"] is PrivateZone]
     if len(ret) > 1:
         log.error(
             "Request matched more than one Hosted Zone (%s). Refine your "
@@ -262,15 +254,11 @@ def get_hosted_zones_by_domain(Name, region=None, key=None, keyid=None, profile=
     ]
     ret = []
     for z in zones:
-        ret += get_hosted_zone(
-            Id=z["Id"], region=region, key=key, keyid=keyid, profile=profile
-        )
+        ret += get_hosted_zone(Id=z["Id"], region=region, key=key, keyid=keyid, profile=profile)
     return ret
 
 
-def list_hosted_zones(
-    DelegationSetId=None, region=None, key=None, keyid=None, profile=None
-):
+def list_hosted_zones(DelegationSetId=None, region=None, key=None, keyid=None, profile=None):
     """
     Return detailed info about all zones in the bound account.
 
@@ -376,9 +364,7 @@ def create_hosted_zone(
         salt myminion boto3_route53.create_hosted_zone example.org.
     """
     if not Name.endswith("."):
-        raise SaltInvocationError(
-            "Domain must be fully-qualified, complete with trailing period."
-        )
+        raise SaltInvocationError("Domain must be fully-qualified, complete with trailing period.")
     Name = aws_encode(Name)
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
     deets = find_hosted_zone(
@@ -418,14 +404,11 @@ def create_hosted_zone(
         if VPCRegion and vpcs:
             vpcs = [v for v in vpcs if v["region"] == VPCRegion]
         if not vpcs:
-            log.error(
-                "Private zone requested but no VPC matching given criteria found."
-            )
+            log.error("Private zone requested but no VPC matching given criteria found.")
             return None
         if len(vpcs) > 1:
             log.error(
-                "Private zone requested but multiple VPCs matching given "
-                "criteria found: %s.",
+                "Private zone requested but multiple VPCs matching given " "criteria found: %s.",
                 [v["id"] for v in vpcs],
             )
             return None
@@ -586,9 +569,7 @@ def associate_vpc_with_hosted_zone(
 
     """
     if not _exactly_one((HostedZoneId, Name)):
-        raise SaltInvocationError(
-            "Exactly one of either HostedZoneId or Name is required."
-        )
+        raise SaltInvocationError("Exactly one of either HostedZoneId or Name is required.")
     if not _exactly_one((VPCId, VPCName)):
         raise SaltInvocationError("Exactly one of either VPCId or VPCName is required.")
     if Name:
@@ -603,9 +584,7 @@ def associate_vpc_with_hosted_zone(
         }
         zone = find_hosted_zone(**args)
         if not zone:
-            log.error(
-                "Couldn't resolve domain name %s to a private hosted zone ID.", Name
-            )
+            log.error("Couldn't resolve domain name %s to a private hosted zone ID.", Name)
             return False
         HostedZoneId = zone[0]["HostedZone"]["Id"]
     vpcs = __salt__["boto_vpc.describe_vpcs"](
@@ -712,9 +691,7 @@ def disassociate_vpc_from_hosted_zone(
 
     """
     if not _exactly_one((HostedZoneId, Name)):
-        raise SaltInvocationError(
-            "Exactly one of either HostedZoneId or Name is required."
-        )
+        raise SaltInvocationError("Exactly one of either HostedZoneId or Name is required.")
     if not _exactly_one((VPCId, VPCName)):
         raise SaltInvocationError("Exactly one of either VPCId or VPCName is required.")
     if Name:
@@ -729,9 +706,7 @@ def disassociate_vpc_from_hosted_zone(
         }
         zone = find_hosted_zone(**args)
         if not zone:
-            log.error(
-                "Couldn't resolve domain name %s to a private hosted zone ID.", Name
-            )
+            log.error("Couldn't resolve domain name %s to a private hosted zone ID.", Name)
             return False
         HostedZoneId = zone[0]["HostedZone"]["Id"]
     vpcs = __salt__["boto_vpc.describe_vpcs"](
@@ -851,9 +826,7 @@ def delete_hosted_zone_by_domain(
         log.error("Couldn't resolve domain name %s to a hosted zone ID.", Name)
         return False
     Id = zone[0]["HostedZone"]["Id"]
-    return delete_hosted_zone(
-        Id=Id, region=region, key=key, keyid=keyid, profile=profile
-    )
+    return delete_hosted_zone(Id=Id, region=region, key=key, keyid=keyid, profile=profile)
 
 
 def aws_encode(x):
@@ -878,13 +851,11 @@ def aws_encode(x):
     ret = None
     try:
         x.encode("ascii")
-        ret = re.sub(r"\\x([a-f0-8]{2})", _hexReplace, x.encode("unicode_escape").decode('latin-1'))
+        ret = re.sub(r"\\x([a-f0-8]{2})", _hexReplace, x.encode("unicode_escape").decode("latin-1"))
     except UnicodeEncodeError:
         ret = x.encode("idna")
     except Exception as e:  # pylint: disable=broad-except
-        log.error(
-            "Couldn't encode %s using either 'unicode_escape' or 'idna' codecs", x
-        )
+        log.error("Couldn't encode %s using either 'unicode_escape' or 'idna' codecs", x)
         raise CommandExecutionError(e)
     log.debug("AWS-encoded result for %s: %s", x, ret)
     return ret
@@ -901,21 +872,17 @@ def _aws_encode_changebatch(o):
         )
         if "ResourceRecords" in o["Changes"][change_idx]["ResourceRecordSet"]:
             rr_idx = 0
-            while rr_idx < len(
-                o["Changes"][change_idx]["ResourceRecordSet"]["ResourceRecords"]
-            ):
-                o["Changes"][change_idx]["ResourceRecordSet"]["ResourceRecords"][
-                    rr_idx
-                ]["Value"] = aws_encode(
-                    o["Changes"][change_idx]["ResourceRecordSet"]["ResourceRecords"][
-                        rr_idx
-                    ]["Value"]
+            while rr_idx < len(o["Changes"][change_idx]["ResourceRecordSet"]["ResourceRecords"]):
+                o["Changes"][change_idx]["ResourceRecordSet"]["ResourceRecords"][rr_idx][
+                    "Value"
+                ] = aws_encode(
+                    o["Changes"][change_idx]["ResourceRecordSet"]["ResourceRecords"][rr_idx][
+                        "Value"
+                    ]
                 )
                 rr_idx += 1
         if "AliasTarget" in o["Changes"][change_idx]["ResourceRecordSet"]:
-            o["Changes"][change_idx]["ResourceRecordSet"]["AliasTarget"][
-                "DNSName"
-            ] = aws_encode(
+            o["Changes"][change_idx]["ResourceRecordSet"]["AliasTarget"]["DNSName"] = aws_encode(
                 o["Changes"][change_idx]["ResourceRecordSet"]["AliasTarget"]["DNSName"]
             )
         change_idx += 1
@@ -944,8 +911,8 @@ def _aws_decode(x):
     and then decode as necessary.
     """
     if "\\" in x:
-        return x.encode('latin-1').decode("unicode_escape")
-    return x.encode('latin-1').decode("idna")
+        return x.encode("latin-1").decode("unicode_escape")
+    return x.encode("latin-1").decode("idna")
 
 
 def _hexReplace(x):
@@ -994,9 +961,7 @@ def get_resource_records(
         salt myminion boto3_route53.get_records test.example.org example.org A
     """
     if not _exactly_one((HostedZoneId, Name)):
-        raise SaltInvocationError(
-            "Exactly one of either HostedZoneId or Name must " "be provided."
-        )
+        raise SaltInvocationError("Exactly one of either HostedZoneId or Name must " "be provided.")
     if Name:
         args = {
             "Name": Name,
@@ -1022,13 +987,9 @@ def get_resource_records(
         if done:
             return ret
         args = {"HostedZoneId": HostedZoneId}
-        args.update(
-            {"StartRecordName": aws_encode(next_rr_name)}
-        ) if next_rr_name else None
+        args.update({"StartRecordName": aws_encode(next_rr_name)}) if next_rr_name else None
         # Grrr, can't specify type unless name is set...  We'll do this via filtering later instead
-        args.update(
-            {"StartRecordType": next_rr_type}
-        ) if next_rr_name and next_rr_type else None
+        args.update({"StartRecordType": next_rr_type}) if next_rr_name and next_rr_type else None
         args.update({"StartRecordIdentifier": next_rr_id}) if next_rr_id else None
         try:
             r = conn.list_resource_record_sets(**args)
@@ -1050,9 +1011,7 @@ def get_resource_records(
                         x += 1
                 # or if we are an AliasTarget then decode the DNSName
                 if "AliasTarget" in rr:
-                    rr["AliasTarget"]["DNSName"] = _aws_decode(
-                        rr["AliasTarget"]["DNSName"]
-                    )
+                    rr["AliasTarget"]["DNSName"] = _aws_decode(rr["AliasTarget"]["DNSName"])
                 if StartRecordName and rr["Name"] != StartRecordName:
                     done = True
                     break
@@ -1152,9 +1111,7 @@ def change_resource_record_sets(
                 ChangeBatch="{'Changes': [{'Action': 'UPSERT', 'ResourceRecordSet': $foo}]}"
     """
     if not _exactly_one((HostedZoneId, Name)):
-        raise SaltInvocationError(
-            "Exactly one of either HostZoneId or Name must be provided."
-        )
+        raise SaltInvocationError("Exactly one of either HostZoneId or Name must be provided.")
     if Name:
         args = {
             "Name": Name,
@@ -1180,9 +1137,7 @@ def change_resource_record_sets(
     while tries:
         try:
             r = conn.change_resource_record_sets(**args)
-            return _wait_for_sync(
-                r["ChangeInfo"]["Id"], conn, 30
-            )  # And a little extra time here
+            return _wait_for_sync(r["ChangeInfo"]["Id"], conn, 30)  # And a little extra time here
         except ClientError as e:
             if tries and e.response.get("Error", {}).get("Code") == "Throttling":
                 log.debug("Throttled by AWS API.")

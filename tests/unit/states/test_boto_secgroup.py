@@ -1,14 +1,7 @@
-# -*- coding: utf-8 -*-
-
-# import Python Libs
-from __future__ import absolute_import, print_function, unicode_literals
-
-# Import Salt Libs
 import salt.states.boto_secgroup as boto_secgroup
 from salt.utils.odict import OrderedDict
-from tests.support.case import TestCase
 
-# Import Salt Testing Libs
+from tests.support.case import TestCase
 from tests.support.mixins import LoaderModuleMockMixin
 
 
@@ -26,9 +19,7 @@ class Boto_SecgroupTestCase(TestCase, LoaderModuleMockMixin):
         """
         present_rules = []
         desired_rules = []
-        self.assertEqual(
-            boto_secgroup._get_rule_changes(desired_rules, present_rules), ([], [])
-        )
+        assert boto_secgroup._get_rule_changes(desired_rules, present_rules) == ([], [])
 
     def test__get_rule_changes_create_rules(self):
         """
@@ -73,9 +64,9 @@ class Boto_SecgroupTestCase(TestCase, LoaderModuleMockMixin):
                 ]
             )
         ]
-        self.assertEqual(
-            boto_secgroup._get_rule_changes(desired_rules, present_rules),
-            ([], rules_to_create),
+        assert boto_secgroup._get_rule_changes(desired_rules, present_rules) == (
+            [],
+            rules_to_create,
         )
 
     def test__get_rule_changes_delete_rules(self):
@@ -121,7 +112,7 @@ class Boto_SecgroupTestCase(TestCase, LoaderModuleMockMixin):
                 ]
             )
         ]
-        self.assertEqual(
-            boto_secgroup._get_rule_changes(desired_rules, present_rules),
-            (rules_to_delete, []),
+        assert boto_secgroup._get_rule_changes(desired_rules, present_rules) == (
+            rules_to_delete,
+            [],
         )

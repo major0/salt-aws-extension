@@ -43,8 +43,6 @@ Connection module for Amazon Autoscale Groups
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import datetime
 import email.mime.multipart
 import logging
@@ -83,9 +81,7 @@ def __virtual__():
     """
     has_boto_reqs = salt.utils.versions.check_boto_reqs()
     if has_boto_reqs is True:
-        __utils__["boto.assign_funcs"](
-            __name__, "asg", module="ec2.autoscale", pack=__salt__
-        )
+        __utils__["boto.assign_funcs"](__name__, "asg", module="ec2.autoscale", pack=__salt__)
         setattr(
             sys.modules[__name__],
             "_get_ec2_conn",
@@ -333,9 +329,7 @@ def create(
             _create_scheduled_actions(conn, name, scheduled_actions)
             # create notifications
             if notification_arn and notification_types:
-                conn.put_notification_configuration(
-                    _asg, notification_arn, notification_types
-                )
+                conn.put_notification_configuration(_asg, notification_arn, notification_types)
             log.info("Created ASG %s", name)
             return True
         except boto.exception.BotoServerError as e:
@@ -386,9 +380,7 @@ def update(
     """
 
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-    conn3 = _get_conn_autoscaling_boto3(
-        region=region, key=key, keyid=keyid, profile=profile
-    )
+    conn3 = _get_conn_autoscaling_boto3(region=region, key=key, keyid=keyid, profile=profile)
     if not conn:
         return False, "failed to connect to AWS"
     if isinstance(availability_zones, str):
@@ -468,9 +460,7 @@ def update(
                 termination_policies=termination_policies,
             )
             if notification_arn and notification_types:
-                conn.put_notification_configuration(
-                    _asg, notification_arn, notification_types
-                )
+                conn.put_notification_configuration(_asg, notification_arn, notification_types)
             _asg.update()
             # Seems the update call doesn't handle tags, so we'll need to update
             # that separately.
@@ -496,9 +486,7 @@ def update(
             # ### scheduled actions
             # delete all scheduled actions, then recreate them
             for scheduled_action in conn.get_all_scheduled_actions(as_group=name):
-                conn.delete_scheduled_action(
-                    scheduled_action.name, autoscale_group=name
-                )
+                conn.delete_scheduled_action(scheduled_action.name, autoscale_group=name)
             _create_scheduled_actions(conn, name, scheduled_actions)
             return True, ""
         except boto.exception.BotoServerError as e:
@@ -535,13 +523,9 @@ def _create_scheduled_actions(conn, as_name, scheduled_actions):
     if scheduled_actions:
         for name, action in scheduled_actions.items():
             if "start_time" in action and isinstance(action["start_time"], str):
-                action["start_time"] = datetime.datetime.strptime(
-                    action["start_time"], DATE_FORMAT
-                )
+                action["start_time"] = datetime.datetime.strptime(action["start_time"], DATE_FORMAT)
             if "end_time" in action and isinstance(action["end_time"], str):
-                action["end_time"] = datetime.datetime.strptime(
-                    action["end_time"], DATE_FORMAT
-                )
+                action["end_time"] = datetime.datetime.strptime(action["end_time"], DATE_FORMAT)
             conn.create_scheduled_group_action(
                 as_name,
                 name,
@@ -634,9 +618,7 @@ def launch_configuration_exists(name, region=None, key=None, keyid=None, profile
             if lc:
                 return True
             else:
-                msg = "The launch configuration does not exist in region {}".format(
-                    region
-                )
+                msg = "The launch configuration does not exist in region {}".format(region)
                 log.debug(msg)
                 return False
         except boto.exception.BotoServerError as e:
@@ -688,9 +670,7 @@ def list_launch_configurations(region=None, key=None, keyid=None, profile=None):
     return [r.name for r in ret]
 
 
-def describe_launch_configuration(
-    name, region=None, key=None, keyid=None, profile=None
-):
+def describe_launch_configuration(name, region=None, key=None, keyid=None, profile=None):
     """
     Dump details of a given launch configuration.
 
@@ -708,9 +688,7 @@ def describe_launch_configuration(
             if lc:
                 return lc[0]
             else:
-                msg = "The launch configuration does not exist in region {}".format(
-                    region
-                )
+                msg = "The launch configuration does not exist in region {}".format(region)
                 log.debug(msg)
                 return None
         except boto.exception.BotoServerError as e:
@@ -939,10 +917,7 @@ def list_groups(region=None, key=None, keyid=None, profile=None):
         salt-call boto_asg.list_groups region=us-east-1
 
     """
-    return [
-        a.name
-        for a in get_all_groups(region=region, key=key, keyid=keyid, profile=profile)
-    ]
+    return [a.name for a in get_all_groups(region=region, key=key, keyid=keyid, profile=profile)]
 
 
 def get_instances(
@@ -982,9 +957,7 @@ def get_instances(
             log.error(e)
             return False
     if len(asgs) != 1:
-        log.debug(
-            "name '%s' returns multiple ASGs: %s", name, [asg.name for asg in asgs]
-        )
+        log.debug("name '%s' returns multiple ASGs: %s", name, [asg.name for asg in asgs])
         return False
     asg = asgs[0]
     instance_ids = []
@@ -999,8 +972,7 @@ def get_instances(
     instances = ec2_conn.get_only_instances(instance_ids=instance_ids)
     if attributes:
         return [
-            [_convert_attribute(instance, attr) for attr in attributes]
-            for instance in instances
+            [_convert_attribute(instance, attr) for attr in attributes] for instance in instances
         ]
     else:
         # properly handle case when not all instances have the requested attribute
@@ -1014,9 +986,7 @@ def get_instances(
 def _convert_attribute(instance, attribute):
     if attribute == "tags":
         tags = dict(getattr(instance, attribute))
-        return {
-            key.encode("utf-8"): value.encode("utf-8") for key, value in tags.items()
-        }
+        return {key.encode("utf-8"): value.encode("utf-8") for key, value in tags.items()}
 
     return getattr(instance, attribute).encode("ascii")
 
@@ -1042,9 +1012,7 @@ def enter_standby(
         salt-call boto_asg.enter_standby my_autoscale_group_name '["i-xxxxxx"]'
 
     """
-    conn = _get_conn_autoscaling_boto3(
-        region=region, key=key, keyid=keyid, profile=profile
-    )
+    conn = _get_conn_autoscaling_boto3(region=region, key=key, keyid=keyid, profile=profile)
     try:
         response = conn.enter_standby(
             InstanceIds=instance_ids,
@@ -1056,9 +1024,7 @@ def enter_standby(
         if e.response.get("Error", {}).get("Code") == "ResourceNotFoundException":
             return {"exists": False}
         return {"error": err}
-    return all(
-        activity["StatusCode"] != "Failed" for activity in response["Activities"]
-    )
+    return all(activity["StatusCode"] != "Failed" for activity in response["Activities"])
 
 
 def exit_standby(
@@ -1082,18 +1048,12 @@ def exit_standby(
         salt-call boto_asg.exit_standby my_autoscale_group_name '["i-xxxxxx"]'
 
     """
-    conn = _get_conn_autoscaling_boto3(
-        region=region, key=key, keyid=keyid, profile=profile
-    )
+    conn = _get_conn_autoscaling_boto3(region=region, key=key, keyid=keyid, profile=profile)
     try:
-        response = conn.exit_standby(
-            InstanceIds=instance_ids, AutoScalingGroupName=name
-        )
+        response = conn.exit_standby(InstanceIds=instance_ids, AutoScalingGroupName=name)
     except ClientError as e:
         err = __utils__["boto3.get_error"](e)
         if e.response.get("Error", {}).get("Code") == "ResourceNotFoundException":
             return {"exists": False}
         return {"error": err}
-    return all(
-        activity["StatusCode"] != "Failed" for activity in response["Activities"]
-    )
+    return all(activity["StatusCode"] != "Failed" for activity in response["Activities"])

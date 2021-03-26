@@ -1,20 +1,15 @@
-# -*- coding: utf-8 -*-
 """
     :codeauthor: Jayesh Kariya <jayeshk@saltstack.com>
 """
-# Import Python libs
-from __future__ import absolute_import, print_function, unicode_literals
-
 import textwrap
 
-# Import Salt Libs
 import salt.config
 import salt.loader
 import salt.states.boto_sqs as boto_sqs
 
-# Import Salt Testing Libs
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
 from tests.support.unit import TestCase
 
 
@@ -63,13 +58,17 @@ class BotoSqsTestCase(TestCase, LoaderModuleMockMixin):
             },
         ):
             with patch.dict(boto_sqs.__opts__, {"test": False}):
-                comt = ["Failed to create SQS queue {0}: create error".format(name,)]
+                comt = [
+                    "Failed to create SQS queue {}: create error".format(
+                        name,
+                    )
+                ]
                 ret = base_ret.copy()
                 ret.update({"result": False, "comment": comt})
-                self.assertDictEqual(boto_sqs.present(name), ret)
+                assert boto_sqs.present(name) == ret
 
             with patch.dict(boto_sqs.__opts__, {"test": True}):
-                comt = ["SQS queue {0} is set to be created.".format(name)]
+                comt = ["SQS queue {} is set to be created.".format(name)]
                 ret = base_ret.copy()
                 ret.update(
                     {
@@ -78,7 +77,7 @@ class BotoSqsTestCase(TestCase, LoaderModuleMockMixin):
                         "changes": {"old": None, "new": "mysqs"},
                     }
                 )
-                self.assertDictEqual(boto_sqs.present(name), ret)
+                assert boto_sqs.present(name) == ret
                 diff = textwrap.dedent(
                     """\
                     ---
@@ -99,15 +98,17 @@ class BotoSqsTestCase(TestCase, LoaderModuleMockMixin):
 
                 comt = [
                     "SQS queue mysqs present.",
-                    "Attribute(s) DelaySeconds set to be updated:\n{0}".format(diff,),
+                    "Attribute(s) DelaySeconds set to be updated:\n{}".format(
+                        diff,
+                    ),
                 ]
                 ret.update({"comment": comt, "changes": {"attributes": {"diff": diff}}})
-                self.assertDictEqual(boto_sqs.present(name, attributes), ret)
+                assert boto_sqs.present(name, attributes) == ret
 
             comt = ["SQS queue mysqs present."]
             ret = base_ret.copy()
             ret.update({"result": True, "comment": comt})
-            self.assertDictEqual(boto_sqs.present(name), ret)
+            assert boto_sqs.present(name) == ret
 
     # 'absent' function tests: 1
 
@@ -120,13 +121,13 @@ class BotoSqsTestCase(TestCase, LoaderModuleMockMixin):
 
         mock = MagicMock(side_effect=[{"result": False}, {"result": True}])
         with patch.dict(boto_sqs.__salt__, {"boto_sqs.exists": mock}):
-            comt = "SQS queue {0} does not exist in None.".format(name)
+            comt = "SQS queue {} does not exist in None.".format(name)
             ret = base_ret.copy()
             ret.update({"result": True, "comment": comt})
-            self.assertDictEqual(boto_sqs.absent(name), ret)
+            assert boto_sqs.absent(name) == ret
 
             with patch.dict(boto_sqs.__opts__, {"test": True}):
-                comt = "SQS queue {0} is set to be removed.".format(name)
+                comt = "SQS queue {} is set to be removed.".format(name)
                 ret = base_ret.copy()
                 ret.update(
                     {
@@ -135,4 +136,4 @@ class BotoSqsTestCase(TestCase, LoaderModuleMockMixin):
                         "changes": {"old": name, "new": None},
                     }
                 )
-                self.assertDictEqual(boto_sqs.absent(name), ret)
+                assert boto_sqs.absent(name) == ret

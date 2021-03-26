@@ -42,7 +42,6 @@ Connection module for Amazon CloudWatch
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
 import logging
 
 import salt.utils.json

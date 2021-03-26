@@ -1,7 +1,5 @@
-# import Salt Libs
 import salt.modules.boto_ssm as boto_ssm
 
-# Import Salt Testing Libs
 from tests.support.mock import patch
 from tests.support.unit import TestCase
 
@@ -17,10 +15,10 @@ class BotoSsmTestCase(TestCase):
         mock_boto_reqs.return_value = True
         mock_assign_funcs.return_value = False
         result = boto_ssm.__virtual__()
-        self.assertEqual(result, True)
+        assert result == True
 
     @patch("salt.utils.versions.check_boto_reqs")
     def test___virtual__has_boto_reqs_false(self, mock_boto_reqs):
         mock_boto_reqs.return_value = False
         result = boto_ssm.__virtual__()
-        self.assertEqual(result, False)
+        assert result == False

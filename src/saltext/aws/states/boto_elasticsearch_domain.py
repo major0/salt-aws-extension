@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Manage Elasticsearch Domains
 ============================
@@ -77,17 +76,10 @@ config:
             - key: askdjghsdfjkghWupUjasdflkdfklgjsdfjajkghs
 
 """
-
-# Import Python libs
-from __future__ import absolute_import, print_function, unicode_literals
-
 import logging
 import os
 
-# Import Salt libs
 import salt.utils.json
-
-# Import 3rd-party libs
 from salt.ext import six
 
 log = logging.getLogger(__name__)
@@ -224,12 +216,12 @@ def present(
         AdvancedOptions = {"rest.action.multi.allow_explicit_index": "true"}
     if Tags is None:
         Tags = {}
-    if AccessPolicies is not None and isinstance(AccessPolicies, six.string_types):
+    if AccessPolicies is not None and isinstance(AccessPolicies, str):
         try:
             AccessPolicies = salt.utils.json.loads(AccessPolicies)
         except ValueError as e:
             ret["result"] = False
-            ret["comment"] = "Failed to create domain: {0}.".format(e.message)
+            ret["comment"] = "Failed to create domain: {}.".format(e.message)
             return ret
     r = __salt__["boto_elasticsearch_domain.exists"](
         DomainName=DomainName, region=region, key=key, keyid=keyid, profile=profile
@@ -237,12 +229,12 @@ def present(
 
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to create domain: {0}.".format(r["error"]["message"])
+        ret["comment"] = "Failed to create domain: {}.".format(r["error"]["message"])
         return ret
 
     if not r.get("exists"):
         if __opts__["test"]:
-            ret["comment"] = "Domain {0} is set to be created.".format(DomainName)
+            ret["comment"] = "Domain {} is set to be created.".format(DomainName)
             ret["result"] = None
             return ret
         r = __salt__["boto_elasticsearch_domain.create"](
@@ -262,21 +254,17 @@ def present(
         )
         if not r.get("created"):
             ret["result"] = False
-            ret["comment"] = "Failed to create domain: {0}.".format(
-                r["error"]["message"]
-            )
+            ret["comment"] = "Failed to create domain: {}.".format(r["error"]["message"])
             return ret
         _describe = __salt__["boto_elasticsearch_domain.describe"](
             DomainName, region=region, key=key, keyid=keyid, profile=profile
         )
         ret["changes"]["old"] = {"domain": None}
         ret["changes"]["new"] = _describe
-        ret["comment"] = "Domain {0} created.".format(DomainName)
+        ret["comment"] = "Domain {} created.".format(DomainName)
         return ret
 
-    ret["comment"] = os.linesep.join(
-        [ret["comment"], "Domain {0} is present.".format(DomainName)]
-    )
+    ret["comment"] = os.linesep.join([ret["comment"], "Domain {} is present.".format(DomainName)])
     ret["changes"] = {}
     # domain exists, ensure config matches
     _status = __salt__["boto_elasticsearch_domain.status"](
@@ -286,12 +274,11 @@ def present(
         ElasticsearchVersion
     ):  # future lint: disable=blacklisted-function
         ret["result"] = False
-        ret["comment"] = (
-            "Failed to update domain: version cannot be modified "
-            "from {0} to {1}.".format(
-                _status.get("ElasticsearchVersion"),
-                str(ElasticsearchVersion),  # future lint: disable=blacklisted-function
-            )
+        ret[
+            "comment"
+        ] = "Failed to update domain: version cannot be modified " "from {} to {}.".format(
+            _status.get("ElasticsearchVersion"),
+            str(ElasticsearchVersion),  # future lint: disable=blacklisted-function
         )
         return ret
     _describe = __salt__["boto_elasticsearch_domain.describe"](
@@ -315,7 +302,7 @@ def present(
         "AdvancedOptions": AdvancedOptions,
     }
 
-    for k, v in six.iteritems(es_opts):
+    for k, v in es_opts.items():
         if not _compare_json(v, _describe[k]):
             need_update = True
             comm_args[k] = v
@@ -323,7 +310,7 @@ def present(
             ret["changes"].setdefault("old", {})[k] = _describe[k]
     if need_update:
         if __opts__["test"]:
-            msg = "Domain {0} set to be modified.".format(DomainName)
+            msg = "Domain {} set to be modified.".format(DomainName)
             ret["comment"] = msg
             ret["result"] = None
             return ret
@@ -331,16 +318,11 @@ def present(
         ret["comment"] = os.linesep.join([ret["comment"], "Domain to be modified"])
 
         r = __salt__["boto_elasticsearch_domain.update"](
-            DomainName=DomainName,
-            region=region,
-            key=key,
-            keyid=keyid,
-            profile=profile,
-            **comm_args
+            DomainName=DomainName, region=region, key=key, keyid=keyid, profile=profile, **comm_args
         )
         if not r.get("updated"):
             ret["result"] = False
-            ret["comment"] = "Failed to update domain: {0}.".format(r["error"])
+            ret["comment"] = "Failed to update domain: {}.".format(r["error"])
             ret["changes"] = {}
             return ret
     return ret
@@ -377,15 +359,15 @@ def absent(name, DomainName, region=None, key=None, keyid=None, profile=None):
     )
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to delete domain: {0}.".format(r["error"]["message"])
+        ret["comment"] = "Failed to delete domain: {}.".format(r["error"]["message"])
         return ret
 
     if r and not r["exists"]:
-        ret["comment"] = "Domain {0} does not exist.".format(DomainName)
+        ret["comment"] = "Domain {} does not exist.".format(DomainName)
         return ret
 
     if __opts__["test"]:
-        ret["comment"] = "Domain {0} is set to be removed.".format(DomainName)
+        ret["comment"] = "Domain {} is set to be removed.".format(DomainName)
         ret["result"] = None
         return ret
 
@@ -394,9 +376,9 @@ def absent(name, DomainName, region=None, key=None, keyid=None, profile=None):
     )
     if not r["deleted"]:
         ret["result"] = False
-        ret["comment"] = "Failed to delete domain: {0}.".format(r["error"]["message"])
+        ret["comment"] = "Failed to delete domain: {}.".format(r["error"]["message"])
         return ret
     ret["changes"]["old"] = {"domain": DomainName}
     ret["changes"]["new"] = {"domain": None}
-    ret["comment"] = "Domain {0} deleted.".format(DomainName)
+    ret["comment"] = "Domain {} deleted.".format(DomainName)
     return ret

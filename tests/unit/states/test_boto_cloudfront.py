@@ -1,21 +1,16 @@
-# -*- coding: utf-8 -*-
 """
 Unit tests for the boto_cloudfront state module.
 """
-# Import Python libs
-from __future__ import absolute_import, print_function, unicode_literals
-
 import copy
 import textwrap
 
-# Import Salt Libs
 import salt.config
 import salt.loader
 import salt.states.boto_cloudfront as boto_cloudfront
 
-# Import Salt Testing Libs
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
 from tests.support.unit import TestCase
 
 
@@ -77,11 +72,8 @@ class BotoCloudfrontTestCase(TestCase, LoaderModuleMockMixin):
             __opts__={"test": False},
         ):
             comment = "Error checking distribution {0}: get_distribution error"
-            self.assertDictEqual(
-                boto_cloudfront.present(self.name, self.config, self.tags),
-                self.base_ret_with(
-                    {"result": False, "comment": comment.format(self.name)}
-                ),
+            assert boto_cloudfront.present(self.name, self.config, self.tags) == self.base_ret_with(
+                {"result": False, "comment": comment.format(self.name)}
             )
 
     def test_present_from_scratch(self):
@@ -92,16 +84,13 @@ class BotoCloudfrontTestCase(TestCase, LoaderModuleMockMixin):
             __salt__={"boto_cloudfront.get_distribution": mock_get},
             __opts__={"test": True},
         ):
-            comment = "Distribution {0} set for creation.".format(self.name)
-            self.assertDictEqual(
-                boto_cloudfront.present(self.name, self.config, self.tags),
-                self.base_ret_with(
-                    {
-                        "result": None,
-                        "comment": comment,
-                        "changes": {"old": None, "new": self.name},
-                    }
-                ),
+            comment = "Distribution {} set for creation.".format(self.name)
+            assert boto_cloudfront.present(self.name, self.config, self.tags) == self.base_ret_with(
+                {
+                    "result": None,
+                    "comment": comment,
+                    "changes": {"old": None, "new": self.name},
+                }
             )
 
         mock_create_failure = MagicMock(return_value={"error": "create error"})
@@ -114,11 +103,8 @@ class BotoCloudfrontTestCase(TestCase, LoaderModuleMockMixin):
             __opts__={"test": False},
         ):
             comment = "Error creating distribution {0}: create error"
-            self.assertDictEqual(
-                boto_cloudfront.present(self.name, self.config, self.tags),
-                self.base_ret_with(
-                    {"result": False, "comment": comment.format(self.name)}
-                ),
+            assert boto_cloudfront.present(self.name, self.config, self.tags) == self.base_ret_with(
+                {"result": False, "comment": comment.format(self.name)}
             )
 
         mock_create_success = MagicMock(return_value={"result": True})
@@ -131,15 +117,12 @@ class BotoCloudfrontTestCase(TestCase, LoaderModuleMockMixin):
             __opts__={"test": False},
         ):
             comment = "Created distribution {0}."
-            self.assertDictEqual(
-                boto_cloudfront.present(self.name, self.config, self.tags),
-                self.base_ret_with(
-                    {
-                        "result": True,
-                        "comment": comment.format(self.name),
-                        "changes": {"old": None, "new": self.name},
-                    }
-                ),
+            assert boto_cloudfront.present(self.name, self.config, self.tags) == self.base_ret_with(
+                {
+                    "result": True,
+                    "comment": comment.format(self.name),
+                    "changes": {"old": None, "new": self.name},
+                }
             )
 
     def test_present_correct_state(self):
@@ -158,11 +141,8 @@ class BotoCloudfrontTestCase(TestCase, LoaderModuleMockMixin):
             __opts__={"test": False},
         ):
             comment = "Distribution {0} has correct config."
-            self.assertDictEqual(
-                boto_cloudfront.present(self.name, self.config, self.tags),
-                self.base_ret_with(
-                    {"result": True, "comment": comment.format(self.name)}
-                ),
+            assert boto_cloudfront.present(self.name, self.config, self.tags) == self.base_ret_with(
+                {"result": True, "comment": comment.format(self.name)}
             )
 
     def test_present_update_config_and_tags(self):
@@ -210,16 +190,13 @@ class BotoCloudfrontTestCase(TestCase, LoaderModuleMockMixin):
             __salt__={"boto_cloudfront.get_distribution": mock_get},
             __opts__={"test": True},
         ):
-            header = "Distribution {0} set for new config:".format(self.name)
-            self.assertDictEqual(
-                boto_cloudfront.present(self.name, self.config, self.tags),
-                self.base_ret_with(
-                    {
-                        "result": None,
-                        "comment": "\n".join([header, diff]),
-                        "changes": {"diff": diff},
-                    }
-                ),
+            header = "Distribution {} set for new config:".format(self.name)
+            assert boto_cloudfront.present(self.name, self.config, self.tags) == self.base_ret_with(
+                {
+                    "result": None,
+                    "comment": "\n".join([header, diff]),
+                    "changes": {"diff": diff},
+                }
             )
 
         mock_update_failure = MagicMock(return_value={"error": "update error"})
@@ -232,11 +209,8 @@ class BotoCloudfrontTestCase(TestCase, LoaderModuleMockMixin):
             __opts__={"test": False},
         ):
             comment = "Error updating distribution {0}: update error"
-            self.assertDictEqual(
-                boto_cloudfront.present(self.name, self.config, self.tags),
-                self.base_ret_with(
-                    {"result": False, "comment": comment.format(self.name)}
-                ),
+            assert boto_cloudfront.present(self.name, self.config, self.tags) == self.base_ret_with(
+                {"result": False, "comment": comment.format(self.name)}
             )
 
         mock_update_success = MagicMock(return_value={"result": True})
@@ -248,13 +222,10 @@ class BotoCloudfrontTestCase(TestCase, LoaderModuleMockMixin):
             },
             __opts__={"test": False},
         ):
-            self.assertDictEqual(
-                boto_cloudfront.present(self.name, self.config, self.tags),
-                self.base_ret_with(
-                    {
-                        "result": True,
-                        "comment": "Updated distribution {0}.".format(self.name),
-                        "changes": {"diff": diff},
-                    }
-                ),
+            assert boto_cloudfront.present(self.name, self.config, self.tags) == self.base_ret_with(
+                {
+                    "result": True,
+                    "comment": "Updated distribution {}.".format(self.name),
+                    "changes": {"diff": diff},
+                }
             )

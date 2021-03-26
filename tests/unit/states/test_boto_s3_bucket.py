@@ -7,12 +7,15 @@ import pytest
 import salt.loader
 import salt.states.boto_s3_bucket as boto_s3_bucket
 from salt.utils.versions import LooseVersion
+
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
-from tests.support.unit import TestCase, skipIf
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
+from tests.support.unit import skipIf
+from tests.support.unit import TestCase
+from tests.unit.modules.test_boto_s3_bucket import BotoS3BucketTestCaseMixin
 
 # pylint: disable=import-error,no-name-in-module,unused-import
-from tests.unit.modules.test_boto_s3_bucket import BotoS3BucketTestCaseMixin
 
 try:
     import boto
@@ -56,9 +59,7 @@ if _has_required_boto():
         "keyid": secret_key,
         "profile": {},
     }
-    error_message = (
-        "An error occurred (101) when calling the {0} operation: Test-defined error"
-    )
+    error_message = "An error occurred (101) when calling the {0} operation: Test-defined error"
     not_found_error = ClientError(
         {"Error": {"Code": "404", "Message": "Test-defined error"}}, "msg"
     )
@@ -91,9 +92,7 @@ if _has_required_boto():
                     "LambdaFunctionArn": "arn:aws:lambda:us-east-1:111111222222:function:my-function",
                     "Id": "zxcvbnmlkjhgfdsa",
                     "Events": ["s3:ObjectCreated:*"],
-                    "Filter": {
-                        "Key": {"FilterRules": [{"Name": "prefix", "Value": "string"}]}
-                    },
+                    "Filter": {"Key": {"FilterRules": [{"Name": "prefix", "Value": "string"}]}},
                 }
             ]
         },
@@ -141,9 +140,7 @@ if _has_required_boto():
             ],
             "Owner": {"DisplayName": "testuser", "ID": "111111222222"},
         },
-        "get_bucket_cors": {
-            "CORSRules": [{"AllowedMethods": ["GET"], "AllowedOrigins": ["*"]}]
-        },
+        "get_bucket_cors": {"CORSRules": [{"AllowedMethods": ["GET"], "AllowedOrigins": ["*"]}]},
         "get_bucket_lifecycle_configuration": {
             "Rules": [
                 {
@@ -164,9 +161,7 @@ if _has_required_boto():
                     "LambdaFunctionArn": "arn:aws:lambda:us-east-1:111111222222:function:my-function",
                     "Id": "zxcvbnmlkjhgfdsa",
                     "Events": ["s3:ObjectCreated:*"],
-                    "Filter": {
-                        "Key": {"FilterRules": [{"Name": "prefix", "Value": "string"}]}
-                    },
+                    "Filter": {"Key": {"FilterRules": [{"Name": "prefix", "Value": "string"}]}},
                 }
             ]
         },
@@ -187,9 +182,7 @@ if _has_required_boto():
             }
         },
         "get_bucket_request_payment": {"Payer": "Requester"},
-        "get_bucket_tagging": {
-            "TagSet": [{"Key": "c", "Value": "d"}, {"Key": "a", "Value": "b"}]
-        },
+        "get_bucket_tagging": {"TagSet": [{"Key": "c", "Value": "d"}, {"Key": "a", "Value": "b"}]},
         "get_bucket_versioning": {"Status": "Enabled"},
         "get_bucket_website": {
             "ErrorDocument": {"Key": "error.html"},
@@ -289,11 +282,8 @@ class BotoS3BucketTestCase(BotoS3BucketStateTestCaseBase, BotoS3BucketTestCaseMi
                 "bucket present", Bucket="testbucket", **config_in
             )
 
-        self.assertTrue(result["result"])
-        self.assertEqual(
-            result["changes"]["new"]["bucket"]["Location"],
-            config_ret["get_bucket_location"],
-        )
+        assert result["result"]
+        assert result["changes"]["new"]["bucket"]["Location"] == config_ret["get_bucket_location"]
 
     @pytest.mark.slow_test
     def test_present_when_bucket_exists_no_mods(self):
@@ -308,8 +298,8 @@ class BotoS3BucketTestCase(BotoS3BucketStateTestCaseBase, BotoS3BucketTestCaseMi
                 "bucket present", Bucket="testbucket", **config_in
             )
 
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_present_when_bucket_exists_all_mods(self):
@@ -326,16 +316,14 @@ class BotoS3BucketTestCase(BotoS3BucketStateTestCaseBase, BotoS3BucketTestCaseMi
                 LocationConstraint=config_in["LocationConstraint"],
             )
 
-        self.assertTrue(result["result"])
-        self.assertNotEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] != {}
 
     @pytest.mark.slow_test
     def test_present_with_failure(self):
         self.conn.head_bucket.side_effect = [not_found_error, None]
         self.conn.list_buckets.return_value = deepcopy(list_ret)
-        self.conn.create_bucket.side_effect = ClientError(
-            error_content, "create_bucket"
-        )
+        self.conn.create_bucket.side_effect = ClientError(error_content, "create_bucket")
         with patch.dict(
             self.funcs,
             {"boto_iam.get_account_id": MagicMock(return_value="111111222222")},
@@ -343,8 +331,8 @@ class BotoS3BucketTestCase(BotoS3BucketStateTestCaseBase, BotoS3BucketTestCaseMi
             result = self.salt_states["boto_s3_bucket.present"](
                 "bucket present", Bucket="testbucket", **config_in
             )
-        self.assertFalse(result["result"])
-        self.assertTrue("Failed to create bucket" in result["comment"])
+        assert not result["result"]
+        assert "Failed to create bucket" in result["comment"]
 
     def test_absent_when_bucket_does_not_exist(self):
         """
@@ -352,18 +340,16 @@ class BotoS3BucketTestCase(BotoS3BucketStateTestCaseBase, BotoS3BucketTestCaseMi
         """
         self.conn.head_bucket.side_effect = [not_found_error, None]
         result = self.salt_states["boto_s3_bucket.absent"]("test", "mybucket")
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     def test_absent_when_bucket_exists(self):
         result = self.salt_states["boto_s3_bucket.absent"]("test", "testbucket")
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"]["new"]["bucket"], None)
+        assert result["result"]
+        assert result["changes"]["new"]["bucket"] == None
 
     def test_absent_with_failure(self):
-        self.conn.delete_bucket.side_effect = ClientError(
-            error_content, "delete_bucket"
-        )
+        self.conn.delete_bucket.side_effect = ClientError(error_content, "delete_bucket")
         result = self.salt_states["boto_s3_bucket.absent"]("test", "testbucket")
-        self.assertFalse(result["result"])
-        self.assertTrue("Failed to delete bucket" in result["comment"])
+        assert not result["result"]
+        assert "Failed to delete bucket" in result["comment"]

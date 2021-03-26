@@ -42,7 +42,6 @@ Connection module for Amazon DynamoDB
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
 import logging
 import time
 
@@ -320,22 +319,12 @@ def extract_index(index_data, global_index=False):
                     parsed_data["keys_only"] = True
 
     if parsed_data["hash_key"]:
-        keys.append(
-            HashKey(
-                parsed_data["hash_key"], data_type=parsed_data["hash_key_data_type"]
-            )
-        )
+        keys.append(HashKey(parsed_data["hash_key"], data_type=parsed_data["hash_key_data_type"]))
     if parsed_data.get("range_key"):
         keys.append(
-            RangeKey(
-                parsed_data["range_key"], data_type=parsed_data["range_key_data_type"]
-            )
+            RangeKey(parsed_data["range_key"], data_type=parsed_data["range_key_data_type"])
         )
-    if (
-        global_index
-        and parsed_data["read_capacity_units"]
-        and parsed_data["write_capacity_units"]
-    ):
+    if global_index and parsed_data["read_capacity_units"] and parsed_data["write_capacity_units"]:
         parsed_data["throughput"] = {
             "read": parsed_data["read_capacity_units"],
             "write": parsed_data["write_capacity_units"],
@@ -343,9 +332,7 @@ def extract_index(index_data, global_index=False):
     if parsed_data["name"] and keys:
         if global_index:
             if parsed_data.get("keys_only") and parsed_data.get("includes"):
-                raise SaltInvocationError(
-                    "Only one type of GSI projection can be used."
-                )
+                raise SaltInvocationError("Only one type of GSI projection can be used.")
 
             if parsed_data.get("includes"):
                 return GlobalIncludeIndex(

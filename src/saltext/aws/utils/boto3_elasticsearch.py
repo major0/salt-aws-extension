@@ -1,16 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Botocore waiters for elasticsearch that are not present in boto3+botocore (yet).
 
 :codeauthor: Herbert Buurman <herbert.buurman@ogd.nl>
 :depends: boto3
 """
-# Import Python libs
-from __future__ import absolute_import, print_function, unicode_literals
-
 import salt.utils.versions
-
-# Import Salt libs
 from salt.exceptions import SaltInvocationError
 
 try:
@@ -115,9 +109,7 @@ def get_waiter(client, waiter=None, waiter_config=None):
     :returns botocore.waiter
     """
     if not any((waiter, waiter_config)):
-        raise SaltInvocationError(
-            "At least one of waiter or waiter_config must be specified."
-        )
+        raise SaltInvocationError("At least one of waiter or waiter_config must be specified.")
     waiter_model = botocore.waiter.WaiterModel(
         {"version": 2, "waiters": {waiter: WAITER_CONFIGS.get(waiter, waiter_config)}}
     )

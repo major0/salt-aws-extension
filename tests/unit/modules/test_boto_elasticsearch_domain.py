@@ -7,9 +7,12 @@ import salt.loader
 import salt.modules.boto_elasticsearch_domain as boto_elasticsearch_domain
 from salt.ext.six.moves import range
 from salt.utils.versions import LooseVersion
+
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
-from tests.support.unit import TestCase, skipIf
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
+from tests.support.unit import skipIf
+from tests.support.unit import TestCase
 
 # pylint: disable=import-error,no-name-in-module
 try:
@@ -52,9 +55,7 @@ if _has_required_boto():
         "keyid": secret_key,
         "profile": {},
     }
-    error_message = (
-        "An error occurred (101) when calling the {0} operation: Test-defined error"
-    )
+    error_message = "An error occurred (101) when calling the {0} operation: Test-defined error"
     error_content = {"Error": {"Code": 101, "Message": "Test-defined error"}}
     not_found_error = ClientError(
         {
@@ -137,11 +138,9 @@ class BotoElasticsearchDomainTestCase(
         """
         Tests checking domain existence when the domain already exists
         """
-        result = boto_elasticsearch_domain.exists(
-            DomainName="testdomain", **conn_parameters
-        )
+        result = boto_elasticsearch_domain.exists(DomainName="testdomain", **conn_parameters)
 
-        self.assertTrue(result["exists"])
+        assert result["exists"]
 
     def test_that_when_checking_if_a_domain_exists_and_a_domain_does_not_exist_the_domain_exists_method_returns_false(
         self,
@@ -150,11 +149,9 @@ class BotoElasticsearchDomainTestCase(
         Tests checking domain existence when the domain does not exist
         """
         self.conn.describe_elasticsearch_domain.side_effect = not_found_error
-        result = boto_elasticsearch_domain.exists(
-            DomainName="mydomain", **conn_parameters
-        )
+        result = boto_elasticsearch_domain.exists(DomainName="mydomain", **conn_parameters)
 
-        self.assertFalse(result["exists"])
+        assert not result["exists"]
 
     def test_that_when_checking_if_a_domain_exists_and_boto3_returns_an_error_the_domain_exists_method_returns_error(
         self,
@@ -165,13 +162,9 @@ class BotoElasticsearchDomainTestCase(
         self.conn.describe_elasticsearch_domain.side_effect = ClientError(
             error_content, "list_domains"
         )
-        result = boto_elasticsearch_domain.exists(
-            DomainName="mydomain", **conn_parameters
-        )
+        result = boto_elasticsearch_domain.exists(DomainName="mydomain", **conn_parameters)
 
-        self.assertEqual(
-            result.get("error", {}).get("message"), error_message.format("list_domains")
-        )
+        assert result.get("error", {}).get("message") == error_message.format("list_domains")
 
     def test_that_when_checking_domain_status_and_a_domain_exists_the_domain_status_method_returns_info(
         self,
@@ -179,14 +172,10 @@ class BotoElasticsearchDomainTestCase(
         """
         Tests checking domain existence when the domain already exists
         """
-        self.conn.describe_elasticsearch_domain.return_value = {
-            "DomainStatus": domain_ret
-        }
-        result = boto_elasticsearch_domain.status(
-            DomainName="testdomain", **conn_parameters
-        )
+        self.conn.describe_elasticsearch_domain.return_value = {"DomainStatus": domain_ret}
+        result = boto_elasticsearch_domain.status(DomainName="testdomain", **conn_parameters)
 
-        self.assertTrue(result["domain"])
+        assert result["domain"]
 
     def test_that_when_checking_domain_status_and_boto3_returns_an_error_the_domain_status_method_returns_error(
         self,
@@ -197,13 +186,9 @@ class BotoElasticsearchDomainTestCase(
         self.conn.describe_elasticsearch_domain.side_effect = ClientError(
             error_content, "list_domains"
         )
-        result = boto_elasticsearch_domain.status(
-            DomainName="mydomain", **conn_parameters
-        )
+        result = boto_elasticsearch_domain.status(DomainName="mydomain", **conn_parameters)
 
-        self.assertEqual(
-            result.get("error", {}).get("message"), error_message.format("list_domains")
-        )
+        assert result.get("error", {}).get("message") == error_message.format("list_domains")
 
     def test_that_when_describing_domain_it_returns_the_dict_of_properties_returns_true(
         self,
@@ -216,9 +201,7 @@ class BotoElasticsearchDomainTestCase(
             if k == "DomainName":
                 continue
             domainconfig[k] = {"Options": v}
-        self.conn.describe_elasticsearch_domain_config.return_value = {
-            "DomainConfig": domainconfig
-        }
+        self.conn.describe_elasticsearch_domain_config.return_value = {"DomainConfig": domainconfig}
 
         result = boto_elasticsearch_domain.describe(
             DomainName=domain_ret["DomainName"], **conn_parameters
@@ -227,7 +210,7 @@ class BotoElasticsearchDomainTestCase(
         log.warning(result)
         desired_ret = copy.copy(domain_ret)
         desired_ret.pop("DomainName")
-        self.assertEqual(result, {"domain": desired_ret})
+        assert result == {"domain": desired_ret}
 
     def test_that_when_describing_domain_on_client_error_it_returns_error(self):
         """
@@ -236,10 +219,8 @@ class BotoElasticsearchDomainTestCase(
         self.conn.describe_elasticsearch_domain_config.side_effect = ClientError(
             error_content, "list_domains"
         )
-        result = boto_elasticsearch_domain.describe(
-            DomainName="testdomain", **conn_parameters
-        )
-        self.assertTrue("error" in result)
+        result = boto_elasticsearch_domain.describe(DomainName="testdomain", **conn_parameters)
+        assert "error" in result
 
     def test_that_when_creating_a_domain_succeeds_the_create_domain_method_returns_true(
         self,
@@ -247,14 +228,12 @@ class BotoElasticsearchDomainTestCase(
         """
         tests True domain created.
         """
-        self.conn.create_elasticsearch_domain.return_value = {
-            "DomainStatus": domain_ret
-        }
+        self.conn.create_elasticsearch_domain.return_value = {"DomainStatus": domain_ret}
         args = copy.copy(domain_ret)
         args.update(conn_parameters)
         result = boto_elasticsearch_domain.create(**args)
 
-        self.assertTrue(result["created"])
+        assert result["created"]
 
     def test_that_when_creating_a_domain_fails_the_create_domain_method_returns_error(
         self,
@@ -268,10 +247,7 @@ class BotoElasticsearchDomainTestCase(
         args = copy.copy(domain_ret)
         args.update(conn_parameters)
         result = boto_elasticsearch_domain.create(**args)
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("create_domain"),
-        )
+        assert result.get("error", {}).get("message") == error_message.format("create_domain")
 
     def test_that_when_deleting_a_domain_succeeds_the_delete_domain_method_returns_true(
         self,
@@ -279,10 +255,8 @@ class BotoElasticsearchDomainTestCase(
         """
         tests True domain deleted.
         """
-        result = boto_elasticsearch_domain.delete(
-            DomainName="testdomain", **conn_parameters
-        )
-        self.assertTrue(result["deleted"])
+        result = boto_elasticsearch_domain.delete(DomainName="testdomain", **conn_parameters)
+        assert result["deleted"]
 
     def test_that_when_deleting_a_domain_fails_the_delete_domain_method_returns_false(
         self,
@@ -293,10 +267,8 @@ class BotoElasticsearchDomainTestCase(
         self.conn.delete_elasticsearch_domain.side_effect = ClientError(
             error_content, "delete_domain"
         )
-        result = boto_elasticsearch_domain.delete(
-            DomainName="testdomain", **conn_parameters
-        )
-        self.assertFalse(result["deleted"])
+        result = boto_elasticsearch_domain.delete(DomainName="testdomain", **conn_parameters)
+        assert not result["deleted"]
 
     def test_that_when_updating_a_domain_succeeds_the_update_domain_method_returns_true(
         self,
@@ -304,14 +276,12 @@ class BotoElasticsearchDomainTestCase(
         """
         tests True domain updated.
         """
-        self.conn.update_elasticsearch_domain_config.return_value = {
-            "DomainConfig": domain_ret
-        }
+        self.conn.update_elasticsearch_domain_config.return_value = {"DomainConfig": domain_ret}
         args = copy.copy(domain_ret)
         args.update(conn_parameters)
         result = boto_elasticsearch_domain.update(**args)
 
-        self.assertTrue(result["updated"])
+        assert result["updated"]
 
     def test_that_when_updating_a_domain_fails_the_update_domain_method_returns_error(
         self,
@@ -325,85 +295,70 @@ class BotoElasticsearchDomainTestCase(
         args = copy.copy(domain_ret)
         args.update(conn_parameters)
         result = boto_elasticsearch_domain.update(**args)
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("update_domain"),
-        )
+        assert result.get("error", {}).get("message") == error_message.format("update_domain")
 
     def test_that_when_adding_tags_succeeds_the_add_tags_method_returns_true(self):
         """
         tests True tags added.
         """
-        self.conn.describe_elasticsearch_domain.return_value = {
-            "DomainStatus": domain_ret
-        }
+        self.conn.describe_elasticsearch_domain.return_value = {"DomainStatus": domain_ret}
         result = boto_elasticsearch_domain.add_tags(
             DomainName="testdomain", a="b", **conn_parameters
         )
 
-        self.assertTrue(result["tagged"])
+        assert result["tagged"]
 
     def test_that_when_adding_tags_fails_the_add_tags_method_returns_false(self):
         """
         tests False tags not added.
         """
         self.conn.add_tags.side_effect = ClientError(error_content, "add_tags")
-        self.conn.describe_elasticsearch_domain.return_value = {
-            "DomainStatus": domain_ret
-        }
+        self.conn.describe_elasticsearch_domain.return_value = {"DomainStatus": domain_ret}
         result = boto_elasticsearch_domain.add_tags(
             DomainName=domain_ret["DomainName"], a="b", **conn_parameters
         )
-        self.assertFalse(result["tagged"])
+        assert not result["tagged"]
 
     def test_that_when_removing_tags_succeeds_the_remove_tags_method_returns_true(self):
         """
         tests True tags removed.
         """
-        self.conn.describe_elasticsearch_domain.return_value = {
-            "DomainStatus": domain_ret
-        }
+        self.conn.describe_elasticsearch_domain.return_value = {"DomainStatus": domain_ret}
         result = boto_elasticsearch_domain.remove_tags(
             DomainName=domain_ret["DomainName"], TagKeys=["a"], **conn_parameters
         )
 
-        self.assertTrue(result["tagged"])
+        assert result["tagged"]
 
     def test_that_when_removing_tags_fails_the_remove_tags_method_returns_false(self):
         """
         tests False tags not removed.
         """
         self.conn.remove_tags.side_effect = ClientError(error_content, "remove_tags")
-        self.conn.describe_elasticsearch_domain.return_value = {
-            "DomainStatus": domain_ret
-        }
+        self.conn.describe_elasticsearch_domain.return_value = {"DomainStatus": domain_ret}
         result = boto_elasticsearch_domain.remove_tags(
             DomainName=domain_ret["DomainName"], TagKeys=["b"], **conn_parameters
         )
-        self.assertFalse(result["tagged"])
+        assert not result["tagged"]
 
     def test_that_when_listing_tags_succeeds_the_list_tags_method_returns_true(self):
         """
         tests True tags listed.
         """
-        self.conn.describe_elasticsearch_domain.return_value = {
-            "DomainStatus": domain_ret
-        }
+        self.conn.describe_elasticsearch_domain.return_value = {"DomainStatus": domain_ret}
         result = boto_elasticsearch_domain.list_tags(
             DomainName=domain_ret["DomainName"], **conn_parameters
         )
 
-        self.assertEqual(result["tags"], {})
+        assert result["tags"] == {}
 
     def test_that_when_listing_tags_fails_the_list_tags_method_returns_false(self):
         """
         tests False tags not listed.
         """
         self.conn.list_tags.side_effect = ClientError(error_content, "list_tags")
-        self.conn.describe_elasticsearch_domain.return_value = {
-            "DomainStatus": domain_ret
-        }
+        self.conn.describe_elasticsearch_domain.return_value = {"DomainStatus": domain_ret}
         result = boto_elasticsearch_domain.list_tags(
             DomainName=domain_ret["DomainName"], **conn_parameters
         )
-        self.assertTrue(result["error"])
+        assert result["error"]

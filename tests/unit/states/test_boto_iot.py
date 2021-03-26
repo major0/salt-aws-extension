@@ -7,12 +7,15 @@ import salt.config
 import salt.loader
 import salt.states.boto_iot as boto_iot
 from salt.utils.versions import LooseVersion
+
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
-from tests.support.unit import TestCase, skipIf
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
+from tests.support.unit import skipIf
+from tests.support.unit import TestCase
+from tests.unit.modules.test_boto_iot import BotoIoTTestCaseMixin
 
 # pylint: disable=import-error,no-name-in-module,unused-import
-from tests.unit.modules.test_boto_iot import BotoIoTTestCaseMixin
 
 try:
     import boto
@@ -60,9 +63,7 @@ if _has_required_boto():
         "keyid": secret_key,
         "profile": {},
     }
-    error_message = (
-        "An error occurred (101) when calling the {0} operation: Test-defined error"
-    )
+    error_message = "An error occurred (101) when calling the {0} operation: Test-defined error"
     not_found_error = ClientError(
         {
             "Error": {
@@ -103,9 +104,7 @@ if _has_required_boto():
             thingTypeDescription=thing_type_desc,
             searchableAttributes=[thing_type_attr_1],
         ),
-        thingTypeMetadata=dict(
-            deprecated=False, creationDate="2010-08-01 15:54:49.699000+00:00"
-        ),
+        thingTypeMetadata=dict(deprecated=False, creationDate="2010-08-01 15:54:49.699000+00:00"),
     )
     deprecated_thing_type_ret = dict(
         thingTypeName=thing_type_name,
@@ -120,9 +119,7 @@ if _has_required_boto():
         ),
     )
     thing_type_arn = "test_thing_type_arn"
-    create_thing_type_ret = dict(
-        thingTypeName=thing_type_name, thingTypeArn=thing_type_arn
-    )
+    create_thing_type_ret = dict(thingTypeName=thing_type_name, thingTypeArn=thing_type_arn)
 
 
 @skipIf(HAS_BOTO is False, "The boto module must be installed.")
@@ -211,10 +208,8 @@ class BotoIoTThingTypeTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
             searchableAttributesList=[thing_type_attr_1],
             **conn_parameters
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(
-            result["changes"]["new"]["thing_type"]["thingTypeName"], thing_type_name
-        )
+        assert result["result"]
+        assert result["changes"]["new"]["thing_type"]["thingTypeName"] == thing_type_name
 
     def test_present_when_thing_type_exists(self):
         self.conn.describe_thing_type.return_value = thing_type_ret
@@ -225,15 +220,13 @@ class BotoIoTThingTypeTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
             searchableAttributesList=[thing_type_attr_1],
             **conn_parameters
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
-        self.assertTrue(self.conn.create_thing_type.call_count == 0)
+        assert result["result"]
+        assert result["changes"] == {}
+        assert self.conn.create_thing_type.call_count == 0
 
     def test_present_with_failure(self):
         self.conn.describe_thing_type.side_effect = [not_found_error, thing_type_ret]
-        self.conn.create_thing_type.side_effect = ClientError(
-            error_content, "create_thing_type"
-        )
+        self.conn.create_thing_type.side_effect = ClientError(error_content, "create_thing_type")
         result = self.salt_states["boto_iot.thing_type_present"](
             "thing type present",
             thingTypeName=thing_type_name,
@@ -241,8 +234,8 @@ class BotoIoTThingTypeTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
             searchableAttributesList=[thing_type_attr_1],
             **conn_parameters
         )
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]
 
     def test_absent_when_thing_type_does_not_exist(self):
         """
@@ -252,8 +245,8 @@ class BotoIoTThingTypeTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
         result = self.salt_states["boto_iot.thing_type_absent"](
             "test", "mythingtype", **conn_parameters
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_absent_when_thing_type_exists(self):
@@ -264,9 +257,9 @@ class BotoIoTThingTypeTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
         result = self.salt_states["boto_iot.thing_type_absent"](
             "test", thing_type_name, **conn_parameters
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"]["new"]["thing_type"], None)
-        self.assertTrue(self.conn.deprecate_thing_type.call_count == 0)
+        assert result["result"]
+        assert result["changes"]["new"]["thing_type"] == None
+        assert self.conn.deprecate_thing_type.call_count == 0
 
     def test_absent_with_deprecate_failure(self):
         self.conn.describe_thing_type.return_value = thing_type_ret
@@ -276,23 +269,21 @@ class BotoIoTThingTypeTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
         result = self.salt_states["boto_iot.thing_type_absent"](
             "test", thing_type_name, **conn_parameters
         )
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
-        self.assertTrue("deprecate_thing_type" in result["comment"])
-        self.assertTrue(self.conn.delete_thing_type.call_count == 0)
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]
+        assert "deprecate_thing_type" in result["comment"]
+        assert self.conn.delete_thing_type.call_count == 0
 
     def test_absent_with_delete_failure(self):
         self.conn.describe_thing_type.return_value = deprecated_thing_type_ret
-        self.conn.delete_thing_type.side_effect = ClientError(
-            error_content, "delete_thing_type"
-        )
+        self.conn.delete_thing_type.side_effect = ClientError(error_content, "delete_thing_type")
         result = self.salt_states["boto_iot.thing_type_absent"](
             "test", thing_type_name, **conn_parameters
         )
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
-        self.assertTrue("delete_thing_type" in result["comment"])
-        self.assertTrue(self.conn.deprecate_thing_type.call_count == 0)
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]
+        assert "delete_thing_type" in result["comment"]
+        assert self.conn.deprecate_thing_type.call_count == 0
 
 
 class BotoIoTPolicyTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
@@ -312,10 +303,8 @@ class BotoIoTPolicyTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
             policyDocument=policy_ret["policyDocument"],
         )
 
-        self.assertTrue(result["result"])
-        self.assertEqual(
-            result["changes"]["new"]["policy"]["policyName"], policy_ret["policyName"]
-        )
+        assert result["result"]
+        assert result["changes"]["new"]["policy"]["policyName"] == policy_ret["policyName"]
 
     def test_present_when_policy_exists(self):
         self.conn.get_policy.return_value = policy_ret
@@ -325,21 +314,19 @@ class BotoIoTPolicyTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
             policyName=policy_ret["policyName"],
             policyDocument=policy_ret["policyDocument"],
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     def test_present_with_failure(self):
         self.conn.get_policy.side_effect = [not_found_error, policy_ret]
-        self.conn.create_policy.side_effect = ClientError(
-            error_content, "create_policy"
-        )
+        self.conn.create_policy.side_effect = ClientError(error_content, "create_policy")
         result = self.salt_states["boto_iot.policy_present"](
             "policy present",
             policyName=policy_ret["policyName"],
             policyDocument=policy_ret["policyDocument"],
         )
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]
 
     def test_absent_when_policy_does_not_exist(self):
         """
@@ -347,40 +334,32 @@ class BotoIoTPolicyTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
         """
         self.conn.get_policy.side_effect = not_found_error
         result = self.salt_states["boto_iot.policy_absent"]("test", "mypolicy")
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     def test_absent_when_policy_exists(self):
         self.conn.get_policy.return_value = policy_ret
         self.conn.list_policy_versions.return_value = {"policyVersions": []}
-        result = self.salt_states["boto_iot.policy_absent"](
-            "test", policy_ret["policyName"]
-        )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"]["new"]["policy"], None)
+        result = self.salt_states["boto_iot.policy_absent"]("test", policy_ret["policyName"])
+        assert result["result"]
+        assert result["changes"]["new"]["policy"] == None
 
     def test_absent_with_failure(self):
         self.conn.get_policy.return_value = policy_ret
         self.conn.list_policy_versions.return_value = {"policyVersions": []}
-        self.conn.delete_policy.side_effect = ClientError(
-            error_content, "delete_policy"
-        )
-        result = self.salt_states["boto_iot.policy_absent"](
-            "test", policy_ret["policyName"]
-        )
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
+        self.conn.delete_policy.side_effect = ClientError(error_content, "delete_policy")
+        result = self.salt_states["boto_iot.policy_absent"]("test", policy_ret["policyName"])
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]
 
     def test_attached_when_policy_not_attached(self):
         """
         Tests attached on a policy that is not attached.
         """
         self.conn.list_principal_policies.return_value = {"policies": []}
-        result = self.salt_states["boto_iot.policy_attached"](
-            "test", "myfunc", principal
-        )
-        self.assertTrue(result["result"])
-        self.assertTrue(result["changes"]["new"]["attached"])
+        result = self.salt_states["boto_iot.policy_attached"]("test", "myfunc", principal)
+        assert result["result"]
+        assert result["changes"]["new"]["attached"]
 
     def test_attached_when_policy_attached(self):
         """
@@ -390,8 +369,8 @@ class BotoIoTPolicyTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
         result = self.salt_states["boto_iot.policy_attached"](
             "test", policy_ret["policyName"], principal
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     def test_attached_with_failure(self):
         """
@@ -404,8 +383,8 @@ class BotoIoTPolicyTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
         result = self.salt_states["boto_iot.policy_attached"](
             "test", policy_ret["policyName"], principal
         )
-        self.assertFalse(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert not result["result"]
+        assert result["changes"] == {}
 
     def test_detached_when_policy_not_detached(self):
         """
@@ -415,9 +394,9 @@ class BotoIoTPolicyTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
         result = self.salt_states["boto_iot.policy_detached"](
             "test", policy_ret["policyName"], principal
         )
-        self.assertTrue(result["result"])
+        assert result["result"]
         log.warning(result)
-        self.assertFalse(result["changes"]["new"]["attached"])
+        assert not result["changes"]["new"]["attached"]
 
     def test_detached_when_policy_detached(self):
         """
@@ -427,8 +406,8 @@ class BotoIoTPolicyTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
         result = self.salt_states["boto_iot.policy_detached"](
             "test", policy_ret["policyName"], principal
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     def test_detached_with_failure(self):
         """
@@ -441,8 +420,8 @@ class BotoIoTPolicyTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
         result = self.salt_states["boto_iot.policy_detached"](
             "test", policy_ret["policyName"], principal
         )
-        self.assertFalse(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert not result["result"]
+        assert result["changes"] == {}
 
 
 @skipIf(HAS_BOTO is False, "The boto module must be installed.")
@@ -476,10 +455,8 @@ class BotoIoTTopicRuleTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
             ruleDisabled=topic_rule_ret["ruleDisabled"],
         )
 
-        self.assertTrue(result["result"])
-        self.assertEqual(
-            result["changes"]["new"]["rule"]["ruleName"], topic_rule_ret["ruleName"]
-        )
+        assert result["result"]
+        assert result["changes"]["new"]["rule"]["ruleName"] == topic_rule_ret["ruleName"]
 
     def test_present_when_policy_exists(self):
         self.conn.get_topic_rule.return_value = {"rule": topic_rule_ret}
@@ -492,17 +469,15 @@ class BotoIoTTopicRuleTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
             actions=topic_rule_ret["actions"],
             ruleDisabled=topic_rule_ret["ruleDisabled"],
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     def test_present_with_failure(self):
         self.conn.get_topic_rule.side_effect = [
             topic_rule_not_found_error,
             {"rule": topic_rule_ret},
         ]
-        self.conn.create_topic_rule.side_effect = ClientError(
-            error_content, "create_topic_rule"
-        )
+        self.conn.create_topic_rule.side_effect = ClientError(error_content, "create_topic_rule")
         result = self.salt_states["boto_iot.topic_rule_present"](
             "topic rule present",
             ruleName=topic_rule_ret["ruleName"],
@@ -511,8 +486,8 @@ class BotoIoTTopicRuleTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
             actions=topic_rule_ret["actions"],
             ruleDisabled=topic_rule_ret["ruleDisabled"],
         )
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]
 
     def test_absent_when_topic_rule_does_not_exist(self):
         """
@@ -520,24 +495,18 @@ class BotoIoTTopicRuleTestCase(BotoIoTStateTestCaseBase, BotoIoTTestCaseMixin):
         """
         self.conn.get_topic_rule.side_effect = topic_rule_not_found_error
         result = self.salt_states["boto_iot.topic_rule_absent"]("test", "myrule")
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     def test_absent_when_topic_rule_exists(self):
         self.conn.get_topic_rule.return_value = topic_rule_ret
-        result = self.salt_states["boto_iot.topic_rule_absent"](
-            "test", topic_rule_ret["ruleName"]
-        )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"]["new"]["rule"], None)
+        result = self.salt_states["boto_iot.topic_rule_absent"]("test", topic_rule_ret["ruleName"])
+        assert result["result"]
+        assert result["changes"]["new"]["rule"] == None
 
     def test_absent_with_failure(self):
         self.conn.get_topic_rule.return_value = topic_rule_ret
-        self.conn.delete_topic_rule.side_effect = ClientError(
-            error_content, "delete_topic_rule"
-        )
-        result = self.salt_states["boto_iot.topic_rule_absent"](
-            "test", topic_rule_ret["ruleName"]
-        )
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
+        self.conn.delete_topic_rule.side_effect = ClientError(error_content, "delete_topic_rule")
+        result = self.salt_states["boto_iot.topic_rule_absent"]("test", topic_rule_ret["ruleName"])
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]

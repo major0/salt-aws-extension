@@ -43,8 +43,6 @@ Connection module for Amazon Route53
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 import time
 
@@ -92,9 +90,7 @@ def _get_split_zone(zone, _conn, private_zone):
     """
     for _zone in _conn.get_zones():
         if _zone.name == zone:
-            _private_zone = (
-                True if _zone.config["PrivateZone"].lower() == "true" else False
-            )
+            _private_zone = True if _zone.config["PrivateZone"].lower() == "true" else False
             if _private_zone == private_zone:
                 return _zone
     return False
@@ -141,9 +137,7 @@ def describe_hosted_zones(
     """
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
     if zone_id and domain_name:
-        raise SaltInvocationError(
-            "At most one of zone_id or domain_name may " "be provided"
-        )
+        raise SaltInvocationError("At most one of zone_id or domain_name may " "be provided")
     retries = 10
     while retries:
         try:
@@ -153,9 +147,7 @@ def describe_hosted_zones(
                     if zone_id.startswith("/hostedzone/")
                     else zone_id
                 )
-                ret = getattr(
-                    conn.get_hosted_zone(zone_id), "GetHostedZoneResponse", None
-                )
+                ret = getattr(conn.get_hosted_zone(zone_id), "GetHostedZoneResponse", None)
             elif domain_name:
                 ret = getattr(
                     conn.get_hosted_zone_by_name(domain_name),
@@ -252,31 +244,31 @@ def zone_exists(
     error_retries=5,
 ):
     """
-    Check for the existence of a Route53 hosted zone.
+     Check for the existence of a Route53 hosted zone.
 
-    .. versionadded:: 2015.8.0
+     .. versionadded:: 2015.8.0
 
-    CLI Example:
+     CLI Example:
 
-    .. code-block:: bash
+     .. code-block:: bash
 
-        salt myminion boto_route53.zone_exists example.org
+         salt myminion boto_route53.zone_exists example.org
 
-   retry_on_errors
-        Continue to query if the zone exists after an error is
-        raised. The previously used argument `retry_on_rate_limit`
-        was deprecated for this argument. Users can still use
-        `retry_on_rate_limit` to ensure backwards compatibility,
-        but please migrate to using the favored `retry_on_errors`
-        argument instead.
+    retry_on_errors
+         Continue to query if the zone exists after an error is
+         raised. The previously used argument `retry_on_rate_limit`
+         was deprecated for this argument. Users can still use
+         `retry_on_rate_limit` to ensure backwards compatibility,
+         but please migrate to using the favored `retry_on_errors`
+         argument instead.
 
-    error_retries
-        Number of times to attempt to query if the zone exists.
-        The previously used argument `rate_limit_retries` was
-        deprecated for this arguments. Users can still use
-        `rate_limit_retries` to ensure backwards compatibility,
-        but please migrate to using the favored `error_retries`
-        argument instead.
+     error_retries
+         Number of times to attempt to query if the zone exists.
+         The previously used argument `rate_limit_retries` was
+         deprecated for this arguments. Users can still use
+         `rate_limit_retries` to ensure backwards compatibility,
+         but please migrate to using the favored `error_retries`
+         argument instead.
 
     """
     if region is None:
@@ -546,29 +538,29 @@ def get_record(
     error_retries=5,
 ):
     """
-    Get a record from a zone.
+     Get a record from a zone.
 
-    CLI Example:
+     CLI Example:
 
-    .. code-block:: bash
+     .. code-block:: bash
 
-        salt myminion boto_route53.get_record test.example.org example.org A
+         salt myminion boto_route53.get_record test.example.org example.org A
 
-   retry_on_errors
-        Continue to query if the zone exists after an error is
-        raised. The previously used argument `retry_on_rate_limit`
-        was deprecated for this argument. Users can still use
-        `retry_on_rate_limit` to ensure backwards compatibility,
-        but please migrate to using the favored `retry_on_errors`
-        argument instead.
+    retry_on_errors
+         Continue to query if the zone exists after an error is
+         raised. The previously used argument `retry_on_rate_limit`
+         was deprecated for this argument. Users can still use
+         `retry_on_rate_limit` to ensure backwards compatibility,
+         but please migrate to using the favored `retry_on_errors`
+         argument instead.
 
-    error_retries
-        Number of times to attempt to query if the zone exists.
-        The previously used argument `rate_limit_retries` was
-        deprecated for this arguments. Users can still use
-        `rate_limit_retries` to ensure backwards compatibility,
-        but please migrate to using the favored `error_retries`
-        argument instead.
+     error_retries
+         Number of times to attempt to query if the zone exists.
+         The previously used argument `rate_limit_retries` was
+         deprecated for this arguments. Users can still use
+         `rate_limit_retries` to ensure backwards compatibility,
+         but please migrate to using the favored `error_retries`
+         argument instead.
     """
     if region is None:
         region = "universal"
@@ -597,9 +589,7 @@ def get_record(
 
             name = _encode_name(name)
 
-            _record = _zone.find_records(
-                name, _type, all=fetch_all, identifier=identifier
-            )
+            _record = _zone.find_records(name, _type, all=fetch_all, identifier=identifier)
 
             break  # the while True
 
@@ -657,29 +647,29 @@ def add_record(
     error_retries=5,
 ):
     """
-    Add a record to a zone.
+     Add a record to a zone.
 
-    CLI Example:
+     CLI Example:
 
-    .. code-block:: bash
+     .. code-block:: bash
 
-        salt myminion boto_route53.add_record test.example.org 1.1.1.1 example.org A
+         salt myminion boto_route53.add_record test.example.org 1.1.1.1 example.org A
 
-   retry_on_errors
-        Continue to query if the zone exists after an error is
-        raised. The previously used argument `retry_on_rate_limit`
-        was deprecated for this argument. Users can still use
-        `retry_on_rate_limit` to ensure backwards compatibility,
-        but please migrate to using the favored `retry_on_errors`
-        argument instead.
+    retry_on_errors
+         Continue to query if the zone exists after an error is
+         raised. The previously used argument `retry_on_rate_limit`
+         was deprecated for this argument. Users can still use
+         `retry_on_rate_limit` to ensure backwards compatibility,
+         but please migrate to using the favored `retry_on_errors`
+         argument instead.
 
-    error_retries
-        Number of times to attempt to query if the zone exists.
-        The previously used argument `rate_limit_retries` was
-        deprecated for this arguments. Users can still use
-        `rate_limit_retries` to ensure backwards compatibility,
-        but please migrate to using the favored `error_retries`
-        argument instead.
+     error_retries
+         Number of times to attempt to query if the zone exists.
+         The previously used argument `rate_limit_retries` was
+         deprecated for this arguments. Users can still use
+         `rate_limit_retries` to ensure backwards compatibility,
+         but please migrate to using the favored `error_retries`
+         argument instead.
     """
     if region is None:
         region = "universal"
@@ -764,29 +754,29 @@ def update_record(
     error_retries=5,
 ):
     """
-    Modify a record in a zone.
+     Modify a record in a zone.
 
-    CLI Example:
+     CLI Example:
 
-    .. code-block:: bash
+     .. code-block:: bash
 
-        salt myminion boto_route53.modify_record test.example.org 1.1.1.1 example.org A
+         salt myminion boto_route53.modify_record test.example.org 1.1.1.1 example.org A
 
-   retry_on_errors
-        Continue to query if the zone exists after an error is
-        raised. The previously used argument `retry_on_rate_limit`
-        was deprecated for this argument. Users can still use
-        `retry_on_rate_limit` to ensure backwards compatibility,
-        but please migrate to using the favored `retry_on_errors`
-        argument instead.
+    retry_on_errors
+         Continue to query if the zone exists after an error is
+         raised. The previously used argument `retry_on_rate_limit`
+         was deprecated for this argument. Users can still use
+         `retry_on_rate_limit` to ensure backwards compatibility,
+         but please migrate to using the favored `retry_on_errors`
+         argument instead.
 
-    error_retries
-        Number of times to attempt to query if the zone exists.
-        The previously used argument `rate_limit_retries` was
-        deprecated for this arguments. Users can still use
-        `rate_limit_retries` to ensure backwards compatibility,
-        but please migrate to using the favored `error_retries`
-        argument instead.
+     error_retries
+         Number of times to attempt to query if the zone exists.
+         The previously used argument `rate_limit_retries` was
+         deprecated for this arguments. Users can still use
+         `rate_limit_retries` to ensure backwards compatibility,
+         but please migrate to using the favored `error_retries`
+         argument instead.
     """
     if region is None:
         region = "universal"
@@ -853,29 +843,29 @@ def delete_record(
     error_retries=5,
 ):
     """
-    Modify a record in a zone.
+     Modify a record in a zone.
 
-    CLI Example:
+     CLI Example:
 
-    .. code-block:: bash
+     .. code-block:: bash
 
-        salt myminion boto_route53.delete_record test.example.org example.org A
+         salt myminion boto_route53.delete_record test.example.org example.org A
 
-   retry_on_errors
-        Continue to query if the zone exists after an error is
-        raised. The previously used argument `retry_on_rate_limit`
-        was deprecated for this argument. Users can still use
-        `retry_on_rate_limit` to ensure backwards compatibility,
-        but please migrate to using the favored `retry_on_errors`
-        argument instead.
+    retry_on_errors
+         Continue to query if the zone exists after an error is
+         raised. The previously used argument `retry_on_rate_limit`
+         was deprecated for this argument. Users can still use
+         `retry_on_rate_limit` to ensure backwards compatibility,
+         but please migrate to using the favored `retry_on_errors`
+         argument instead.
 
-    error_retries
-        Number of times to attempt to query if the zone exists.
-        The previously used argument `rate_limit_retries` was
-        deprecated for this arguments. Users can still use
-        `rate_limit_retries` to ensure backwards compatibility,
-        but please migrate to using the favored `error_retries`
-        argument instead.
+     error_retries
+         Number of times to attempt to query if the zone exists.
+         The previously used argument `rate_limit_retries` was
+         deprecated for this arguments. Users can still use
+         `rate_limit_retries` to ensure backwards compatibility,
+         but please migrate to using the favored `error_retries`
+         argument instead.
     """
     if region is None:
         region = "universal"
@@ -900,9 +890,7 @@ def delete_record(
 
     while error_retries > 0:
         try:
-            old_record = _zone.find_records(
-                name, _type, all=all_records, identifier=identifier
-            )
+            old_record = _zone.find_records(name, _type, all=all_records, identifier=identifier)
             if not old_record:
                 return False
             status = _zone.delete_record(old_record)
@@ -930,9 +918,7 @@ def _try_func(conn, func, **args):
             return getattr(conn, func)(**args)
         except AttributeError as e:
             # Don't include **args in log messages - security concern.
-            log.error(
-                "Function `%s()` not found for AWS connection object %s", func, conn
-            )
+            log.error("Function `%s()` not found for AWS connection object %s", func, conn)
             return None
         except DNSServerError as e:
             if tries and e.code == "Throttling":
@@ -1045,9 +1031,7 @@ def create_hosted_zone(
         region = "universal"
 
     if not domain_name.endswith("."):
-        raise SaltInvocationError(
-            "Domain MUST be fully-qualified, complete " "with ending period."
-        )
+        raise SaltInvocationError("Domain MUST be fully-qualified, complete " "with ending period.")
 
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
 
@@ -1079,14 +1063,11 @@ def create_hosted_zone(
         if vpc_region and vpcs:
             vpcs = [v for v in vpcs if v["region"] == vpc_region]
         if not vpcs:
-            log.error(
-                "Private zone requested but a VPC matching given criteria" " not found."
-            )
+            log.error("Private zone requested but a VPC matching given criteria" " not found.")
             return None
         if len(vpcs) > 1:
             log.error(
-                "Private zone requested but multiple VPCs matching given "
-                "criteria found: %s.",
+                "Private zone requested but multiple VPCs matching given " "criteria found: %s.",
                 [v["id"] for v in vpcs],
             )
             return None

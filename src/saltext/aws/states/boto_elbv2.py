@@ -32,7 +32,6 @@ passed in as a dict, or as a string to pull from pillars or minion config:
         key: askdjghsdfjkghWupUjasdflkdfklgjsdfjajkghs
         region: us-east-1
 """
-
 import copy
 import logging
 
@@ -181,9 +180,7 @@ def delete_target_group(name, region=None, key=None, keyid=None, profile=None):
     """
     ret = {"name": name, "result": None, "comment": "", "changes": {}}
 
-    if not __salt__["boto_elbv2.target_group_exists"](
-        name, region, key, keyid, profile
-    ):
+    if not __salt__["boto_elbv2.target_group_exists"](name, region, key, keyid, profile):
         ret["result"] = True
         ret["comment"] = "Target Group {} does not exists".format(name)
         return ret
@@ -206,9 +203,7 @@ def delete_target_group(name, region=None, key=None, keyid=None, profile=None):
     return ret
 
 
-def targets_registered(
-    name, targets, region=None, key=None, keyid=None, profile=None, **kwargs
-):
+def targets_registered(name, targets, region=None, key=None, keyid=None, profile=None, **kwargs):
     """
     .. versionadded:: 2017.7.0
 
@@ -247,9 +242,7 @@ def targets_registered(
             if target in health and health.get(target) != "draining":
                 ret["comment"] = ret[
                     "comment"
-                ] + "Target/s {} already registered and is {}.\n".format(
-                    target, health[target]
-                )
+                ] + "Target/s {} already registered and is {}.\n".format(target, health[target])
                 ret["result"] = True
             else:
                 if __opts__["test"]:
@@ -268,9 +261,7 @@ def targets_registered(
                         changes = True
                         ret["result"] = True
                     else:
-                        ret["comment"] = "Target Group {} failed to add targets".format(
-                            name
-                        )
+                        ret["comment"] = "Target Group {} failed to add targets".format(name)
                         failure = True
         if failure:
             ret["result"] = False
@@ -292,9 +283,7 @@ def targets_registered(
     return ret
 
 
-def targets_deregistered(
-    name, targets, region=None, key=None, keyid=None, profile=None, **kwargs
-):
+def targets_deregistered(name, targets, region=None, key=None, keyid=None, profile=None, **kwargs):
     """
     Remove targets to an Application Load Balancer target group.
 
@@ -327,9 +316,9 @@ def targets_deregistered(
             targets = [targets]
         for target in targets:
             if target not in health or health.get(target) == "draining":
-                ret["comment"] = ret[
-                    "comment"
-                ] + "Target/s {} already deregistered\n".format(target)
+                ret["comment"] = ret["comment"] + "Target/s {} already deregistered\n".format(
+                    target
+                )
                 ret["result"] = True
             else:
                 if __opts__["test"]:
@@ -348,9 +337,7 @@ def targets_deregistered(
                         changes = True
                         ret["result"] = True
                     else:
-                        ret[
-                            "comment"
-                        ] = "Target Group {} failed to remove targets".format(name)
+                        ret["comment"] = "Target Group {} failed to remove targets".format(name)
                         failure = True
         if failure:
             ret["result"] = False

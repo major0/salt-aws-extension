@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Connection module for Amazon SQS
 
@@ -43,17 +42,10 @@ Connection module for Amazon SQS
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-from __future__ import absolute_import, print_function, unicode_literals
-
-# Import Python libs
 import logging
 
-# Import Salt libs
 import salt.utils.json
 import salt.utils.versions
-
-# Import 3rd-party libs
 from salt.ext import six
 from salt.ext.six.moves.urllib.parse import urlparse as _urlparse
 
@@ -63,7 +55,6 @@ __func_alias__ = {
     "list_": "list",
 }
 
-# Import third party libs
 try:
     # pylint: disable=unused-import
     import boto3
@@ -90,7 +81,7 @@ def _preprocess_attributes(attributes):
     """
     Pre-process incoming queue attributes before setting them
     """
-    if isinstance(attributes, six.string_types):
+    if isinstance(attributes, str):
         attributes = salt.utils.json.loads(attributes)
 
     def stringified(val):
@@ -100,7 +91,7 @@ def _preprocess_attributes(attributes):
             return salt.utils.json.dumps(val)
         return val
 
-    return dict((attr, stringified(val)) for attr, val in six.iteritems(attributes))
+    return {attr: stringified(val) for attr, val in attributes.items()}
 
 
 def exists(name, region=None, key=None, keyid=None, profile=None):
@@ -126,7 +117,12 @@ def exists(name, region=None, key=None, keyid=None, profile=None):
 
 
 def create(
-    name, attributes=None, region=None, key=None, keyid=None, profile=None,
+    name,
+    attributes=None,
+    region=None,
+    key=None,
+    keyid=None,
+    profile=None,
 ):
     """
     Create an SQS queue.
@@ -218,7 +214,12 @@ def get_attributes(name, region=None, key=None, keyid=None, profile=None):
 
 
 def set_attributes(
-    name, attributes, region=None, key=None, keyid=None, profile=None,
+    name,
+    attributes,
+    region=None,
+    key=None,
+    keyid=None,
+    profile=None,
 ):
     """
     Set attributes on an SQS queue.

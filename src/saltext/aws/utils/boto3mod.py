@@ -15,16 +15,15 @@ Example Usage:
     .. code-block:: python
 
         def __virtual__():
-            __utils__['boto.apply_funcs'](__name__, 'vpc')
+            __utils__["boto.apply_funcs"](__name__, "vpc")
+
 
         def test():
             conn = _get_conn()
-            vpc_id = _cache_id('test-vpc')
+            vpc_id = _cache_id("test-vpc")
 
 .. versionadded:: 2015.8.0
 """
-
-
 import hashlib
 import logging
 import sys
@@ -133,9 +132,7 @@ def cache_id(
 
     .. code-block:: python
 
-        __utils__['boto.cache_id']('ec2', 'myinstance',
-                                   'i-a1b2c3',
-                                   profile='custom_profile')
+        __utils__["boto.cache_id"]("ec2", "myinstance", "i-a1b2c3", profile="custom_profile")
     """
 
     cxkey, _, _, _ = _get_profile(service, region, key, keyid, profile)
@@ -168,22 +165,20 @@ def cache_id_func(service):
 
     .. code-block:: python
 
-        cache_id = __utils__['boto.cache_id_func']('ec2')
-        cache_id('myinstance', 'i-a1b2c3')
-        instance_id = cache_id('myinstance')
+        cache_id = __utils__["boto.cache_id_func"]("ec2")
+        cache_id("myinstance", "i-a1b2c3")
+        instance_id = cache_id("myinstance")
     """
     return partial(cache_id, service)
 
 
-def get_connection(
-    service, module=None, region=None, key=None, keyid=None, profile=None
-):
+def get_connection(service, module=None, region=None, key=None, keyid=None, profile=None):
     """
     Return a boto connection for the service.
 
     .. code-block:: python
 
-        conn = __utils__['boto.get_connection']('ec2', profile='custom_profile')
+        conn = __utils__["boto.get_connection"]("ec2", profile="custom_profile")
     """
 
     module = module or service
@@ -219,7 +214,7 @@ def get_connection_func(service, module=None):
 
     .. code-block:: python
 
-        get_conn = __utils__['boto.get_connection_func']('ec2')
+        get_conn = __utils__["boto.get_connection_func"]("ec2")
         conn = get_conn()
     """
     return partial(get_connection, service, module=module)
@@ -274,7 +269,7 @@ def assign_funcs(
 
     .. code-block:: python
 
-        _utils__['boto.assign_partials'](__name__, 'ec2')
+        _utils__["boto.assign_partials"](__name__, "ec2")
     """
     mod = sys.modules[modname]
     setattr(mod, get_conn_funcname, get_connection_func(service, module=module))
@@ -312,6 +307,5 @@ def ordered(obj):
 
 
 def json_objs_equal(left, right):
-    """ Compare two parsed JSON objects, given non-ordering in JSON objects
-    """
+    """Compare two parsed JSON objects, given non-ordering in JSON objects"""
     return ordered(left) == ordered(right)

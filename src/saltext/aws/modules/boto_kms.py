@@ -34,8 +34,6 @@ Connection module for Amazon KMS
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 
 import salt.serializers.json
@@ -69,9 +67,7 @@ def __init__(opts):
         __utils__["boto.assign_funcs"](__name__, "kms", pack=__salt__)
 
 
-def create_alias(
-    alias_name, target_key_id, region=None, key=None, keyid=None, profile=None
-):
+def create_alias(alias_name, target_key_id, region=None, key=None, keyid=None, profile=None):
     """
     Create a display name for a key.
 
@@ -157,9 +153,7 @@ def create_key(
     r = {}
     _policy = salt.serializers.json.serialize(policy)
     try:
-        key_metadata = conn.create_key(
-            _policy, description=description, key_usage=key_usage
-        )
+        key_metadata = conn.create_key(_policy, description=description, key_usage=key_usage)
         r["key_metadata"] = key_metadata["KeyMetadata"]
     except boto.exception.BotoServerError as e:
         r["error"] = __utils__["boto.get_error"](e)
@@ -451,9 +445,7 @@ def generate_data_key_without_plaintext(
     return r
 
 
-def generate_random(
-    number_of_bytes=None, region=None, key=None, keyid=None, profile=None
-):
+def generate_random(number_of_bytes=None, region=None, key=None, keyid=None, profile=None):
     """
     Generate a random string.
 
@@ -474,9 +466,7 @@ def generate_random(
     return r
 
 
-def get_key_policy(
-    key_id, policy_name, region=None, key=None, keyid=None, profile=None
-):
+def get_key_policy(key_id, policy_name, region=None, key=None, keyid=None, profile=None):
     """
     Get the policy for the specified key.
 
@@ -520,9 +510,7 @@ def get_key_rotation_status(key_id, region=None, key=None, keyid=None, profile=N
     return r
 
 
-def list_grants(
-    key_id, limit=None, marker=None, region=None, key=None, keyid=None, profile=None
-):
+def list_grants(key_id, limit=None, marker=None, region=None, key=None, keyid=None, profile=None):
     """
     List grants for the specified key.
 
@@ -580,9 +568,7 @@ def list_key_policies(
     return r
 
 
-def put_key_policy(
-    key_id, policy_name, policy, region=None, key=None, keyid=None, profile=None
-):
+def put_key_policy(key_id, policy_name, policy, region=None, key=None, keyid=None, profile=None):
     """
     Attach a key policy to the specified key.
 
@@ -596,9 +582,7 @@ def put_key_policy(
 
     r = {}
     try:
-        conn.put_key_policy(
-            key_id, policy_name, salt.serializers.json.serialize(policy)
-        )
+        conn.put_key_policy(key_id, policy_name, salt.serializers.json.serialize(policy))
         r["result"] = True
     except boto.exception.BotoServerError as e:
         r["result"] = False
@@ -667,9 +651,7 @@ def revoke_grant(key_id, grant_id, region=None, key=None, keyid=None, profile=No
     return r
 
 
-def update_key_description(
-    key_id, description, region=None, key=None, keyid=None, profile=None
-):
+def update_key_description(key_id, description, region=None, key=None, keyid=None, profile=None):
     """
     Update a key's description.
 

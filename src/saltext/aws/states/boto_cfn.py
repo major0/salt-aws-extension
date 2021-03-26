@@ -35,7 +35,6 @@ Connection module for Amazon Cloud Formation
           boto_cfn.absent:
             - name: mystack
 """
-
 import logging
 import xml.etree.ElementTree as ET
 
@@ -147,9 +146,7 @@ def present(
 
     template_body = _get_template(template_body, name)
     stack_policy_body = _get_template(stack_policy_body, name)
-    stack_policy_during_update_body = _get_template(
-        stack_policy_during_update_body, name
-    )
+    stack_policy_during_update_body = _get_template(stack_policy_during_update_body, name)
 
     for i in [template_body, stack_policy_body, stack_policy_during_update_body]:
         if isinstance(i, dict):
@@ -160,16 +157,14 @@ def present(
     if _valid is not True:
         code, message = _valid
         ret["result"] = False
-        ret["comment"] = "Template could not be validated.\n{} \n{}".format(
-            code, message
-        )
+        ret["comment"] = "Template could not be validated.\n{} \n{}".format(code, message)
         return ret
     log.debug("Template %s is valid.", name)
     if __salt__["boto_cfn.exists"](name, region, key, keyid, profile):
         template = __salt__["boto_cfn.get_template"](name, region, key, keyid, profile)
-        template = template["GetTemplateResponse"]["GetTemplateResult"][
-            "TemplateBody"
-        ].encode("ascii", "ignore")
+        template = template["GetTemplateResponse"]["GetTemplateResult"]["TemplateBody"].encode(
+            "ascii", "ignore"
+        )
         template = salt.utils.json.loads(template)
         _template_body = salt.utils.json.loads(template_body)
         compare = salt.utils.compat.cmp(template, _template_body)
@@ -208,9 +203,7 @@ def present(
                     name, code, message
                 )
                 return ret
-            ret["comment"] = "Cloud formation template {} has been updated.".format(
-                name
-            )
+            ret["comment"] = "Cloud formation template {} has been updated.".format(name)
             ret["changes"]["new"] = updated
             return ret
         ret["comment"] = "Stack {} exists.".format(name)
@@ -273,9 +266,7 @@ def absent(name, region=None, key=None, keyid=None, profile=None):
     deleted = __salt__["boto_cfn.delete"](name, region, key, keyid, profile)
     if isinstance(deleted, str):
         code, message = _get_error(deleted)
-        ret["comment"] = "Stack {} could not be deleted.\n{}\n{}".format(
-            name, code, message
-        )
+        ret["comment"] = "Stack {} could not be deleted.\n{}\n{}".format(name, code, message)
         ret["result"] = False
         ret["changes"] = {}
         return ret

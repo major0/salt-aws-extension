@@ -41,8 +41,6 @@ as a passed in dict, or as a string to pull from pillars or minion config:
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 import time
 
@@ -50,7 +48,8 @@ import salt.utils.compat
 import salt.utils.data
 import salt.utils.json
 import salt.utils.versions
-from salt.exceptions import CommandExecutionError, SaltInvocationError
+from salt.exceptions import CommandExecutionError
+from salt.exceptions import SaltInvocationError
 from salt.ext.six.moves import map
 
 try:
@@ -81,9 +80,7 @@ def __virtual__():
     # the boto_ec2 execution module relies on the connect_to_region() method
     # which was added in boto 2.8.0
     # https://github.com/boto/boto/commit/33ac26b416fbb48a60602542b4ce15dcc7029f12
-    has_boto_reqs = salt.utils.versions.check_boto_reqs(
-        boto_ver="2.8.0", check_boto3=False
-    )
+    has_boto_reqs = salt.utils.versions.check_boto_reqs(boto_ver="2.8.0", check_boto3=False)
     if has_boto_reqs is True:
         __utils__["boto.assign_funcs"](__name__, "ec2", pack=__salt__)
     return has_boto_reqs
@@ -113,9 +110,7 @@ def _get_all_eip_addresses(
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
 
     try:
-        return conn.get_all_addresses(
-            addresses=addresses, allocation_ids=allocation_ids
-        )
+        return conn.get_all_addresses(addresses=addresses, allocation_ids=allocation_ids)
     except boto.exception.BotoServerError as e:
         log.error(e)
         return []
@@ -147,9 +142,7 @@ def get_all_eip_addresses(
     """
     return [
         x.public_ip
-        for x in _get_all_eip_addresses(
-            addresses, allocation_ids, region, key, keyid, profile
-        )
+        for x in _get_all_eip_addresses(addresses, allocation_ids, region, key, keyid, profile)
     ]
 
 
@@ -172,9 +165,7 @@ def get_unassociated_eip_address(
     .. versionadded:: 2016.3.0
     """
     eip = None
-    for address in get_all_eip_addresses(
-        region=region, key=key, keyid=keyid, profile=profile
-    ):
+    for address in get_all_eip_addresses(region=region, key=key, keyid=keyid, profile=profile):
         address_info = get_eip_address_info(
             addresses=address, region=region, key=key, keyid=keyid, profile=profile
         )[0]
@@ -284,9 +275,7 @@ def allocate_eip_address(domain=None, region=None, key=None, keyid=None, profile
     .. versionadded:: 2016.3.0
     """
     if domain and domain != "vpc":
-        raise SaltInvocationError(
-            "The only permitted value for the 'domain' param is 'vpc'."
-        )
+        raise SaltInvocationError("The only permitted value for the 'domain' param is 'vpc'.")
 
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
 
@@ -434,8 +423,7 @@ def associate_eip_address(
             return False
         if not network_interface_id:
             log.error(
-                "Given network_interface_name '%s' cannot be mapped to "
-                "an network_interface_id",
+                "Given network_interface_name '%s' cannot be mapped to " "an network_interface_id",
                 network_interface_name,
             )
             return False
@@ -526,8 +514,7 @@ def assign_private_ip_addresses(
     """
     if not salt.utils.data.exactly_one((network_interface_name, network_interface_id)):
         raise SaltInvocationError(
-            "Exactly one of 'network_interface_name', "
-            "'network_interface_id' must be provided"
+            "Exactly one of 'network_interface_name', " "'network_interface_id' must be provided"
         )
 
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
@@ -546,8 +533,7 @@ def assign_private_ip_addresses(
             return False
         if not network_interface_id:
             log.error(
-                "Given network_interface_name '%s' cannot be mapped to "
-                "an network_interface_id",
+                "Given network_interface_name '%s' cannot be mapped to " "an network_interface_id",
                 network_interface_name,
             )
             return False
@@ -596,8 +582,7 @@ def unassign_private_ip_addresses(
     """
     if not salt.utils.data.exactly_one((network_interface_name, network_interface_id)):
         raise SaltInvocationError(
-            "Exactly one of 'network_interface_name', "
-            "'network_interface_id' must be provided"
+            "Exactly one of 'network_interface_name', " "'network_interface_id' must be provided"
         )
 
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
@@ -616,8 +601,7 @@ def unassign_private_ip_addresses(
             return False
         if not network_interface_id:
             log.error(
-                "Given network_interface_name '%s' cannot be mapped to "
-                "an network_interface_id",
+                "Given network_interface_name '%s' cannot be mapped to " "an network_interface_id",
                 network_interface_name,
             )
             return False
@@ -911,9 +895,7 @@ def get_id(
         if len(instance_ids) == 1:
             return instance_ids[0]
         else:
-            raise CommandExecutionError(
-                "Found more than one instance " "matching the criteria."
-            )
+            raise CommandExecutionError("Found more than one instance " "matching the criteria.")
     else:
         log.warning("Could not find instance.")
         return None
@@ -1018,8 +1000,7 @@ def _to_blockdev_map(thing):
         thing = salt.utils.json.loads(thing)
     if not isinstance(thing, dict):
         log.error(
-            "Can't convert '%s' of type %s to a "
-            "boto.ec2.blockdevicemapping.BlockDeviceMapping",
+            "Can't convert '%s' of type %s to a " "boto.ec2.blockdevicemapping.BlockDeviceMapping",
             thing,
             type(thing),
         )
@@ -1202,9 +1183,7 @@ def run(
 
     """
     if all((subnet_id, subnet_name)):
-        raise SaltInvocationError(
-            "Only one of subnet_name or subnet_id may be " "provided."
-        )
+        raise SaltInvocationError("Only one of subnet_name or subnet_id may be " "provided.")
     if subnet_name:
         r = __salt__["boto_vpc.get_resource_id"](
             "subnet", subnet_name, region=region, key=key, keyid=keyid, profile=profile
@@ -1258,8 +1237,7 @@ def run(
         network_interface_id = result["result"]
         if not network_interface_id:
             log.warning(
-                "Given network_interface_name '%s' cannot be mapped to an "
-                "network_interface_id",
+                "Given network_interface_name '%s' cannot be mapped to an " "network_interface_id",
                 network_interface_name,
             )
 
@@ -1273,9 +1251,7 @@ def run(
         )
 
     if network_interfaces:
-        interfaces_specs = [
-            NetworkInterfaceSpecification(**x) for x in network_interfaces
-        ]
+        interfaces_specs = [NetworkInterfaceSpecification(**x) for x in network_interfaces]
         interfaces = NetworkInterfaceCollection(*interfaces_specs)
     else:
         interfaces = NetworkInterfaceCollection(interface)
@@ -1372,9 +1348,7 @@ def create_key(key_name, save_path, region=None, key=None, keyid=None, profile=N
         return False
 
 
-def import_key(
-    key_name, public_key_material, region=None, key=None, keyid=None, profile=None
-):
+def import_key(key_name, public_key_material, region=None, key=None, keyid=None, profile=None):
     """
     Imports the public key from an RSA key pair that you created with a third-party tool.
     Supported formats:
@@ -1422,9 +1396,7 @@ def delete_key(key_name, region=None, key=None, keyid=None, profile=None):
         return False
 
 
-def get_keys(
-    keynames=None, filters=None, region=None, key=None, keyid=None, profile=None
-):
+def get_keys(keynames=None, filters=None, region=None, key=None, keyid=None, profile=None):
     """
     Gets all keys or filters them by name and returns a list.
     keynames (list):: A list of the names of keypairs to retrieve.
@@ -1509,17 +1481,14 @@ def get_attribute(
     ]
     if not any((instance_name, instance_id)):
         raise SaltInvocationError(
-            "At least one of the following must be specified: "
-            "instance_name or instance_id."
+            "At least one of the following must be specified: " "instance_name or instance_id."
         )
     if instance_name and instance_id:
         raise SaltInvocationError(
             "Both instance_name and instance_id can not be specified in the same command."
         )
     if attribute not in attribute_list:
-        raise SaltInvocationError(
-            "Attribute must be one of: {}.".format(attribute_list)
-        )
+        raise SaltInvocationError("Attribute must be one of: {}.".format(attribute_list))
     try:
         if instance_name:
             instances = find_instances(
@@ -1608,9 +1577,7 @@ def set_attribute(
             "Both instance_name and instance_id can not be specified in the same command."
         )
     if attribute not in attribute_list:
-        raise SaltInvocationError(
-            "Attribute must be one of: {}.".format(attribute_list)
-        )
+        raise SaltInvocationError("Attribute must be one of: {}.".format(attribute_list))
     try:
         if instance_name:
             instances = find_instances(
@@ -1626,9 +1593,7 @@ def set_attribute(
                     "Found more than one EC2 instance matching the criteria."
                 )
             instance_id = instances[0]
-        attribute = conn.modify_instance_attribute(
-            instance_id, attribute, attribute_value
-        )
+        attribute = conn.modify_instance_attribute(instance_id, attribute, attribute_value)
         if not attribute:
             return False
         return attribute
@@ -1700,9 +1665,7 @@ def get_network_interface(
 def _get_network_interface(conn, name=None, network_interface_id=None):
     r = {}
     if not (name or network_interface_id):
-        raise SaltInvocationError(
-            "Either name or network_interface_id must be provided."
-        )
+        raise SaltInvocationError("Either name or network_interface_id must be provided.")
     try:
         if network_interface_id:
             enis = conn.get_all_network_interfaces([network_interface_id])
@@ -1862,9 +1825,7 @@ def delete_network_interface(
         salt myminion boto_ec2.create_network_interface my_eni subnet-12345 description=my_eni groups=['my_group']
     """
     if not (name or network_interface_id):
-        raise SaltInvocationError(
-            "Either name or network_interface_id must be provided."
-        )
+        raise SaltInvocationError("Either name or network_interface_id must be provided.")
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
     r = {}
     result = _get_network_interface(conn, name, network_interface_id)
@@ -1908,14 +1869,12 @@ def attach_network_interface(
     """
     if not salt.utils.data.exactly_one((name, network_interface_id)):
         raise SaltInvocationError(
-            "Exactly one (but not both) of 'name' or 'network_interface_id' "
-            "must be provided."
+            "Exactly one (but not both) of 'name' or 'network_interface_id' " "must be provided."
         )
 
     if not salt.utils.data.exactly_one((instance_name, instance_id)):
         raise SaltInvocationError(
-            "Exactly one (but not both) of 'instance_name' or 'instance_id' "
-            "must be provided."
+            "Exactly one (but not both) of 'instance_name' or 'instance_id' " "must be provided."
         )
 
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
@@ -1941,9 +1900,7 @@ def attach_network_interface(
             return False
 
     try:
-        r["result"] = conn.attach_network_interface(
-            network_interface_id, instance_id, device_index
-        )
+        r["result"] = conn.attach_network_interface(network_interface_id, instance_id, device_index)
     except boto.exception.EC2ResponseError as e:
         r["error"] = __utils__["boto.get_error"](e)
     return r
@@ -2016,9 +1973,7 @@ def modify_network_interface_attribute(
         salt myminion boto_ec2.modify_network_interface_attribute my_eni attr=description value='example description'
     """
     if not (name or network_interface_id):
-        raise SaltInvocationError(
-            "Either name or network_interface_id must be provided."
-        )
+        raise SaltInvocationError("Either name or network_interface_id must be provided.")
     if attr is None and value is None:
         raise SaltInvocationError("attr and value must be provided.")
     r = {}
@@ -2049,9 +2004,7 @@ def modify_network_interface_attribute(
             profile=profile,
         )
         if not _value:
-            r["error"] = {
-                "message": ("Security groups do not map to valid security" " group ids")
-            }
+            r["error"] = {"message": ("Security groups do not map to valid security" " group ids")}
             return r
     _attachment_id = None
     if _attr == "deleteOnTermination":
@@ -2242,18 +2195,16 @@ def set_volumes_tags(
         volumes = get_all_volumes(**args)
         log.debug("got volume list: %s", volumes)
         for vol in volumes:
-            tag_sets.setdefault(
-                vol.id.replace("-", "_"), {"vol": vol, "tags": tags.copy()}
-            )["tags"].update(tags.copy())
+            tag_sets.setdefault(vol.id.replace("-", "_"), {"vol": vol, "tags": tags.copy()})[
+                "tags"
+            ].update(tags.copy())
     log.debug("tag_sets after munging: %s", tag_sets)
 
     ### ...then loop through all those volume->tag pairs and apply them.
     changes = {"old": {}, "new": {}}
     for volume in tag_sets.values():
         vol, tags = volume["vol"], volume["tags"]
-        log.debug(
-            "current tags on vol.id %s: %s", vol.id, dict(getattr(vol, "tags", {}))
-        )
+        log.debug("current tags on vol.id %s: %s", vol.id, dict(getattr(vol, "tags", {})))
         curr = set(dict(getattr(vol, "tags", {})).keys())
         log.debug("requested tags on vol.id %s: %s", vol.id, tags)
         req = set(tags.keys())
@@ -2272,13 +2223,9 @@ def set_volumes_tags(
             d = {k: tags[k] for k in update}
             log.debug("Updated tags for vol.id %s: %s", vol.id, d)
         if not dry_run:
-            if not create_tags(
-                vol.id, tags, region=region, key=key, keyid=keyid, profile=profile
-            ):
+            if not create_tags(vol.id, tags, region=region, key=key, keyid=keyid, profile=profile):
                 ret["success"] = False
-                ret["comment"] = "Failed to set tags on vol.id {}: {}".format(
-                    vol.id, tags
-                )
+                ret["comment"] = "Failed to set tags on vol.id {}: {}".format(vol.id, tags)
                 return ret
             if authoritative:
                 if remove:
@@ -2292,9 +2239,7 @@ def set_volumes_tags(
                         profile=profile,
                     ):
                         ret["success"] = False
-                        ret[
-                            "comment"
-                        ] = "Failed to remove tags on vol.id {}: {}".format(
+                        ret["comment"] = "Failed to remove tags on vol.id {}: {}".format(
                             vol.id, remove
                         )
                         return ret
@@ -2450,11 +2395,7 @@ def detach_volume(
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
     try:
         ret = conn.detach_volume(volume_id, instance_id, device, force)
-        if (
-            ret
-            and wait_for_detachement
-            and not _wait_for_volume_available(conn, volume_id)
-        ):
+        if ret and wait_for_detachement and not _wait_for_volume_available(conn, volume_id):
             timeout_msg = 'Timed out waiting for the volume status "available".'
             log.error(timeout_msg)
             return False
@@ -2524,9 +2465,7 @@ def _wait_for_volume_available(conn, volume_id, retries=5, interval=5):
             return False
 
 
-def attach_volume(
-    volume_id, instance_id, device, region=None, key=None, keyid=None, profile=None
-):
+def attach_volume(volume_id, instance_id, device, region=None, key=None, keyid=None, profile=None):
     """
     Attach an EBS volume to an EC2 instance.
     ..

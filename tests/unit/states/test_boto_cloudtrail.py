@@ -7,12 +7,15 @@ import salt.config
 import salt.loader
 import salt.states.boto_cloudtrail as boto_cloudtrail
 from salt.utils.versions import LooseVersion
+
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
-from tests.support.unit import TestCase, skipIf
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
+from tests.support.unit import skipIf
+from tests.support.unit import TestCase
+from tests.unit.modules.test_boto_cloudtrail import BotoCloudTrailTestCaseMixin
 
 # pylint: disable=import-error,no-name-in-module,unused-import
-from tests.unit.modules.test_boto_cloudtrail import BotoCloudTrailTestCaseMixin
 
 try:
     import boto
@@ -57,9 +60,7 @@ if _has_required_boto():
         "keyid": secret_key,
         "profile": {},
     }
-    error_message = (
-        "An error occurred (101) when calling the {0} operation: Test-defined error"
-    )
+    error_message = "An error occurred (101) when calling the {0} operation: Test-defined error"
     not_found_error = ClientError(
         {"Error": {"Code": "TrailNotFoundException", "Message": "Test-defined error"}},
         "msg",
@@ -157,9 +158,7 @@ class BotoCloudTrailStateTestCaseBase(TestCase, LoaderModuleMockMixin):
         session_instance.client.return_value = self.conn
 
 
-class BotoCloudTrailTestCase(
-    BotoCloudTrailStateTestCaseBase, BotoCloudTrailTestCaseMixin
-):
+class BotoCloudTrailTestCase(BotoCloudTrailStateTestCaseBase, BotoCloudTrailTestCaseMixin):
     """
     TestCase for salt.modules.boto_cloudtrail state.module
     """
@@ -172,50 +171,44 @@ class BotoCloudTrailTestCase(
         self.conn.get_trail_status.side_effect = [not_found_error, status_ret]
         self.conn.create_trail.return_value = trail_ret
         self.conn.describe_trails.return_value = {"trailList": [trail_ret]}
-        with patch.dict(
-            self.funcs, {"boto_iam.get_account_id": MagicMock(return_value="1234")}
-        ):
+        with patch.dict(self.funcs, {"boto_iam.get_account_id": MagicMock(return_value="1234")}):
             result = self.salt_states["boto_cloudtrail.present"](
                 "trail present",
                 Name=trail_ret["Name"],
                 S3BucketName=trail_ret["S3BucketName"],
             )
 
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"]["new"]["trail"]["Name"], trail_ret["Name"])
+        assert result["result"]
+        assert result["changes"]["new"]["trail"]["Name"] == trail_ret["Name"]
 
     @pytest.mark.slow_test
     def test_present_when_trail_exists(self):
         self.conn.get_trail_status.return_value = status_ret
         self.conn.create_trail.return_value = trail_ret
         self.conn.describe_trails.return_value = {"trailList": [trail_ret]}
-        with patch.dict(
-            self.funcs, {"boto_iam.get_account_id": MagicMock(return_value="1234")}
-        ):
+        with patch.dict(self.funcs, {"boto_iam.get_account_id": MagicMock(return_value="1234")}):
             result = self.salt_states["boto_cloudtrail.present"](
                 "trail present",
                 Name=trail_ret["Name"],
                 S3BucketName=trail_ret["S3BucketName"],
                 LoggingEnabled=False,
             )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_present_with_failure(self):
         self.conn.get_trail_status.side_effect = [not_found_error, status_ret]
         self.conn.create_trail.side_effect = ClientError(error_content, "create_trail")
-        with patch.dict(
-            self.funcs, {"boto_iam.get_account_id": MagicMock(return_value="1234")}
-        ):
+        with patch.dict(self.funcs, {"boto_iam.get_account_id": MagicMock(return_value="1234")}):
             result = self.salt_states["boto_cloudtrail.present"](
                 "trail present",
                 Name=trail_ret["Name"],
                 S3BucketName=trail_ret["S3BucketName"],
                 LoggingEnabled=False,
             )
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]
 
     def test_absent_when_trail_does_not_exist(self):
         """
@@ -223,18 +216,18 @@ class BotoCloudTrailTestCase(
         """
         self.conn.get_trail_status.side_effect = not_found_error
         result = self.salt_states["boto_cloudtrail.absent"]("test", "mytrail")
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     def test_absent_when_trail_exists(self):
         self.conn.get_trail_status.return_value = status_ret
         result = self.salt_states["boto_cloudtrail.absent"]("test", trail_ret["Name"])
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"]["new"]["trail"], None)
+        assert result["result"]
+        assert result["changes"]["new"]["trail"] == None
 
     def test_absent_with_failure(self):
         self.conn.get_trail_status.return_value = status_ret
         self.conn.delete_trail.side_effect = ClientError(error_content, "delete_trail")
         result = self.salt_states["boto_cloudtrail.absent"]("test", trail_ret["Name"])
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]

@@ -40,8 +40,6 @@ Connection module for Amazon SNS
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 
 import salt.utils.versions
@@ -143,9 +141,7 @@ def delete(name, region=None, key=None, keyid=None, profile=None):
     return True
 
 
-def get_all_subscriptions_by_topic(
-    name, region=None, key=None, keyid=None, profile=None
-):
+def get_all_subscriptions_by_topic(name, region=None, key=None, keyid=None, profile=None):
     """
     Get list of all subscriptions to a specific topic.
 
@@ -160,18 +156,14 @@ def get_all_subscriptions_by_topic(
         pass
 
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-    ret = conn.get_all_subscriptions_by_topic(
-        get_arn(name, region, key, keyid, profile)
-    )
+    ret = conn.get_all_subscriptions_by_topic(get_arn(name, region, key, keyid, profile))
     __context__[cache_key] = ret["ListSubscriptionsByTopicResponse"][
         "ListSubscriptionsByTopicResult"
     ]["Subscriptions"]
     return __context__[cache_key]
 
 
-def subscribe(
-    topic, protocol, endpoint, region=None, key=None, keyid=None, profile=None
-):
+def subscribe(topic, protocol, endpoint, region=None, key=None, keyid=None, profile=None):
     """
     Subscribe to a Topic.
 
@@ -189,9 +181,7 @@ def subscribe(
     return True
 
 
-def unsubscribe(
-    topic, subscription_arn, region=None, key=None, keyid=None, profile=None
-):
+def unsubscribe(topic, subscription_arn, region=None, key=None, keyid=None, profile=None):
     """
     Unsubscribe a specific SubscriptionArn of a topic.
 

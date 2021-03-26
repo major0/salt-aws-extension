@@ -15,16 +15,15 @@ Example Usage:
     .. code-block:: python
 
         def __virtual__():
-            __utils__['boto.assign_funcs'](__name__, 'vpc')
+            __utils__["boto.assign_funcs"](__name__, "vpc")
+
 
         def test():
             conn = _get_conn()
-            vpc_id = _cache_id('test-vpc')
+            vpc_id = _cache_id("test-vpc")
 
 .. versionadded:: 2015.8.0
 """
-
-
 import hashlib
 import logging
 import sys
@@ -119,9 +118,7 @@ def cache_id(
 
     .. code-block:: python
 
-        __utils__['boto.cache_id']('ec2', 'myinstance',
-                                   'i-a1b2c3',
-                                   profile='custom_profile')
+        __utils__["boto.cache_id"]("ec2", "myinstance", "i-a1b2c3", profile="custom_profile")
     """
 
     cxkey, _, _, _ = _get_profile(service, region, key, keyid, profile)
@@ -154,22 +151,20 @@ def cache_id_func(service):
 
     .. code-block:: python
 
-        cache_id = __utils__['boto.cache_id_func']('ec2')
-        cache_id('myinstance', 'i-a1b2c3')
-        instance_id = cache_id('myinstance')
+        cache_id = __utils__["boto.cache_id_func"]("ec2")
+        cache_id("myinstance", "i-a1b2c3")
+        instance_id = cache_id("myinstance")
     """
     return partial(cache_id, service)
 
 
-def get_connection(
-    service, module=None, region=None, key=None, keyid=None, profile=None
-):
+def get_connection(service, module=None, region=None, key=None, keyid=None, profile=None):
     """
     Return a boto connection for the service.
 
     .. code-block:: python
 
-        conn = __utils__['boto.get_connection']('ec2', profile='custom_profile')
+        conn = __utils__["boto.get_connection"]("ec2", profile="custom_profile")
     """
 
     # future lint: disable=blacklisted-function
@@ -186,9 +181,7 @@ def get_connection(
         return __context__[cxkey]
 
     try:
-        conn = svc_mod.connect_to_region(
-            region, aws_access_key_id=keyid, aws_secret_access_key=key
-        )
+        conn = svc_mod.connect_to_region(region, aws_access_key_id=keyid, aws_secret_access_key=key)
         if conn is None:
             raise SaltInvocationError('Region "{}" is not ' "valid.".format(region))
     except boto.exception.NoAuthHandlerFound:
@@ -207,7 +200,7 @@ def get_connection_func(service, module=None):
 
     .. code-block:: python
 
-        get_conn = __utils__['boto.get_connection_func']('ec2')
+        get_conn = __utils__["boto.get_connection_func"]("ec2")
         conn = get_conn()
     """
     return partial(get_connection, service, module=module)
@@ -259,7 +252,7 @@ def assign_funcs(modname, service, module=None, pack=None):
 
     .. code-block:: python
 
-        __utils__['boto.assign_partials'](__name__, 'ec2')
+        __utils__["boto.assign_partials"](__name__, "ec2")
     """
     if pack:
         global __salt__  # pylint: disable=W0601

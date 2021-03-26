@@ -41,17 +41,15 @@ Execution module for Amazon Elasticache using boto3
 
 :depends: boto3
 """
-
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 import time
 
 import salt.utils.compat
 import salt.utils.versions
-from salt.exceptions import CommandExecutionError, SaltInvocationError
+from salt.exceptions import CommandExecutionError
+from salt.exceptions import SaltInvocationError
 
 log = logging.getLogger(__name__)
 
@@ -115,9 +113,7 @@ def _describe_resource(
         func = "describe_" + res_type + "s"
         f = getattr(conn, func)
     except (AttributeError, KeyError) as e:
-        raise SaltInvocationError(
-            "No function '{}()' found: {}".format(func, e.message)
-        )
+        raise SaltInvocationError("No function '{}()' found: {}".format(func, e.message))
     # Undocumented, but you can't pass 'Marker' if searching for a specific resource...
     args.update({name_param: name} if name else {"Marker": ""})
     args = {k: v for k, v in args.items() if not k.startswith("_")}
@@ -149,8 +145,7 @@ def _delete_resource(
         wait = int(wait)
     except Exception:  # pylint: disable=broad-except
         raise SaltInvocationError(
-            "Bad value ('{}') passed for 'wait' param - must be an "
-            "int or boolean.".format(wait)
+            "Bad value ('{}') passed for 'wait' param - must be an " "int or boolean.".format(wait)
         )
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
     if name_param in args:
@@ -171,9 +166,7 @@ def _delete_resource(
             func = "describe_" + res_type + "s"
             s = globals()[func]
     except (AttributeError, KeyError) as e:
-        raise SaltInvocationError(
-            "No function '{}()' found: {}".format(func, e.message)
-        )
+        raise SaltInvocationError("No function '{}()' found: {}".format(func, e.message))
     try:
 
         f(**args)
@@ -217,8 +210,7 @@ def _create_resource(
         wait = int(wait)
     except Exception:  # pylint: disable=broad-except
         raise SaltInvocationError(
-            "Bad value ('{}') passed for 'wait' param - must be an "
-            "int or boolean.".format(wait)
+            "Bad value ('{}') passed for 'wait' param - must be an " "int or boolean.".format(wait)
         )
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
     if name_param in args:
@@ -239,9 +231,7 @@ def _create_resource(
             func = "describe_" + res_type + "s"
             s = globals()[func]
     except (AttributeError, KeyError) as e:
-        raise SaltInvocationError(
-            "No function '{}()' found: {}".format(func, e.message)
-        )
+        raise SaltInvocationError("No function '{}()' found: {}".format(func, e.message))
     try:
         f(**args)
         if not wait:
@@ -260,14 +250,10 @@ def _create_resource(
                 log.info("%s %s created and available.", desc.title(), name)
                 return True
             sleep = wait if wait % 60 == wait else 60
-            log.info(
-                "Sleeping %s seconds for %s %s to become available.", sleep, desc, name
-            )
+            log.info("Sleeping %s seconds for %s %s to become available.", sleep, desc, name)
             time.sleep(sleep)
             wait -= sleep
-        log.error(
-            "%s %s not available after %s seconds!", desc.title(), name, orig_wait
-        )
+        log.error("%s %s not available after %s seconds!", desc.title(), name, orig_wait)
         return False
     except botocore.exceptions.ClientError as e:
         msg = "Failed to create {} {}: {}".format(desc, name, e)
@@ -293,8 +279,7 @@ def _modify_resource(
         wait = int(wait)
     except Exception:  # pylint: disable=broad-except
         raise SaltInvocationError(
-            "Bad value ('{}') passed for 'wait' param - must be an "
-            "int or boolean.".format(wait)
+            "Bad value ('{}') passed for 'wait' param - must be an " "int or boolean.".format(wait)
         )
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
     if name_param in args:
@@ -315,9 +300,7 @@ def _modify_resource(
             func = "describe_" + res_type + "s"
             s = globals()[func]
     except (AttributeError, KeyError) as e:
-        raise SaltInvocationError(
-            "No function '{}()' found: {}".format(func, e.message)
-        )
+        raise SaltInvocationError("No function '{}()' found: {}".format(func, e.message))
     try:
         f(**args)
         if not wait:
@@ -336,14 +319,10 @@ def _modify_resource(
                 log.info("%s %s modified and available.", desc.title(), name)
                 return True
             sleep = wait if wait % 60 == wait else 60
-            log.info(
-                "Sleeping %s seconds for %s %s to become available.", sleep, desc, name
-            )
+            log.info("Sleeping %s seconds for %s %s to become available.", sleep, desc, name)
             time.sleep(sleep)
             wait -= sleep
-        log.error(
-            "%s %s not available after %s seconds!", desc.title(), name, orig_wait
-        )
+        log.error("%s %s not available after %s seconds!", desc.title(), name, orig_wait)
         return False
     except botocore.exceptions.ClientError as e:
         msg = "Failed to modify {} {}: {}".format(desc, name, e)
@@ -378,9 +357,7 @@ def describe_cache_clusters(
     )
 
 
-def cache_cluster_exists(
-    name, conn=None, region=None, key=None, keyid=None, profile=None
-):
+def cache_cluster_exists(name, conn=None, region=None, key=None, keyid=None, profile=None):
     """
     Check to see if a cache cluster exists.
 
@@ -398,14 +375,7 @@ def cache_cluster_exists(
 
 
 def create_cache_cluster(
-    name,
-    wait=600,
-    security_groups=None,
-    region=None,
-    key=None,
-    keyid=None,
-    profile=None,
-    **args
+    name, wait=600, security_groups=None, region=None, key=None, keyid=None, profile=None, **args
 ):
     """
     Create a cache cluster.
@@ -447,14 +417,7 @@ def create_cache_cluster(
 
 
 def modify_cache_cluster(
-    name,
-    wait=600,
-    security_groups=None,
-    region=None,
-    key=None,
-    keyid=None,
-    profile=None,
-    **args
+    name, wait=600, security_groups=None, region=None, key=None, keyid=None, profile=None, **args
 ):
     """
     Update a cache cluster in place.
@@ -500,9 +463,7 @@ def modify_cache_cluster(
     )
 
 
-def delete_cache_cluster(
-    name, wait=600, region=None, key=None, keyid=None, profile=None, **args
-):
+def delete_cache_cluster(name, wait=600, region=None, key=None, keyid=None, profile=None, **args):
     """
     Delete a cache cluster.
 
@@ -564,21 +525,12 @@ def replication_group_exists(name, region=None, key=None, keyid=None, profile=No
         salt myminion boto3_elasticache.replication_group_exists myelasticache
     """
     return bool(
-        describe_replication_groups(
-            name=name, region=region, key=key, keyid=keyid, profile=profile
-        )
+        describe_replication_groups(name=name, region=region, key=key, keyid=keyid, profile=profile)
     )
 
 
 def create_replication_group(
-    name,
-    wait=600,
-    security_groups=None,
-    region=None,
-    key=None,
-    keyid=None,
-    profile=None,
-    **args
+    name, wait=600, security_groups=None, region=None, key=None, keyid=None, profile=None, **args
 ):
     """
     Create a replication group.
@@ -620,14 +572,7 @@ def create_replication_group(
 
 
 def modify_replication_group(
-    name,
-    wait=600,
-    security_groups=None,
-    region=None,
-    key=None,
-    keyid=None,
-    profile=None,
-    **args
+    name, wait=600, security_groups=None, region=None, key=None, keyid=None, profile=None, **args
 ):
     """
     Modify a replication group.
@@ -859,9 +804,7 @@ def modify_cache_subnet_group(
     )
 
 
-def delete_cache_subnet_group(
-    name, region=None, key=None, keyid=None, profile=None, **args
-):
+def delete_cache_subnet_group(name, region=None, key=None, keyid=None, profile=None, **args):
     """
     Delete an ElastiCache subnet group.
 
@@ -927,9 +870,7 @@ def cache_security_group_exists(name, region=None, key=None, keyid=None, profile
     )
 
 
-def create_cache_security_group(
-    name, region=None, key=None, keyid=None, profile=None, **args
-):
+def create_cache_security_group(name, region=None, key=None, keyid=None, profile=None, **args):
     """
     Create a cache security group.
 
@@ -952,9 +893,7 @@ def create_cache_security_group(
     )
 
 
-def delete_cache_security_group(
-    name, region=None, key=None, keyid=None, profile=None, **args
-):
+def delete_cache_security_group(name, region=None, key=None, keyid=None, profile=None, **args):
     """
     Delete a cache security group.
 
@@ -1058,9 +997,7 @@ def revoke_cache_security_group_ingress(
         return False
 
 
-def list_tags_for_resource(
-    name, region=None, key=None, keyid=None, profile=None, **args
-):
+def list_tags_for_resource(name, region=None, key=None, keyid=None, profile=None, **args):
     """
     List tags on an Elasticache resource.
 
@@ -1081,8 +1018,7 @@ def list_tags_for_resource(
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
     if "ResourceName" in args:
         log.info(
-            "'name: %s' param being overridden by explicitly provided "
-            "'ResourceName: %s'",
+            "'name: %s' param being overridden by explicitly provided " "'ResourceName: %s'",
             name,
             args["ResourceName"],
         )
@@ -1122,8 +1058,7 @@ def add_tags_to_resource(name, region=None, key=None, keyid=None, profile=None, 
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
     if "ResourceName" in args:
         log.info(
-            "'name: %s' param being overridden by explicitly provided "
-            "'ResourceName: %s'",
+            "'name: %s' param being overridden by explicitly provided " "'ResourceName: %s'",
             name,
             args["ResourceName"],
         )
@@ -1140,9 +1075,7 @@ def add_tags_to_resource(name, region=None, key=None, keyid=None, profile=None, 
         return False
 
 
-def remove_tags_from_resource(
-    name, region=None, key=None, keyid=None, profile=None, **args
-):
+def remove_tags_from_resource(name, region=None, key=None, keyid=None, profile=None, **args):
     """
     Remove tags from an Elasticache resource.
 
@@ -1164,8 +1097,7 @@ def remove_tags_from_resource(
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
     if "ResourceName" in args:
         log.info(
-            "'name: %s' param being overridden by explicitly provided "
-            "'ResourceName: %s'",
+            "'name: %s' param being overridden by explicitly provided " "'ResourceName: %s'",
             name,
             args["ResourceName"],
         )
@@ -1196,8 +1128,7 @@ def copy_snapshot(name, region=None, key=None, keyid=None, profile=None, **args)
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
     if "SourceSnapshotName" in args:
         log.info(
-            "'name: %s' param being overridden by explicitly provided "
-            "'SourceSnapshotName: %s'",
+            "'name: %s' param being overridden by explicitly provided " "'SourceSnapshotName: %s'",
             name,
             args["SourceSnapshotName"],
         )
@@ -1240,9 +1171,7 @@ def describe_cache_parameter_groups(
     )
 
 
-def create_cache_parameter_group(
-    name, region=None, key=None, keyid=None, profile=None, **args
-):
+def create_cache_parameter_group(name, region=None, key=None, keyid=None, profile=None, **args):
     """
     Create a cache parameter group.
 
@@ -1268,9 +1197,7 @@ def create_cache_parameter_group(
     )
 
 
-def delete_cache_parameter_group(
-    name, region=None, key=None, keyid=None, profile=None, **args
-):
+def delete_cache_parameter_group(name, region=None, key=None, keyid=None, profile=None, **args):
     """
     Delete a cache parameter group.
 

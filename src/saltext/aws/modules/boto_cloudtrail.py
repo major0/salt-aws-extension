@@ -47,8 +47,6 @@ The dependencies listed above can be installed via package or pip.
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 
 import salt.utils.compat
@@ -450,9 +448,7 @@ def add_tags(Name, region=None, key=None, keyid=None, profile=None, **kwargs):
                 continue
             tagslist.append({"Key": str(k), "Value": str(v)})
         conn.add_tags(
-            ResourceId=_get_trail_arn(
-                Name, region=region, key=key, keyid=keyid, profile=profile
-            ),
+            ResourceId=_get_trail_arn(Name, region=region, key=key, keyid=keyid, profile=profile),
             TagsList=tagslist,
         )
         return {"tagged": True}
@@ -483,9 +479,7 @@ def remove_tags(Name, region=None, key=None, keyid=None, profile=None, **kwargs)
                 continue
             tagslist.append({"Key": str(k), "Value": str(v)})
         conn.remove_tags(
-            ResourceId=_get_trail_arn(
-                Name, region=region, key=key, keyid=keyid, profile=profile
-            ),
+            ResourceId=_get_trail_arn(Name, region=region, key=key, keyid=keyid, profile=profile),
             TagsList=tagslist,
         )
         return {"tagged": True}

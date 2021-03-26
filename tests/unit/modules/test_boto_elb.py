@@ -3,23 +3,22 @@ import os.path
 from copy import deepcopy
 
 import pkg_resources
-
 import salt.config
 import salt.loader
 import salt.modules.boto_elb as boto_elb
 import salt.utils.versions
 from salt.ext import six
+
 from tests.support.mixins import LoaderModuleMockMixin
 from tests.support.runtests import RUNTIME_VARS
-from tests.support.unit import TestCase, skipIf
+from tests.support.unit import skipIf
+from tests.support.unit import TestCase
 
 # pylint: disable=import-error
 try:
     import boto
 
-    boto.ENDPOINTS_PATH = os.path.join(
-        RUNTIME_VARS.TESTS_DIR, "unit/files/endpoints.json"
-    )
+    boto.ENDPOINTS_PATH = os.path.join(RUNTIME_VARS.TESTS_DIR, "unit/files/endpoints.json")
     import boto.ec2.elb
 
     HAS_BOTO = True
@@ -96,9 +95,7 @@ def _has_required_moto():
         )
         if moto_version < salt.utils.versions.LooseVersion(required_moto):
             return False
-        elif six.PY3 and moto_version < salt.utils.versions.LooseVersion(
-            required_moto_py3
-        ):
+        elif six.PY3 and moto_version < salt.utils.versions.LooseVersion(required_moto_py3):
             return False
 
     return True
@@ -118,9 +115,7 @@ class BotoElbTestCase(TestCase, LoaderModuleMockMixin):
 
     def setup_loader_modules(self):
         opts = salt.config.DEFAULT_MASTER_OPTS.copy()
-        utils = salt.loader.utils(
-            opts, whitelist=["boto", "args", "systemd", "path", "platform"]
-        )
+        utils = salt.loader.utils(opts, whitelist=["boto", "args", "systemd", "path", "platform"])
         funcs = salt.loader.minion_mods(opts, utils=utils)
         return {boto_elb: {"__opts__": opts, "__utils__": utils, "__salt__": funcs}}
 
@@ -145,7 +140,7 @@ class BotoElbTestCase(TestCase, LoaderModuleMockMixin):
         register_result = boto_elb.register_instances(
             elb_name, reservations.instances[0].id, **conn_parameters
         )
-        self.assertEqual(True, register_result)
+        assert True == register_result
 
     @mock_ec2_deprecated
     @mock_elb_deprecated
@@ -160,16 +155,12 @@ class BotoElbTestCase(TestCase, LoaderModuleMockMixin):
         elb_name = "TestRegisterInstancesValidIdResult"
         conn_elb.create_load_balancer(elb_name, zones, [(80, 80, "http")])
         reservations = conn_ec2.run_instances("ami-08389d60")
-        boto_elb.register_instances(
-            elb_name, reservations.instances[0].id, **conn_parameters
-        )
+        boto_elb.register_instances(elb_name, reservations.instances[0].id, **conn_parameters)
         load_balancer_refreshed = conn_elb.get_all_load_balancers(elb_name)[0]
-        registered_instance_ids = [
-            instance.id for instance in load_balancer_refreshed.instances
-        ]
+        registered_instance_ids = [instance.id for instance in load_balancer_refreshed.instances]
 
         log.debug(load_balancer_refreshed.instances)
-        self.assertEqual([reservations.instances[0].id], registered_instance_ids)
+        assert [reservations.instances[0].id] == registered_instance_ids
 
     @mock_ec2_deprecated
     @mock_elb_deprecated
@@ -182,15 +173,13 @@ class BotoElbTestCase(TestCase, LoaderModuleMockMixin):
         conn_elb = boto.ec2.elb.connect_to_region(region, **boto_conn_parameters)
         zones = [zone.name for zone in conn_ec2.get_all_zones()]
         elb_name = "TestDeregisterInstancesValidIdResult"
-        load_balancer = conn_elb.create_load_balancer(
-            elb_name, zones, [(80, 80, "http")]
-        )
+        load_balancer = conn_elb.create_load_balancer(elb_name, zones, [(80, 80, "http")])
         reservations = conn_ec2.run_instances("ami-08389d60")
         load_balancer.register_instances(reservations.instances[0].id)
         deregister_result = boto_elb.deregister_instances(
             elb_name, reservations.instances[0].id, **conn_parameters
         )
-        self.assertEqual(True, deregister_result)
+        assert True == deregister_result
 
     @mock_ec2_deprecated
     @mock_elb_deprecated
@@ -203,22 +192,16 @@ class BotoElbTestCase(TestCase, LoaderModuleMockMixin):
         conn_elb = boto.ec2.elb.connect_to_region(region, **boto_conn_parameters)
         zones = [zone.name for zone in conn_ec2.get_all_zones()]
         elb_name = "TestDeregisterInstancesValidIdString"
-        load_balancer = conn_elb.create_load_balancer(
-            elb_name, zones, [(80, 80, "http")]
-        )
+        load_balancer = conn_elb.create_load_balancer(elb_name, zones, [(80, 80, "http")])
         reservations = conn_ec2.run_instances("ami-08389d60", min_count=2)
         all_instance_ids = [instance.id for instance in reservations.instances]
         load_balancer.register_instances(all_instance_ids)
-        boto_elb.deregister_instances(
-            elb_name, reservations.instances[0].id, **conn_parameters
-        )
+        boto_elb.deregister_instances(elb_name, reservations.instances[0].id, **conn_parameters)
         load_balancer_refreshed = conn_elb.get_all_load_balancers(elb_name)[0]
         expected_instances = deepcopy(all_instance_ids)
         expected_instances.remove(reservations.instances[0].id)
-        actual_instances = [
-            instance.id for instance in load_balancer_refreshed.instances
-        ]
-        self.assertEqual(actual_instances, expected_instances)
+        actual_instances = [instance.id for instance in load_balancer_refreshed.instances]
+        assert actual_instances == expected_instances
 
     @mock_ec2_deprecated
     @mock_elb_deprecated
@@ -231,9 +214,7 @@ class BotoElbTestCase(TestCase, LoaderModuleMockMixin):
         conn_elb = boto.ec2.elb.connect_to_region(region, **boto_conn_parameters)
         zones = [zone.name for zone in conn_ec2.get_all_zones()]
         elb_name = "TestDeregisterInstancesValidIdList"
-        load_balancer = conn_elb.create_load_balancer(
-            elb_name, zones, [(80, 80, "http")]
-        )
+        load_balancer = conn_elb.create_load_balancer(elb_name, zones, [(80, 80, "http")])
         reservations = conn_ec2.run_instances("ami-08389d60", min_count=3)
         all_instance_ids = [instance.id for instance in reservations.instances]
         load_balancer.register_instances(all_instance_ids)
@@ -243,7 +224,5 @@ class BotoElbTestCase(TestCase, LoaderModuleMockMixin):
         expected_instances = [reservations.instances[-1].id]
         boto_elb.deregister_instances(elb_name, deregister_instances, **conn_parameters)
         load_balancer_refreshed = conn_elb.get_all_load_balancers(elb_name)[0]
-        actual_instances = [
-            instance.id for instance in load_balancer_refreshed.instances
-        ]
-        self.assertEqual(actual_instances, expected_instances)
+        actual_instances = [instance.id for instance in load_balancer_refreshed.instances]
+        assert actual_instances == expected_instances

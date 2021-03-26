@@ -35,8 +35,6 @@ Connection module for Amazon IAM
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 import time
 import urllib.parse
@@ -347,9 +345,7 @@ def get_user(user_name=None, region=None, key=None, keyid=None, profile=None):
         return False
 
 
-def create_group(
-    group_name, path=None, region=None, key=None, keyid=None, profile=None
-):
+def create_group(group_name, path=None, region=None, key=None, keyid=None, profile=None):
     """
     Create a group.
 
@@ -421,9 +417,7 @@ def get_group_members(group_name, region=None, key=None, keyid=None, profile=Non
             info = conn.get_group(group_name, marker=marker, max_items=1000)
             if not info:
                 return False
-            truncated = bool(
-                info["get_group_response"]["get_group_result"]["is_truncated"]
-            )
+            truncated = bool(info["get_group_response"]["get_group_result"]["is_truncated"])
             if truncated and "marker" in info["get_group_response"]["get_group_result"]:
                 marker = info["get_group_response"]["get_group_result"]["marker"]
             else:
@@ -437,9 +431,7 @@ def get_group_members(group_name, region=None, key=None, keyid=None, profile=Non
         return False
 
 
-def add_user_to_group(
-    user_name, group_name, region=None, key=None, keyid=None, profile=None
-):
+def add_user_to_group(user_name, group_name, region=None, key=None, keyid=None, profile=None):
     """
     Add user to group.
 
@@ -471,9 +463,7 @@ def add_user_to_group(
         return False
 
 
-def user_exists_in_group(
-    user_name, group_name, region=None, key=None, keyid=None, profile=None
-):
+def user_exists_in_group(user_name, group_name, region=None, key=None, keyid=None, profile=None):
     """
     Check if user exists in group.
 
@@ -492,16 +482,12 @@ def user_exists_in_group(
     if users:
         for _user in users:
             if user_name == _user["user_name"]:
-                log.debug(
-                    "IAM user %s is already in IAM group %s.", user_name, group_name
-                )
+                log.debug("IAM user %s is already in IAM group %s.", user_name, group_name)
                 return True
     return False
 
 
-def remove_user_from_group(
-    group_name, user_name, region=None, key=None, keyid=None, profile=None
-):
+def remove_user_from_group(group_name, user_name, region=None, key=None, keyid=None, profile=None):
     """
     Remove user from group.
 
@@ -572,9 +558,7 @@ def put_group_policy(
     return False
 
 
-def delete_group_policy(
-    group_name, policy_name, region=None, key=None, keyid=None, profile=None
-):
+def delete_group_policy(group_name, policy_name, region=None, key=None, keyid=None, profile=None):
     """
     Delete a group policy.
 
@@ -592,21 +576,15 @@ def delete_group_policy(
         return True
     try:
         conn.delete_group_policy(group_name, policy_name)
-        log.info(
-            "Successfully deleted policy %s for IAM group %s.", policy_name, group_name
-        )
+        log.info("Successfully deleted policy %s for IAM group %s.", policy_name, group_name)
         return True
     except boto.exception.BotoServerError as e:
         log.debug(e)
-        log.error(
-            "Failed to delete policy %s for IAM group %s.", policy_name, group_name
-        )
+        log.error("Failed to delete policy %s for IAM group %s.", policy_name, group_name)
         return False
 
 
-def get_group_policy(
-    group_name, policy_name, region=None, key=None, keyid=None, profile=None
-):
+def get_group_policy(group_name, policy_name, region=None, key=None, keyid=None, profile=None):
     """
     Retrieves the specified policy document for the specified group.
 
@@ -655,15 +633,11 @@ def get_all_groups(path_prefix="/", region=None, key=None, keyid=None, profile=N
     while marker:
         _groups = conn.get_all_groups(path_prefix=path_prefix, marker=marker)
         groups = groups + _groups.list_groups_response.list_groups_result.groups
-        marker = getattr(
-            _groups.list_groups_response.list_groups_result, "marker", None
-        )
+        marker = getattr(_groups.list_groups_response.list_groups_result, "marker", None)
     return groups
 
 
-def get_all_instance_profiles(
-    path_prefix="/", region=None, key=None, keyid=None, profile=None
-):
+def get_all_instance_profiles(path_prefix="/", region=None, key=None, keyid=None, profile=None):
     """
     Get and return all IAM instance profiles, starting at the optional path.
 
@@ -687,9 +661,7 @@ def get_all_instance_profiles(
     return profiles
 
 
-def list_instance_profiles(
-    path_prefix="/", region=None, key=None, keyid=None, profile=None
-):
+def list_instance_profiles(path_prefix="/", region=None, key=None, keyid=None, profile=None):
     """
     List all IAM instance profiles, starting at the optional path.
 
@@ -753,9 +725,7 @@ def delete_group(group_name, region=None, key=None, keyid=None, profile=None):
         return False
 
 
-def create_login_profile(
-    user_name, password, region=None, key=None, keyid=None, profile=None
-):
+def create_login_profile(user_name, password, region=None, key=None, keyid=None, profile=None):
     """
     Creates a login profile for the specified user, give the user the
     ability to access AWS services and the AWS Management Console.
@@ -835,9 +805,7 @@ def get_all_mfa_devices(user_name, region=None, key=None, keyid=None, profile=No
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
     try:
         result = conn.get_all_mfa_devices(user_name)
-        devices = result["list_mfa_devices_response"]["list_mfa_devices_result"][
-            "mfa_devices"
-        ]
+        devices = result["list_mfa_devices_response"]["list_mfa_devices_result"]["mfa_devices"]
         return devices
     except boto.exception.BotoServerError as e:
         log.debug(e)
@@ -848,9 +816,7 @@ def get_all_mfa_devices(user_name, region=None, key=None, keyid=None, profile=No
         return False
 
 
-def deactivate_mfa_device(
-    user_name, serial, region=None, key=None, keyid=None, profile=None
-):
+def deactivate_mfa_device(user_name, serial, region=None, key=None, keyid=None, profile=None):
     """
     Deactivates the specified MFA device and removes it from association with
     the user.
@@ -875,13 +841,9 @@ def deactivate_mfa_device(
     except boto.exception.BotoServerError as e:
         log.debug(e)
         if "Not Found" in e:
-            log.info(
-                "MFA device %s not associated with IAM user %s.", serial, user_name
-            )
+            log.info("MFA device %s not associated with IAM user %s.", serial, user_name)
             return True
-        log.error(
-            "Failed to deactivate MFA device %s for IAM user %s.", serial, user_name
-        )
+        log.error("Failed to deactivate MFA device %s for IAM user %s.", serial, user_name)
         return False
 
 
@@ -1088,17 +1050,13 @@ def associate_profile_to_role(
     if not instance_profile_exists(profile_name, region, key, keyid, profile):
         log.error("Instance profile %s does not exist.", profile_name)
         return False
-    associated = profile_associated(
-        role_name, profile_name, region, key, keyid, profile
-    )
+    associated = profile_associated(role_name, profile_name, region, key, keyid, profile)
     if associated:
         return True
     else:
         try:
             conn.add_role_to_instance_profile(profile_name, role_name)
-            log.info(
-                "Added %s instance profile to IAM role %s.", profile_name, role_name
-            )
+            log.info("Added %s instance profile to IAM role %s.", profile_name, role_name)
             return True
         except boto.exception.BotoServerError as e:
             log.debug(e)
@@ -1130,17 +1088,13 @@ def disassociate_profile_from_role(
     if not instance_profile_exists(profile_name, region, key, keyid, profile):
         log.error("Instance profile %s does not exist.", profile_name)
         return False
-    associated = profile_associated(
-        role_name, profile_name, region, key, keyid, profile
-    )
+    associated = profile_associated(role_name, profile_name, region, key, keyid, profile)
     if not associated:
         return True
     else:
         try:
             conn.remove_role_from_instance_profile(profile_name, role_name)
-            log.info(
-                "Removed %s instance profile from IAM role %s.", profile_name, role_name
-            )
+            log.info("Removed %s instance profile from IAM role %s.", profile_name, role_name)
             return True
         except boto.exception.BotoServerError as e:
             log.debug(e)
@@ -1173,9 +1127,7 @@ def list_role_policies(role_name, region=None, key=None, keyid=None, profile=Non
         return []
 
 
-def get_role_policy(
-    role_name, policy_name, region=None, key=None, keyid=None, profile=None
-):
+def get_role_policy(role_name, policy_name, region=None, key=None, keyid=None, profile=None):
     """
     Get a role policy.
 
@@ -1232,15 +1184,11 @@ def create_role_policy(
         return True
     except boto.exception.BotoServerError as e:
         log.error(e)
-        log.error(
-            "Failed to %s policy %s for IAM role %s.", mode, policy_name, role_name
-        )
+        log.error("Failed to %s policy %s for IAM role %s.", mode, policy_name, role_name)
         return False
 
 
-def delete_role_policy(
-    role_name, policy_name, region=None, key=None, keyid=None, profile=None
-):
+def delete_role_policy(role_name, policy_name, region=None, key=None, keyid=None, profile=None):
     """
     Delete a role policy.
 
@@ -1257,9 +1205,7 @@ def delete_role_policy(
         return True
     try:
         conn.delete_role_policy(role_name, policy_name)
-        log.info(
-            "Successfully deleted policy %s for IAM role %s.", policy_name, role_name
-        )
+        log.info("Successfully deleted policy %s for IAM role %s.", policy_name, role_name)
         return True
     except boto.exception.BotoServerError as e:
         log.debug(e)
@@ -1358,15 +1304,12 @@ def get_account_id(region=None, key=None, keyid=None, profile=None):
             # If call failed, then let's try to get the ARN from the metadata
             timeout = boto.config.getfloat("Boto", "metadata_service_timeout", 1.0)
             attempts = boto.config.getint("Boto", "metadata_service_num_attempts", 1)
-            identity = boto.utils.get_instance_identity(
-                timeout=timeout, num_retries=attempts
-            )
+            identity = boto.utils.get_instance_identity(timeout=timeout, num_retries=attempts)
             try:
                 account_id = identity["document"]["accountId"]
             except KeyError:
                 log.error(
-                    "Failed to get account id from instance_identity in"
-                    " boto_iam.get_account_id."
+                    "Failed to get account id from instance_identity in" " boto_iam.get_account_id."
                 )
         __context__[cache_key] = account_id
     return __context__[cache_key]
@@ -1455,9 +1398,7 @@ def get_all_user_policies(
         return False
 
 
-def get_user_policy(
-    user_name, policy_name, region=None, key=None, keyid=None, profile=None
-):
+def get_user_policy(user_name, policy_name, region=None, key=None, keyid=None, profile=None):
     """
     Retrieves the specified policy document for the specified user.
 
@@ -1518,9 +1459,7 @@ def put_user_policy(
     return False
 
 
-def delete_user_policy(
-    user_name, policy_name, region=None, key=None, keyid=None, profile=None
-):
+def delete_user_policy(user_name, policy_name, region=None, key=None, keyid=None, profile=None):
     """
     Delete a user policy.
 
@@ -1538,9 +1477,7 @@ def delete_user_policy(
         return True
     try:
         conn.delete_user_policy(user_name, policy_name)
-        log.info(
-            "Successfully deleted policy %s for IAM user %s.", policy_name, user_name
-        )
+        log.info("Successfully deleted policy %s for IAM user %s.", policy_name, user_name)
         return True
     except boto.exception.BotoServerError as e:
         log.debug(e)
@@ -1662,9 +1599,7 @@ def export_users(path_prefix="/", region=None, key=None, keyid=None, profile=Non
     for user in users:
         name = user.user_name
         _policies = conn.get_all_user_policies(name, max_items=100)
-        _policies = (
-            _policies.list_user_policies_response.list_user_policies_result.policy_names
-        )
+        _policies = _policies.list_user_policies_response.list_user_policies_result.policy_names
         policies = {}
         for policy_name in _policies:
             _policy = conn.get_user_policy(name, policy_name)
@@ -1701,9 +1636,7 @@ def export_roles(path_prefix="/", region=None, key=None, keyid=None, profile=Non
     for role in roles:
         name = role.role_name
         _policies = conn.list_role_policies(name, max_items=100)
-        _policies = (
-            _policies.list_role_policies_response.list_role_policies_result.policy_names
-        )
+        _policies = _policies.list_role_policies_response.list_role_policies_result.policy_names
         policies = {}
         for policy_name in _policies:
             _policy = conn.get_role_policy(name, policy_name)
@@ -1750,9 +1683,7 @@ def policy_exists(policy_name, region=None, key=None, keyid=None, profile=None):
 
     try:
         conn.get_policy(
-            _get_policy_arn(
-                policy_name, region=region, key=key, keyid=keyid, profile=profile
-            )
+            _get_policy_arn(policy_name, region=region, key=key, keyid=keyid, profile=profile)
         )
         return True
     except boto.exception.BotoServerError:
@@ -1773,9 +1704,7 @@ def get_policy(policy_name, region=None, key=None, keyid=None, profile=None):
 
     try:
         ret = conn.get_policy(
-            _get_policy_arn(
-                policy_name, region=region, key=key, keyid=keyid, profile=profile
-            )
+            _get_policy_arn(policy_name, region=region, key=key, keyid=keyid, profile=profile)
         )
         return ret.get("get_policy_response", {}).get("get_policy_result", {})
     except boto.exception.BotoServerError:
@@ -1875,9 +1804,7 @@ def list_policies(region=None, key=None, keyid=None, profile=None):
         return []
 
 
-def policy_version_exists(
-    policy_name, version_id, region=None, key=None, keyid=None, profile=None
-):
+def policy_version_exists(policy_name, version_id, region=None, key=None, keyid=None, profile=None):
     """
     Check to see if policy exists.
 
@@ -1897,9 +1824,7 @@ def policy_version_exists(
         return False
 
 
-def get_policy_version(
-    policy_name, version_id, region=None, key=None, keyid=None, profile=None
-):
+def get_policy_version(policy_name, version_id, region=None, key=None, keyid=None, profile=None):
     """
     Check to see if policy exists.
 
@@ -1913,9 +1838,7 @@ def get_policy_version(
 
     try:
         ret = conn.get_policy_version(
-            _get_policy_arn(
-                policy_name, region=region, key=key, keyid=keyid, profile=profile
-            ),
+            _get_policy_arn(policy_name, region=region, key=key, keyid=keyid, profile=profile),
             version_id,
         )
         retval = (
@@ -1972,9 +1895,7 @@ def create_policy_version(
         return {"created": False, "error": __utils__["boto.get_error"](e)}
 
 
-def delete_policy_version(
-    policy_name, version_id, region=None, key=None, keyid=None, profile=None
-):
+def delete_policy_version(policy_name, version_id, region=None, key=None, keyid=None, profile=None):
     """
     Delete a policy version.
 
@@ -2062,9 +1983,7 @@ def set_default_policy_version(
     return True
 
 
-def attach_user_policy(
-    policy_name, user_name, region=None, key=None, keyid=None, profile=None
-):
+def attach_user_policy(policy_name, user_name, region=None, key=None, keyid=None, profile=None):
     """
     Attach a managed policy to a user.
 
@@ -2087,9 +2006,7 @@ def attach_user_policy(
     return True
 
 
-def detach_user_policy(
-    policy_name, user_name, region=None, key=None, keyid=None, profile=None
-):
+def detach_user_policy(policy_name, user_name, region=None, key=None, keyid=None, profile=None):
     """
     Detach a managed policy to a user.
 
@@ -2107,16 +2024,12 @@ def detach_user_policy(
         log.info("Detached %s policy from IAM user %s.", policy_name, user_name)
     except boto.exception.BotoServerError as e:
         log.debug(e)
-        log.error(
-            "Failed to detach %s policy from IAM user %s.", policy_name, user_name
-        )
+        log.error("Failed to detach %s policy from IAM user %s.", policy_name, user_name)
         return False
     return True
 
 
-def attach_group_policy(
-    policy_name, group_name, region=None, key=None, keyid=None, profile=None
-):
+def attach_group_policy(policy_name, group_name, region=None, key=None, keyid=None, profile=None):
     """
     Attach a managed policy to a group.
 
@@ -2134,16 +2047,12 @@ def attach_group_policy(
         log.info("Attached policy %s to IAM group %s.", policy_name, group_name)
     except boto.exception.BotoServerError as e:
         log.debug(e)
-        log.error(
-            "Failed to attach policy %s to IAM group %s.", policy_name, group_name
-        )
+        log.error("Failed to attach policy %s to IAM group %s.", policy_name, group_name)
         return False
     return True
 
 
-def detach_group_policy(
-    policy_name, group_name, region=None, key=None, keyid=None, profile=None
-):
+def detach_group_policy(policy_name, group_name, region=None, key=None, keyid=None, profile=None):
     """
     Detach a managed policy to a group.
 
@@ -2161,16 +2070,12 @@ def detach_group_policy(
         log.info("Detached policy %s from IAM group %s.", policy_name, group_name)
     except boto.exception.BotoServerError as e:
         log.debug(e)
-        log.error(
-            "Failed to detach policy %s from IAM group %s.", policy_name, group_name
-        )
+        log.error("Failed to detach policy %s from IAM group %s.", policy_name, group_name)
         return False
     return True
 
 
-def attach_role_policy(
-    policy_name, role_name, region=None, key=None, keyid=None, profile=None
-):
+def attach_role_policy(policy_name, role_name, region=None, key=None, keyid=None, profile=None):
     """
     Attach a managed policy to a role.
 
@@ -2193,9 +2098,7 @@ def attach_role_policy(
     return True
 
 
-def detach_role_policy(
-    policy_name, role_name, region=None, key=None, keyid=None, profile=None
-):
+def detach_role_policy(policy_name, role_name, region=None, key=None, keyid=None, profile=None):
     """
     Detach a managed policy to a role.
 
@@ -2213,9 +2116,7 @@ def detach_role_policy(
         log.info("Detached policy %s from IAM role %s.", policy_name, role_name)
     except boto.exception.BotoServerError as e:
         log.debug(e)
-        log.error(
-            "Failed to detach policy %s from IAM role %s.", policy_name, role_name
-        )
+        log.error("Failed to detach policy %s from IAM role %s.", policy_name, role_name)
         return False
     return True
 
@@ -2270,9 +2171,7 @@ def list_entities_for_policy(
                 time.sleep(5)
                 retries -= 1
                 continue
-            log.error(
-                "Failed to list entities for IAM policy %s: %s", policy_name, e.message
-            )
+            log.error("Failed to list entities for IAM policy %s: %s", policy_name, e.message)
             return {}
     return {}
 
@@ -2454,9 +2353,7 @@ def get_saml_provider_arn(name, region=None, key=None, keyid=None, profile=None)
         response = conn.list_saml_providers()
         for (
             saml_provider
-        ) in (
-            response.list_saml_providers_response.list_saml_providers_result.saml_provider_list
-        ):
+        ) in response.list_saml_providers_response.list_saml_providers_result.saml_provider_list:
             if saml_provider["arn"].endswith(":saml-provider/" + name):
                 return saml_provider["arn"]
         return False

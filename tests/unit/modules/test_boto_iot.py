@@ -1,25 +1,18 @@
-# -*- coding: utf-8 -*-
-
-# Import Python libs
-from __future__ import absolute_import, print_function, unicode_literals
-
 import logging
 import random
 import string
 
-# Import Salt libs
 import salt.config
 import salt.loader
 import salt.modules.boto_iot as boto_iot
-
-# Import 3rd-party libs
 from salt.ext.six.moves import range  # pylint: disable=import-error,redefined-builtin
 from salt.utils.versions import LooseVersion
 
-# Import Salt Testing libs
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
-from tests.support.unit import TestCase, skipIf
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
+from tests.support.unit import skipIf
+from tests.support.unit import TestCase
 
 # pylint: disable=import-error,no-name-in-module,unused-import
 try:
@@ -68,9 +61,7 @@ if _has_required_boto():
         "keyid": secret_key,
         "profile": {},
     }
-    error_message = (
-        "An error occurred (101) when calling the {0} operation: Test-defined error"
-    )
+    error_message = "An error occurred (101) when calling the {0} operation: Test-defined error"
     not_found_error = ClientError(
         {
             "Error": {
@@ -110,21 +101,17 @@ if _has_required_boto():
             thingTypeDescription=thing_type_desc,
             searchableAttributes=[thing_type_attr_1],
         ),
-        thingTypeMetadata=dict(
-            deprecated=False, creationDate="test_thing_type_create_date"
-        ),
+        thingTypeMetadata=dict(deprecated=False, creationDate="test_thing_type_create_date"),
     )
     thing_type_arn = "test_thing_type_arn"
-    create_thing_type_ret = dict(
-        thingTypeName=thing_type_name, thingTypeArn=thing_type_arn
-    )
+    create_thing_type_ret = dict(thingTypeName=thing_type_name, thingTypeArn=thing_type_arn)
 
 
 @skipIf(HAS_BOTO is False, "The boto module must be installed.")
 @skipIf(
     _has_required_boto() is False,
     "The boto3 module must be greater than"
-    " or equal to version {0}".format(required_boto3_version),
+    " or equal to version {}".format(required_boto3_version),
 )
 class BotoIoTTestCaseBase(TestCase, LoaderModuleMockMixin):
     conn = None
@@ -137,7 +124,7 @@ class BotoIoTTestCaseBase(TestCase, LoaderModuleMockMixin):
         return {boto_iot: {"__utils__": utils}}
 
     def setUp(self):
-        super(BotoIoTTestCaseBase, self).setUp()
+        super().setUp()
         boto_iot.__init__(self.opts)
         del self.opts
 
@@ -160,7 +147,7 @@ class BotoIoTTestCaseBase(TestCase, LoaderModuleMockMixin):
         session_instance.client.return_value = self.conn
 
 
-class BotoIoTTestCaseMixin(object):
+class BotoIoTTestCaseMixin:
     pass
 
 
@@ -176,11 +163,9 @@ class BotoIoTThingTypeTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         Tests checking iot thing type existence when the iot thing type already exists
         """
         self.conn.describe_thing_type.return_value = thing_type_ret
-        result = boto_iot.thing_type_exists(
-            thingTypeName=thing_type_name, **conn_parameters
-        )
+        result = boto_iot.thing_type_exists(thingTypeName=thing_type_name, **conn_parameters)
 
-        self.assertTrue(result["exists"])
+        assert result["exists"]
 
     def test_that_when_checking_if_a_thing_type_exists_and_a_thing_type_does_not_exist_the_thing_type_exists_method_returns_false(
         self,
@@ -193,7 +178,7 @@ class BotoIoTThingTypeTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             thingTypeName="non existent thing type", **conn_parameters
         )
 
-        self.assertFalse(result["exists"])
+        assert not result["exists"]
 
     def test_that_when_checking_if_a_thing_type_exists_and_boto3_returns_an_error_the_thing_type_exists_method_returns_error(
         self,
@@ -204,14 +189,9 @@ class BotoIoTThingTypeTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         self.conn.describe_thing_type.side_effect = ClientError(
             error_content, "describe_thing_type"
         )
-        result = boto_iot.thing_type_exists(
-            thingTypeName="mythingtype", **conn_parameters
-        )
+        result = boto_iot.thing_type_exists(thingTypeName="mythingtype", **conn_parameters)
 
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("describe_thing_type"),
-        )
+        assert result.get("error", {}).get("message") == error_message.format("describe_thing_type")
 
     def test_that_when_describing_thing_type_and_thing_type_exists_the_describe_thing_type_method_returns_thing_type(
         self,
@@ -220,11 +200,9 @@ class BotoIoTThingTypeTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         Tests describe thing type for an existing thing type
         """
         self.conn.describe_thing_type.return_value = thing_type_ret
-        result = boto_iot.describe_thing_type(
-            thingTypeName=thing_type_name, **conn_parameters
-        )
+        result = boto_iot.describe_thing_type(thingTypeName=thing_type_name, **conn_parameters)
 
-        self.assertEqual(result.get("thing_type"), thing_type_ret)
+        assert result.get("thing_type") == thing_type_ret
 
     def test_that_when_describing_thing_type_and_thing_type_does_not_exists_the_describe_thing_type_method_returns_none(
         self,
@@ -237,7 +215,7 @@ class BotoIoTThingTypeTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             thingTypeName="non existent thing type", **conn_parameters
         )
 
-        self.assertEqual(result.get("thing_type"), None)
+        assert result.get("thing_type") == None
 
     def test_that_when_describing_thing_type_and_boto3_returns_error_an_error_the_describe_thing_type_method_returns_error(
         self,
@@ -245,14 +223,9 @@ class BotoIoTThingTypeTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         self.conn.describe_thing_type.side_effect = ClientError(
             error_content, "describe_thing_type"
         )
-        result = boto_iot.describe_thing_type(
-            thingTypeName="mythingtype", **conn_parameters
-        )
+        result = boto_iot.describe_thing_type(thingTypeName="mythingtype", **conn_parameters)
 
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("describe_thing_type"),
-        )
+        assert result.get("error", {}).get("message") == error_message.format("describe_thing_type")
 
     def test_that_when_creating_a_thing_type_succeeds_the_create_thing_type_method_returns_true(
         self,
@@ -267,8 +240,8 @@ class BotoIoTThingTypeTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             searchableAttributesList=[thing_type_attr_1],
             **conn_parameters
         )
-        self.assertTrue(result["created"])
-        self.assertTrue(result["thingTypeArn"], thing_type_arn)
+        assert result["created"]
+        assert result["thingTypeArn"], thing_type_arn
 
     def test_that_when_creating_a_thing_type_fails_the_create_thing_type_method_returns_error(
         self,
@@ -276,19 +249,14 @@ class BotoIoTThingTypeTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         tests False when thing type not created
         """
-        self.conn.create_thing_type.side_effect = ClientError(
-            error_content, "create_thing_type"
-        )
+        self.conn.create_thing_type.side_effect = ClientError(error_content, "create_thing_type")
         result = boto_iot.create_thing_type(
             thingTypeName=thing_type_name,
             thingTypeDescription=thing_type_desc,
             searchableAttributesList=[thing_type_attr_1],
             **conn_parameters
         )
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("create_thing_type"),
-        )
+        assert result.get("error", {}).get("message") == error_message.format("create_thing_type")
 
     def test_that_when_deprecating_a_thing_type_succeeds_the_deprecate_thing_type_method_returns_true(
         self,
@@ -301,8 +269,8 @@ class BotoIoTThingTypeTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             thingTypeName=thing_type_name, undoDeprecate=False, **conn_parameters
         )
 
-        self.assertTrue(result.get("deprecated"))
-        self.assertEqual(result.get("error"), None)
+        assert result.get("deprecated")
+        assert result.get("error") == None
 
     def test_that_when_deprecating_a_thing_type_fails_the_deprecate_thing_type_method_returns_error(
         self,
@@ -317,10 +285,9 @@ class BotoIoTThingTypeTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             thingTypeName=thing_type_name, undoDeprecate=False, **conn_parameters
         )
 
-        self.assertFalse(result.get("deprecated"))
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("deprecate_thing_type"),
+        assert not result.get("deprecated")
+        assert result.get("error", {}).get("message") == error_message.format(
+            "deprecate_thing_type"
         )
 
     def test_that_when_deleting_a_thing_type_succeeds_the_delete_thing_type_method_returns_true(
@@ -330,12 +297,10 @@ class BotoIoTThingTypeTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         tests True when delete thing type succeeds
         """
         self.conn.delete_thing_type.return_value = {}
-        result = boto_iot.delete_thing_type(
-            thingTypeName=thing_type_name, **conn_parameters
-        )
+        result = boto_iot.delete_thing_type(thingTypeName=thing_type_name, **conn_parameters)
 
-        self.assertTrue(result.get("deleted"))
-        self.assertEqual(result.get("error"), None)
+        assert result.get("deleted")
+        assert result.get("error") == None
 
     def test_that_when_deleting_a_thing_type_fails_the_delete_thing_type_method_returns_error(
         self,
@@ -343,17 +308,10 @@ class BotoIoTThingTypeTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         tests False when delete thing type fails
         """
-        self.conn.delete_thing_type.side_effect = ClientError(
-            error_content, "delete_thing_type"
-        )
-        result = boto_iot.delete_thing_type(
-            thingTypeName=thing_type_name, **conn_parameters
-        )
-        self.assertFalse(result.get("deleted"))
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("delete_thing_type"),
-        )
+        self.conn.delete_thing_type.side_effect = ClientError(error_content, "delete_thing_type")
+        result = boto_iot.delete_thing_type(thingTypeName=thing_type_name, **conn_parameters)
+        assert not result.get("deleted")
+        assert result.get("error", {}).get("message") == error_message.format("delete_thing_type")
 
 
 class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
@@ -368,11 +326,9 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         Tests checking iot policy existence when the iot policy already exists
         """
         self.conn.get_policy.return_value = {"policy": policy_ret}
-        result = boto_iot.policy_exists(
-            policyName=policy_ret["policyName"], **conn_parameters
-        )
+        result = boto_iot.policy_exists(policyName=policy_ret["policyName"], **conn_parameters)
 
-        self.assertTrue(result["exists"])
+        assert result["exists"]
 
     def test_that_when_checking_if_a_policy_exists_and_a_policy_does_not_exist_the_policy_exists_method_returns_false(
         self,
@@ -383,7 +339,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         self.conn.get_policy.side_effect = not_found_error
         result = boto_iot.policy_exists(policyName="mypolicy", **conn_parameters)
 
-        self.assertFalse(result["exists"])
+        assert not result["exists"]
 
     def test_that_when_checking_if_a_policy_exists_and_boto3_returns_an_error_the_policy_exists_method_returns_error(
         self,
@@ -394,9 +350,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         self.conn.get_policy.side_effect = ClientError(error_content, "get_policy")
         result = boto_iot.policy_exists(policyName="mypolicy", **conn_parameters)
 
-        self.assertEqual(
-            result.get("error", {}).get("message"), error_message.format("get_policy")
-        )
+        assert result.get("error", {}).get("message") == error_message.format("get_policy")
 
     def test_that_when_creating_a_policy_succeeds_the_create_policy_method_returns_true(
         self,
@@ -411,7 +365,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             **conn_parameters
         )
 
-        self.assertTrue(result["created"])
+        assert result["created"]
 
     def test_that_when_creating_a_policy_fails_the_create_policy_method_returns_error(
         self,
@@ -419,18 +373,13 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         tests False policy not created.
         """
-        self.conn.create_policy.side_effect = ClientError(
-            error_content, "create_policy"
-        )
+        self.conn.create_policy.side_effect = ClientError(error_content, "create_policy")
         result = boto_iot.create_policy(
             policyName=policy_ret["policyName"],
             policyDocument=policy_ret["policyDocument"],
             **conn_parameters
         )
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("create_policy"),
-        )
+        assert result.get("error", {}).get("message") == error_message.format("create_policy")
 
     def test_that_when_deleting_a_policy_succeeds_the_delete_policy_method_returns_true(
         self,
@@ -440,7 +389,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         result = boto_iot.delete_policy(policyName="testpolicy", **conn_parameters)
 
-        self.assertTrue(result["deleted"])
+        assert result["deleted"]
 
     def test_that_when_deleting_a_policy_fails_the_delete_policy_method_returns_false(
         self,
@@ -448,11 +397,9 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         tests False policy not deleted.
         """
-        self.conn.delete_policy.side_effect = ClientError(
-            error_content, "delete_policy"
-        )
+        self.conn.delete_policy.side_effect = ClientError(error_content, "delete_policy")
         result = boto_iot.delete_policy(policyName="testpolicy", **conn_parameters)
-        self.assertFalse(result["deleted"])
+        assert not result["deleted"]
 
     def test_that_when_describing_policy_it_returns_the_dict_of_properties_returns_true(
         self,
@@ -462,11 +409,9 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         self.conn.get_policy.return_value = {"policy": policy_ret}
 
-        result = boto_iot.describe_policy(
-            policyName=policy_ret["policyName"], **conn_parameters
-        )
+        result = boto_iot.describe_policy(policyName=policy_ret["policyName"], **conn_parameters)
 
-        self.assertTrue(result["policy"])
+        assert result["policy"]
 
     def test_that_when_describing_policy_it_returns_the_dict_of_properties_returns_false(
         self,
@@ -477,7 +422,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         self.conn.get_policy.side_effect = not_found_error
         result = boto_iot.describe_policy(policyName="testpolicy", **conn_parameters)
 
-        self.assertFalse(result["policy"])
+        assert not result["policy"]
 
     def test_that_when_describing_policy_on_client_error_it_returns_error(self):
         """
@@ -485,7 +430,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         self.conn.get_policy.side_effect = ClientError(error_content, "get_policy")
         result = boto_iot.describe_policy(policyName="testpolicy", **conn_parameters)
-        self.assertTrue("error" in result)
+        assert "error" in result
 
     def test_that_when_checking_if_a_policy_version_exists_and_a_policy_version_exists_the_policy_version_exists_method_returns_true(
         self,
@@ -498,7 +443,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             policyName=policy_ret["policyName"], policyVersionId=1, **conn_parameters
         )
 
-        self.assertTrue(result["exists"])
+        assert result["exists"]
 
     def test_that_when_checking_if_a_policy_version_exists_and_a_policy_version_does_not_exist_the_policy_version_exists_method_returns_false(
         self,
@@ -511,7 +456,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             policyName=policy_ret["policyName"], policyVersionId=1, **conn_parameters
         )
 
-        self.assertFalse(result["exists"])
+        assert not result["exists"]
 
     def test_that_when_checking_if_a_policy_version_exists_and_boto3_returns_an_error_the_policy_version_exists_method_returns_error(
         self,
@@ -519,17 +464,12 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         Tests checking iot policy_version existence when boto returns an error
         """
-        self.conn.get_policy_version.side_effect = ClientError(
-            error_content, "get_policy_version"
-        )
+        self.conn.get_policy_version.side_effect = ClientError(error_content, "get_policy_version")
         result = boto_iot.policy_version_exists(
             policyName=policy_ret["policyName"], policyVersionId=1, **conn_parameters
         )
 
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("get_policy_version"),
-        )
+        assert result.get("error", {}).get("message") == error_message.format("get_policy_version")
 
     def test_that_when_creating_a_policy_version_succeeds_the_create_policy_version_method_returns_true(
         self,
@@ -544,7 +484,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             **conn_parameters
         )
 
-        self.assertTrue(result["created"])
+        assert result["created"]
 
     def test_that_when_creating_a_policy_version_fails_the_create_policy_version_method_returns_error(
         self,
@@ -560,9 +500,8 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             policyDocument=policy_ret["policyDocument"],
             **conn_parameters
         )
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("create_policy_version"),
+        assert result.get("error", {}).get("message") == error_message.format(
+            "create_policy_version"
         )
 
     def test_that_when_deleting_a_policy_version_succeeds_the_delete_policy_version_method_returns_true(
@@ -575,7 +514,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             policyName="testpolicy", policyVersionId=1, **conn_parameters
         )
 
-        self.assertTrue(result["deleted"])
+        assert result["deleted"]
 
     def test_that_when_deleting_a_policy_version_fails_the_delete_policy_version_method_returns_false(
         self,
@@ -589,7 +528,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         result = boto_iot.delete_policy_version(
             policyName="testpolicy", policyVersionId=1, **conn_parameters
         )
-        self.assertFalse(result["deleted"])
+        assert not result["deleted"]
 
     def test_that_when_describing_policy_version_it_returns_the_dict_of_properties_returns_true(
         self,
@@ -603,7 +542,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             policyName=policy_ret["policyName"], policyVersionId=1, **conn_parameters
         )
 
-        self.assertTrue(result["policy"])
+        assert result["policy"]
 
     def test_that_when_describing_policy_version_it_returns_the_dict_of_properties_returns_false(
         self,
@@ -616,19 +555,17 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             policyName=policy_ret["policyName"], policyVersionId=1, **conn_parameters
         )
 
-        self.assertFalse(result["policy"])
+        assert not result["policy"]
 
     def test_that_when_describing_policy_version_on_client_error_it_returns_error(self):
         """
         Tests describing parameters failure
         """
-        self.conn.get_policy_version.side_effect = ClientError(
-            error_content, "get_policy_version"
-        )
+        self.conn.get_policy_version.side_effect = ClientError(error_content, "get_policy_version")
         result = boto_iot.describe_policy_version(
             policyName=policy_ret["policyName"], policyVersionId=1, **conn_parameters
         )
-        self.assertTrue("error" in result)
+        assert "error" in result
 
     def test_that_when_listing_policies_succeeds_the_list_policies_method_returns_true(
         self,
@@ -639,7 +576,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         self.conn.list_policies.return_value = {"policies": [policy_ret]}
         result = boto_iot.list_policies(**conn_parameters)
 
-        self.assertTrue(result["policies"])
+        assert result["policies"]
 
     def test_that_when_listing_policy_fails_the_list_policy_method_returns_false(self):
         """
@@ -647,20 +584,15 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         self.conn.list_policies.return_value = {"policies": []}
         result = boto_iot.list_policies(**conn_parameters)
-        self.assertFalse(result["policies"])
+        assert not result["policies"]
 
     def test_that_when_listing_policy_fails_the_list_policy_method_returns_error(self):
         """
         tests False policy error.
         """
-        self.conn.list_policies.side_effect = ClientError(
-            error_content, "list_policies"
-        )
+        self.conn.list_policies.side_effect = ClientError(error_content, "list_policies")
         result = boto_iot.list_policies(**conn_parameters)
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("list_policies"),
-        )
+        assert result.get("error", {}).get("message") == error_message.format("list_policies")
 
     def test_that_when_listing_policy_versions_succeeds_the_list_policy_versions_method_returns_true(
         self,
@@ -669,11 +601,9 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         tests True policy versions listed.
         """
         self.conn.list_policy_versions.return_value = {"policyVersions": [policy_ret]}
-        result = boto_iot.list_policy_versions(
-            policyName="testpolicy", **conn_parameters
-        )
+        result = boto_iot.list_policy_versions(policyName="testpolicy", **conn_parameters)
 
-        self.assertTrue(result["policyVersions"])
+        assert result["policyVersions"]
 
     def test_that_when_listing_policy_versions_fails_the_list_policy_versions_method_returns_false(
         self,
@@ -682,10 +612,8 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         tests False no policy versions listed.
         """
         self.conn.list_policy_versions.return_value = {"policyVersions": []}
-        result = boto_iot.list_policy_versions(
-            policyName="testpolicy", **conn_parameters
-        )
-        self.assertFalse(result["policyVersions"])
+        result = boto_iot.list_policy_versions(policyName="testpolicy", **conn_parameters)
+        assert not result["policyVersions"]
 
     def test_that_when_listing_policy_versions_fails_the_list_policy_versions_method_returns_error(
         self,
@@ -696,12 +624,9 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         self.conn.list_policy_versions.side_effect = ClientError(
             error_content, "list_policy_versions"
         )
-        result = boto_iot.list_policy_versions(
-            policyName="testpolicy", **conn_parameters
-        )
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("list_policy_versions"),
+        result = boto_iot.list_policy_versions(policyName="testpolicy", **conn_parameters)
+        assert result.get("error", {}).get("message") == error_message.format(
+            "list_policy_versions"
         )
 
     def test_that_when_setting_default_policy_version_succeeds_the_set_default_policy_version_method_returns_true(
@@ -714,7 +639,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             policyName="testpolicy", policyVersionId=1, **conn_parameters
         )
 
-        self.assertTrue(result["changed"])
+        assert result["changed"]
 
     def test_that_when_set_default_policy_version_fails_the_set_default_policy_version_method_returns_error(
         self,
@@ -728,9 +653,8 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         result = boto_iot.set_default_policy_version(
             policyName="testpolicy", policyVersionId=1, **conn_parameters
         )
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("set_default_policy_version"),
+        assert result.get("error", {}).get("message") == error_message.format(
+            "set_default_policy_version"
         )
 
     def test_that_when_list_principal_policies_succeeds_the_list_principal_policies_method_returns_true(
@@ -744,7 +668,7 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             principal="us-east-1:GUID-GUID-GUID", **conn_parameters
         )
 
-        self.assertTrue(result["policies"])
+        assert result["policies"]
 
     def test_that_when_list_principal_policies_fails_the_list_principal_policies_method_returns_error(
         self,
@@ -758,9 +682,8 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         result = boto_iot.list_principal_policies(
             principal="us-east-1:GUID-GUID-GUID", **conn_parameters
         )
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("list_principal_policies"),
+        assert result.get("error", {}).get("message") == error_message.format(
+            "list_principal_policies"
         )
 
     def test_that_when_attach_principal_policy_succeeds_the_attach_principal_policy_method_returns_true(
@@ -770,12 +693,10 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         tests True policy attached.
         """
         result = boto_iot.attach_principal_policy(
-            policyName="testpolicy",
-            principal="us-east-1:GUID-GUID-GUID",
-            **conn_parameters
+            policyName="testpolicy", principal="us-east-1:GUID-GUID-GUID", **conn_parameters
         )
 
-        self.assertTrue(result["attached"])
+        assert result["attached"]
 
     def test_that_when_attach_principal_policy_version_fails_the_attach_principal_policy_version_method_returns_error(
         self,
@@ -787,13 +708,10 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             error_content, "attach_principal_policy"
         )
         result = boto_iot.attach_principal_policy(
-            policyName="testpolicy",
-            principal="us-east-1:GUID-GUID-GUID",
-            **conn_parameters
+            policyName="testpolicy", principal="us-east-1:GUID-GUID-GUID", **conn_parameters
         )
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("attach_principal_policy"),
+        assert result.get("error", {}).get("message") == error_message.format(
+            "attach_principal_policy"
         )
 
     def test_that_when_detach_principal_policy_succeeds_the_detach_principal_policy_method_returns_true(
@@ -803,12 +721,10 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         tests True policy detached.
         """
         result = boto_iot.detach_principal_policy(
-            policyName="testpolicy",
-            principal="us-east-1:GUID-GUID-GUID",
-            **conn_parameters
+            policyName="testpolicy", principal="us-east-1:GUID-GUID-GUID", **conn_parameters
         )
 
-        self.assertTrue(result["detached"])
+        assert result["detached"]
 
     def test_that_when_detach_principal_policy_version_fails_the_detach_principal_policy_version_method_returns_error(
         self,
@@ -820,13 +736,10 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             error_content, "detach_principal_policy"
         )
         result = boto_iot.detach_principal_policy(
-            policyName="testpolicy",
-            principal="us-east-1:GUID-GUID-GUID",
-            **conn_parameters
+            policyName="testpolicy", principal="us-east-1:GUID-GUID-GUID", **conn_parameters
         )
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("detach_principal_policy"),
+        assert result.get("error", {}).get("message") == error_message.format(
+            "detach_principal_policy"
         )
 
 
@@ -834,9 +747,9 @@ class BotoIoTPolicyTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
 @skipIf(
     _has_required_boto() is False,
     "The boto3 module must be greater than"
-    " or equal to version {0}.  The botocore"
+    " or equal to version {}.  The botocore"
     " module must be greater than or equal to"
-    " version {1}.".format(required_boto3_version, required_botocore_version),
+    " version {}.".format(required_boto3_version, required_botocore_version),
 )
 class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
     """
@@ -850,11 +763,9 @@ class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         Tests checking iot topic_rule existence when the iot topic_rule already exists
         """
         self.conn.get_topic_rule.return_value = {"rule": topic_rule_ret}
-        result = boto_iot.topic_rule_exists(
-            ruleName=topic_rule_ret["ruleName"], **conn_parameters
-        )
+        result = boto_iot.topic_rule_exists(ruleName=topic_rule_ret["ruleName"], **conn_parameters)
 
-        self.assertTrue(result["exists"])
+        assert result["exists"]
 
     def test_that_when_checking_if_a_rule_exists_and_a_rule_does_not_exist_the_topic_rule_exists_method_returns_false(
         self,
@@ -865,7 +776,7 @@ class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         self.conn.get_topic_rule.side_effect = topic_rule_not_found_error
         result = boto_iot.topic_rule_exists(ruleName="mypolicy", **conn_parameters)
 
-        self.assertFalse(result["exists"])
+        assert not result["exists"]
 
     def test_that_when_checking_if_a_topic_rule_exists_and_boto3_returns_an_error_the_topic_rule_exists_method_returns_error(
         self,
@@ -873,15 +784,10 @@ class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         Tests checking iot topic_rule existence when boto returns an error
         """
-        self.conn.get_topic_rule.side_effect = ClientError(
-            error_content, "get_topic_rule"
-        )
+        self.conn.get_topic_rule.side_effect = ClientError(error_content, "get_topic_rule")
         result = boto_iot.topic_rule_exists(ruleName="myrule", **conn_parameters)
 
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("get_topic_rule"),
-        )
+        assert result.get("error", {}).get("message") == error_message.format("get_topic_rule")
 
     def test_that_when_creating_a_topic_rule_succeeds_the_create_topic_rule_method_returns_true(
         self,
@@ -898,7 +804,7 @@ class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             **conn_parameters
         )
 
-        self.assertTrue(result["created"])
+        assert result["created"]
 
     def test_that_when_creating_a_topic_rule_fails_the_create_topic_rule_method_returns_error(
         self,
@@ -906,9 +812,7 @@ class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         tests False topic_rule not created.
         """
-        self.conn.create_topic_rule.side_effect = ClientError(
-            error_content, "create_topic_rule"
-        )
+        self.conn.create_topic_rule.side_effect = ClientError(error_content, "create_topic_rule")
         result = boto_iot.create_topic_rule(
             ruleName=topic_rule_ret["ruleName"],
             sql=topic_rule_ret["sql"],
@@ -916,10 +820,7 @@ class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             actions=topic_rule_ret["actions"],
             **conn_parameters
         )
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("create_topic_rule"),
-        )
+        assert result.get("error", {}).get("message") == error_message.format("create_topic_rule")
 
     def test_that_when_replacing_a_topic_rule_succeeds_the_replace_topic_rule_method_returns_true(
         self,
@@ -936,7 +837,7 @@ class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             **conn_parameters
         )
 
-        self.assertTrue(result["replaced"])
+        assert result["replaced"]
 
     def test_that_when_replacing_a_topic_rule_fails_the_replace_topic_rule_method_returns_error(
         self,
@@ -944,9 +845,7 @@ class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         tests False topic_rule not replaced.
         """
-        self.conn.replace_topic_rule.side_effect = ClientError(
-            error_content, "replace_topic_rule"
-        )
+        self.conn.replace_topic_rule.side_effect = ClientError(error_content, "replace_topic_rule")
         result = boto_iot.replace_topic_rule(
             ruleName=topic_rule_ret["ruleName"],
             sql=topic_rule_ret["sql"],
@@ -954,10 +853,7 @@ class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             actions=topic_rule_ret["actions"],
             **conn_parameters
         )
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("replace_topic_rule"),
-        )
+        assert result.get("error", {}).get("message") == error_message.format("replace_topic_rule")
 
     def test_that_when_deleting_a_topic_rule_succeeds_the_delete_topic_rule_method_returns_true(
         self,
@@ -967,7 +863,7 @@ class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         result = boto_iot.delete_topic_rule(ruleName="testrule", **conn_parameters)
 
-        self.assertTrue(result["deleted"])
+        assert result["deleted"]
 
     def test_that_when_deleting_a_topic_rule_fails_the_delete_topic_rule_method_returns_false(
         self,
@@ -975,11 +871,9 @@ class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         tests False topic_rule not deleted.
         """
-        self.conn.delete_topic_rule.side_effect = ClientError(
-            error_content, "delete_topic_rule"
-        )
+        self.conn.delete_topic_rule.side_effect = ClientError(error_content, "delete_topic_rule")
         result = boto_iot.delete_topic_rule(ruleName="testrule", **conn_parameters)
-        self.assertFalse(result["deleted"])
+        assert not result["deleted"]
 
     def test_that_when_describing_topic_rule_it_returns_the_dict_of_properties_returns_true(
         self,
@@ -993,17 +887,15 @@ class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
             ruleName=topic_rule_ret["ruleName"], **conn_parameters
         )
 
-        self.assertTrue(result["rule"])
+        assert result["rule"]
 
     def test_that_when_describing_topic_rule_on_client_error_it_returns_error(self):
         """
         Tests describing parameters failure
         """
-        self.conn.get_topic_rule.side_effect = ClientError(
-            error_content, "get_topic_rule"
-        )
+        self.conn.get_topic_rule.side_effect = ClientError(error_content, "get_topic_rule")
         result = boto_iot.describe_topic_rule(ruleName="testrule", **conn_parameters)
-        self.assertTrue("error" in result)
+        assert "error" in result
 
     def test_that_when_listing_topic_rules_succeeds_the_list_topic_rules_method_returns_true(
         self,
@@ -1014,7 +906,7 @@ class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         self.conn.list_topic_rules.return_value = {"rules": [topic_rule_ret]}
         result = boto_iot.list_topic_rules(**conn_parameters)
 
-        self.assertTrue(result["rules"])
+        assert result["rules"]
 
     def test_that_when_listing_topic_rules_fails_the_list_topic_rules_method_returns_error(
         self,
@@ -1022,11 +914,6 @@ class BotoIoTTopicRuleTestCase(BotoIoTTestCaseBase, BotoIoTTestCaseMixin):
         """
         tests False policy error.
         """
-        self.conn.list_topic_rules.side_effect = ClientError(
-            error_content, "list_topic_rules"
-        )
+        self.conn.list_topic_rules.side_effect = ClientError(error_content, "list_topic_rules")
         result = boto_iot.list_topic_rules(**conn_parameters)
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("list_topic_rules"),
-        )
+        assert result.get("error", {}).get("message") == error_message.format("list_topic_rules")

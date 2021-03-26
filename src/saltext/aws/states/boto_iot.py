@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Manage IoT Objects
 ==================
@@ -70,19 +69,13 @@ config:
             - key: askdjghsdfjkghWupUjasdflkdfklgjsdfjajkghs
 
 """
-# Import Python libs
-from __future__ import absolute_import, print_function, unicode_literals
-
 import datetime
 import logging
 import os
 import time
 
-# Import Salt libs
 import salt.utils.data
 import salt.utils.json
-
-# Import 3rd-party libs
 from salt.ext import six
 
 log = logging.getLogger(__name__)
@@ -151,20 +144,16 @@ def thing_type_present(
 
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to create thing type: {0}.".format(
-            r["error"]["message"]
-        )
+        ret["comment"] = "Failed to create thing type: {}.".format(r["error"]["message"])
         return ret
 
     if r.get("exists"):
         ret["result"] = True
-        ret["comment"] = "Thing type with given name {0} already exists".format(
-            thingTypeName
-        )
+        ret["comment"] = "Thing type with given name {} already exists".format(thingTypeName)
         return ret
 
     if __opts__["test"]:
-        ret["comment"] = "Thing type {0} is set to be created.".format(thingTypeName)
+        ret["comment"] = "Thing type {} is set to be created.".format(thingTypeName)
         ret["result"] = None
         return ret
 
@@ -180,9 +169,7 @@ def thing_type_present(
 
     if not r.get("created"):
         ret["result"] = False
-        ret["comment"] = "Failed to create thing type: {0}.".format(
-            r["error"]["message"]
-        )
+        ret["comment"] = "Failed to create thing type: {}.".format(r["error"]["message"])
         return ret
 
     _describe = __salt__["boto_iot.describe_thing_type"](
@@ -194,13 +181,11 @@ def thing_type_present(
     )
     ret["changes"]["old"] = {"thing_type": None}
     ret["changes"]["new"] = _describe
-    ret["comment"] = "Thing Type {0} created.".format(thingTypeName)
+    ret["comment"] = "Thing Type {} created.".format(thingTypeName)
     return ret
 
 
-def thing_type_absent(
-    name, thingTypeName, region=None, key=None, keyid=None, profile=None
-):
+def thing_type_absent(name, thingTypeName, region=None, key=None, keyid=None, profile=None):
     """
     Ensure thing type with passed properties is absent.
 
@@ -238,13 +223,11 @@ def thing_type_absent(
     )
     if "error" in _describe:
         ret["result"] = False
-        ret["comment"] = "Failed to delete thing type: {0}.".format(
-            _describe["error"]["message"]
-        )
+        ret["comment"] = "Failed to delete thing type: {}.".format(_describe["error"]["message"])
         return ret
 
     if _describe and not _describe["thing_type"]:
-        ret["comment"] = "Thing Type {0} does not exist.".format(thingTypeName)
+        ret["comment"] = "Thing Type {} does not exist.".format(thingTypeName)
         return ret
 
     _existing_thing_type = _describe["thing_type"]
@@ -256,9 +239,7 @@ def thing_type_absent(
             _change_desc = "removed"
         else:
             _change_desc = "deprecated and removed"
-        ret["comment"] = "Thing Type {0} is set to be {1}.".format(
-            thingTypeName, _change_desc
-        )
+        ret["comment"] = "Thing Type {} is set to be {}.".format(thingTypeName, _change_desc)
         ret["result"] = None
         return ret
 
@@ -278,7 +259,7 @@ def thing_type_absent(
         )
         if "error" in _deprecate:
             ret["result"] = False
-            ret["comment"] = "Failed to deprecate thing type: {0}.".format(
+            ret["comment"] = "Failed to deprecate thing type: {}.".format(
                 _deprecate["error"]["message"]
             )
             return ret
@@ -320,13 +301,11 @@ def thing_type_absent(
     )
     if not r["deleted"]:
         ret["result"] = False
-        ret["comment"] = "Failed to delete thing type: {0}.".format(
-            r["error"]["message"]
-        )
+        ret["comment"] = "Failed to delete thing type: {}.".format(r["error"]["message"])
         return ret
     ret["changes"]["old"] = _describe
     ret["changes"]["new"] = {"thing_type": None}
-    ret["comment"] = "Thing Type {0} deleted.".format(thingTypeName)
+    ret["comment"] = "Thing Type {} deleted.".format(thingTypeName)
     return ret
 
 
@@ -368,12 +347,12 @@ def policy_present(
 
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to create policy: {0}.".format(r["error"]["message"])
+        ret["comment"] = "Failed to create policy: {}.".format(r["error"]["message"])
         return ret
 
     if not r.get("exists"):
         if __opts__["test"]:
-            ret["comment"] = "Policy {0} is set to be created.".format(policyName)
+            ret["comment"] = "Policy {} is set to be created.".format(policyName)
             ret["result"] = None
             return ret
         r = __salt__["boto_iot.create_policy"](
@@ -386,39 +365,35 @@ def policy_present(
         )
         if not r.get("created"):
             ret["result"] = False
-            ret["comment"] = "Failed to create policy: {0}.".format(
-                r["error"]["message"]
-            )
+            ret["comment"] = "Failed to create policy: {}.".format(r["error"]["message"])
             return ret
         _describe = __salt__["boto_iot.describe_policy"](
             policyName, region=region, key=key, keyid=keyid, profile=profile
         )
         ret["changes"]["old"] = {"policy": None}
         ret["changes"]["new"] = _describe
-        ret["comment"] = "Policy {0} created.".format(policyName)
+        ret["comment"] = "Policy {} created.".format(policyName)
         return ret
 
-    ret["comment"] = os.linesep.join(
-        [ret["comment"], "Policy {0} is present.".format(policyName)]
-    )
+    ret["comment"] = os.linesep.join([ret["comment"], "Policy {} is present.".format(policyName)])
     ret["changes"] = {}
     # policy exists, ensure config matches
     _describe = __salt__["boto_iot.describe_policy"](
         policyName=policyName, region=region, key=key, keyid=keyid, profile=profile
     )["policy"]
 
-    if isinstance(_describe["policyDocument"], six.string_types):
+    if isinstance(_describe["policyDocument"], str):
         describeDict = salt.utils.json.loads(_describe["policyDocument"])
     else:
         describeDict = _describe["policyDocument"]
 
-    if isinstance(policyDocument, six.string_types):
+    if isinstance(policyDocument, str):
         policyDocument = salt.utils.json.loads(policyDocument)
 
     r = salt.utils.data.compare_dicts(describeDict, policyDocument)
     if bool(r):
         if __opts__["test"]:
-            msg = "Policy {0} set to be modified.".format(policyName)
+            msg = "Policy {} set to be modified.".format(policyName)
             ret["comment"] = msg
             ret["result"] = None
             return ret
@@ -437,9 +412,7 @@ def policy_present(
         )
         if not r.get("created"):
             ret["result"] = False
-            ret["comment"] = "Failed to update policy: {0}.".format(
-                r["error"]["message"]
-            )
+            ret["comment"] = "Failed to update policy: {}.".format(r["error"]["message"])
             ret["changes"] = {}
             return ret
 
@@ -453,9 +426,7 @@ def policy_present(
         )
 
         ret["changes"].setdefault("new", {})["policyDocument"] = policyDocument
-        ret["changes"].setdefault("old", {})["policyDocument"] = _describe[
-            "policyDocument"
-        ]
+        ret["changes"].setdefault("old", {})["policyDocument"] = _describe["policyDocument"]
     return ret
 
 
@@ -490,15 +461,15 @@ def policy_absent(name, policyName, region=None, key=None, keyid=None, profile=N
     )
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to delete policy: {0}.".format(r["error"]["message"])
+        ret["comment"] = "Failed to delete policy: {}.".format(r["error"]["message"])
         return ret
 
     if r and not r["exists"]:
-        ret["comment"] = "Policy {0} does not exist.".format(policyName)
+        ret["comment"] = "Policy {} does not exist.".format(policyName)
         return ret
 
     if __opts__["test"]:
-        ret["comment"] = "Policy {0} is set to be removed.".format(policyName)
+        ret["comment"] = "Policy {} is set to be removed.".format(policyName)
         ret["result"] = None
         return ret
     # delete non-default versions
@@ -519,9 +490,7 @@ def policy_absent(name, policyName, region=None, key=None, keyid=None, profile=N
             )
             if not r["deleted"]:
                 ret["result"] = False
-                ret["comment"] = "Failed to delete policy: {0}.".format(
-                    r["error"]["message"]
-                )
+                ret["comment"] = "Failed to delete policy: {}.".format(r["error"]["message"])
                 return ret
     # For the delete to succeed, the policy must be detached from any
     # principals. However, no API is provided to list the principals to which it
@@ -535,17 +504,15 @@ def policy_absent(name, policyName, region=None, key=None, keyid=None, profile=N
     )
     if not r["deleted"]:
         ret["result"] = False
-        ret["comment"] = "Failed to delete policy: {0}.".format(r["error"]["message"])
+        ret["comment"] = "Failed to delete policy: {}.".format(r["error"]["message"])
         return ret
     ret["changes"]["old"] = {"policy": policyName}
     ret["changes"]["new"] = {"policy": None}
-    ret["comment"] = "Policy {0} deleted.".format(policyName)
+    ret["comment"] = "Policy {} deleted.".format(policyName)
     return ret
 
 
-def policy_attached(
-    name, policyName, principal, region=None, key=None, keyid=None, profile=None
-):
+def policy_attached(name, policyName, principal, region=None, key=None, keyid=None, profile=None):
     """
     Ensure policy is attached to the given principal.
 
@@ -579,7 +546,7 @@ def policy_attached(
 
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to attach policy: {0}.".format(r["error"]["message"])
+        ret["comment"] = "Failed to attach policy: {}.".format(r["error"]["message"])
         return ret
 
     attached = False
@@ -589,9 +556,7 @@ def policy_attached(
             break
     if not attached:
         if __opts__["test"]:
-            ret["comment"] = "Policy {0} is set to be attached to {1}.".format(
-                policyName, principal
-            )
+            ret["comment"] = "Policy {} is set to be attached to {}.".format(policyName, principal)
             ret["result"] = None
             return ret
         r = __salt__["boto_iot.attach_principal_policy"](
@@ -604,26 +569,20 @@ def policy_attached(
         )
         if not r.get("attached"):
             ret["result"] = False
-            ret["comment"] = "Failed to attach policy: {0}.".format(
-                r["error"]["message"]
-            )
+            ret["comment"] = "Failed to attach policy: {}.".format(r["error"]["message"])
             return ret
         ret["changes"]["old"] = {"attached": False}
         ret["changes"]["new"] = {"attached": True}
-        ret["comment"] = "Policy {0} attached to {1}.".format(policyName, principal)
+        ret["comment"] = "Policy {} attached to {}.".format(policyName, principal)
         return ret
 
-    ret["comment"] = os.linesep.join(
-        [ret["comment"], "Policy {0} is attached.".format(policyName)]
-    )
+    ret["comment"] = os.linesep.join([ret["comment"], "Policy {} is attached.".format(policyName)])
     ret["changes"] = {}
 
     return ret
 
 
-def policy_detached(
-    name, policyName, principal, region=None, key=None, keyid=None, profile=None
-):
+def policy_detached(name, policyName, principal, region=None, key=None, keyid=None, profile=None):
     """
     Ensure policy is attached to the given principal.
 
@@ -658,7 +617,7 @@ def policy_detached(
 
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to detached policy: {0}.".format(r["error"]["message"])
+        ret["comment"] = "Failed to detached policy: {}.".format(r["error"]["message"])
         return ret
 
     attached = False
@@ -668,7 +627,7 @@ def policy_detached(
             break
     if attached:
         if __opts__["test"]:
-            ret["comment"] = "Policy {0} is set to be detached from {1}.".format(
+            ret["comment"] = "Policy {} is set to be detached from {}.".format(
                 policyName, principal
             )
             ret["result"] = None
@@ -683,18 +642,14 @@ def policy_detached(
         )
         if not r.get("detached"):
             ret["result"] = False
-            ret["comment"] = "Failed to detach policy: {0}.".format(
-                r["error"]["message"]
-            )
+            ret["comment"] = "Failed to detach policy: {}.".format(r["error"]["message"])
             return ret
         ret["changes"]["old"] = {"attached": True}
         ret["changes"]["new"] = {"attached": False}
-        ret["comment"] = "Policy {0} detached from {1}.".format(policyName, principal)
+        ret["comment"] = "Policy {} detached from {}.".format(policyName, principal)
         return ret
 
-    ret["comment"] = os.linesep.join(
-        [ret["comment"], "Policy {0} is detached.".format(policyName)]
-    )
+    ret["comment"] = os.linesep.join([ret["comment"], "Policy {} is detached.".format(policyName)])
     ret["changes"] = {}
 
     return ret
@@ -754,12 +709,12 @@ def topic_rule_present(
 
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to create rule: {0}.".format(r["error"]["message"])
+        ret["comment"] = "Failed to create rule: {}.".format(r["error"]["message"])
         return ret
 
     if not r.get("exists"):
         if __opts__["test"]:
-            ret["comment"] = "Rule {0} is set to be created.".format(ruleName)
+            ret["comment"] = "Rule {} is set to be created.".format(ruleName)
             ret["result"] = None
             return ret
         r = __salt__["boto_iot.create_topic_rule"](
@@ -775,26 +730,24 @@ def topic_rule_present(
         )
         if not r.get("created"):
             ret["result"] = False
-            ret["comment"] = "Failed to create rule: {0}.".format(r["error"]["message"])
+            ret["comment"] = "Failed to create rule: {}.".format(r["error"]["message"])
             return ret
         _describe = __salt__["boto_iot.describe_topic_rule"](
             ruleName, region=region, key=key, keyid=keyid, profile=profile
         )
         ret["changes"]["old"] = {"rule": None}
         ret["changes"]["new"] = _describe
-        ret["comment"] = "Rule {0} created.".format(ruleName)
+        ret["comment"] = "Rule {} created.".format(ruleName)
         return ret
 
-    ret["comment"] = os.linesep.join(
-        [ret["comment"], "Rule {0} is present.".format(ruleName)]
-    )
+    ret["comment"] = os.linesep.join([ret["comment"], "Rule {} is present.".format(ruleName)])
     ret["changes"] = {}
     # policy exists, ensure config matches
     _describe = __salt__["boto_iot.describe_topic_rule"](
         ruleName=ruleName, region=region, key=key, keyid=keyid, profile=profile
     )["rule"]
 
-    if isinstance(actions, six.string_types):
+    if isinstance(actions, str):
         actions = salt.utils.json.loads(actions)
 
     need_update = False
@@ -812,7 +765,7 @@ def topic_rule_present(
             ret["changes"].setdefault("old", {})[var] = _describe[var]
     if need_update:
         if __opts__["test"]:
-            msg = "Rule {0} set to be modified.".format(ruleName)
+            msg = "Rule {} set to be modified.".format(ruleName)
             ret["changes"] = {}
             ret["comment"] = msg
             ret["result"] = None
@@ -831,7 +784,7 @@ def topic_rule_present(
         )
         if not r.get("replaced"):
             ret["result"] = False
-            ret["comment"] = "Failed to update rule: {0}.".format(r["error"]["message"])
+            ret["comment"] = "Failed to update rule: {}.".format(r["error"]["message"])
             ret["changes"] = {}
     return ret
 
@@ -867,15 +820,15 @@ def topic_rule_absent(name, ruleName, region=None, key=None, keyid=None, profile
     )
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to delete rule: {0}.".format(r["error"]["message"])
+        ret["comment"] = "Failed to delete rule: {}.".format(r["error"]["message"])
         return ret
 
     if r and not r["exists"]:
-        ret["comment"] = "Rule {0} does not exist.".format(ruleName)
+        ret["comment"] = "Rule {} does not exist.".format(ruleName)
         return ret
 
     if __opts__["test"]:
-        ret["comment"] = "Rule {0} is set to be removed.".format(ruleName)
+        ret["comment"] = "Rule {} is set to be removed.".format(ruleName)
         ret["result"] = None
         return ret
     r = __salt__["boto_iot.delete_topic_rule"](
@@ -883,9 +836,9 @@ def topic_rule_absent(name, ruleName, region=None, key=None, keyid=None, profile
     )
     if not r["deleted"]:
         ret["result"] = False
-        ret["comment"] = "Failed to delete rule: {0}.".format(r["error"]["message"])
+        ret["comment"] = "Failed to delete rule: {}.".format(r["error"]["message"])
         return ret
     ret["changes"]["old"] = {"rule": ruleName}
     ret["changes"]["new"] = {"rule": None}
-    ret["comment"] = "Rule {0} deleted.".format(ruleName)
+    ret["comment"] = "Rule {} deleted.".format(ruleName)
     return ret

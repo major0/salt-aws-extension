@@ -48,8 +48,6 @@ Connection module for Amazon Elasticsearch Service
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 
 import salt.utils.compat
@@ -119,9 +117,7 @@ def add_tags(
         salt myminion boto3_elasticsearch.add_tags domain_name=mydomain tags='{"foo": "bar", "baz": "qux"}'
     """
     if not any((arn, domain_name)):
-        raise SaltInvocationError(
-            "At least one of domain_name or arn must be specified."
-        )
+        raise SaltInvocationError("At least one of domain_name or arn must be specified.")
     ret = {"result": False}
     if arn is None:
         res = describe_elasticsearch_domain(
@@ -134,21 +130,13 @@ def add_tags(
         if "error" in res:
             ret.update(res)
         elif not res["result"]:
-            ret.update(
-                {
-                    "error": 'The domain with name "{}" does not exist.'.format(
-                        domain_name
-                    )
-                }
-            )
+            ret.update({"error": 'The domain with name "{}" does not exist.'.format(domain_name)})
         else:
             arn = res["response"].get("ARN")
     if arn:
         boto_params = {
             "ARN": arn,
-            "TagList": [
-                {"Key": k, "Value": value} for k, value in (tags or {}).items()
-            ],
+            "TagList": [{"Key": k, "Value": value} for k, value in (tags or {}).items()],
         }
         try:
             conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
@@ -365,9 +353,7 @@ def create_elasticsearch_domain(
             ret["result"] = True
             ret["response"] = res["DomainStatus"]
         if blocking:
-            waiter = __utils__["boto3_elasticsearch.get_waiter"](
-                conn, waiter="ESDomainAvailable"
-            )
+            waiter = __utils__["boto3_elasticsearch.get_waiter"](conn, waiter="ESDomainAvailable")
             waiter.wait(DomainName=domain_name)
     except (ParamValidationError, ClientError, WaiterError) as exp:
         ret.update({"error": __utils__["boto3.get_error"](exp)["message"]})
@@ -398,9 +384,7 @@ def delete_elasticsearch_domain(
         conn.delete_elasticsearch_domain(DomainName=domain_name)
         ret["result"] = True
         if blocking:
-            waiter = __utils__["boto3_elasticsearch.get_waiter"](
-                conn, waiter="ESDomainDeleted"
-            )
+            waiter = __utils__["boto3_elasticsearch.get_waiter"](conn, waiter="ESDomainDeleted")
             waiter.wait(DomainName=domain_name)
     except (ParamValidationError, ClientError, WaiterError) as exp:
         ret.update({"error": __utils__["boto3.get_error"](exp)["message"]})
@@ -431,9 +415,7 @@ def delete_elasticsearch_service_role(region=None, keyid=None, key=None, profile
     return ret
 
 
-def describe_elasticsearch_domain(
-    domain_name, region=None, keyid=None, key=None, profile=None
-):
+def describe_elasticsearch_domain(domain_name, region=None, keyid=None, key=None, profile=None):
     """
     Given a domain name gets its status description.
 
@@ -488,9 +470,7 @@ def describe_elasticsearch_domain_config(
     return ret
 
 
-def describe_elasticsearch_domains(
-    domain_names, region=None, keyid=None, key=None, profile=None
-):
+def describe_elasticsearch_domains(domain_names, region=None, keyid=None, key=None, profile=None):
     """
     Returns domain configuration information about the specified Elasticsearch
     domains, including the domain ID, domain endpoint, and domain ARN.
@@ -655,9 +635,9 @@ def describe_reserved_elasticsearch_instances(
             "ReservedElasticsearchInstanceId": reserved_elasticsearch_instance_id,
         }
         res = []
-        for page in conn.get_paginator(
-            "describe_reserved_elasticsearch_instances"
-        ).paginate(**boto_params):
+        for page in conn.get_paginator("describe_reserved_elasticsearch_instances").paginate(
+            **boto_params
+        ):
             res.extend(page["ReservedElasticsearchInstances"])
         if res:
             ret["result"] = True
@@ -824,9 +804,7 @@ def list_elasticsearch_instance_types(
             }
         )
         res = []
-        for page in conn.get_paginator("list_elasticsearch_instance_types").paginate(
-            **boto_params
-        ):
+        for page in conn.get_paginator("list_elasticsearch_instance_types").paginate(**boto_params):
             res.extend(page["ElasticsearchInstanceTypes"])
         if res:
             ret["result"] = True
@@ -863,9 +841,7 @@ def list_elasticsearch_versions(region=None, keyid=None, key=None, profile=None)
     return ret
 
 
-def list_tags(
-    domain_name=None, arn=None, region=None, key=None, keyid=None, profile=None
-):
+def list_tags(domain_name=None, arn=None, region=None, key=None, keyid=None, profile=None):
     """
     Returns all tags for the given Elasticsearch domain.
 
@@ -878,9 +854,7 @@ def list_tags(
 
     """
     if not any((arn, domain_name)):
-        raise SaltInvocationError(
-            "At least one of domain_name or arn must be specified."
-        )
+        raise SaltInvocationError("At least one of domain_name or arn must be specified.")
     ret = {"result": False}
     if arn is None:
         res = describe_elasticsearch_domain(
@@ -893,13 +867,7 @@ def list_tags(
         if "error" in res:
             ret.update(res)
         elif not res["result"]:
-            ret.update(
-                {
-                    "error": 'The domain with name "{}" does not exist.'.format(
-                        domain_name
-                    )
-                }
-            )
+            ret.update({"error": 'The domain with name "{}" does not exist.'.format(domain_name)})
         else:
             arn = res["response"].get("ARN")
     if arn:
@@ -907,9 +875,7 @@ def list_tags(
             conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
             res = conn.list_tags(ARN=arn)
             ret["result"] = True
-            ret["response"] = {
-                item["Key"]: item["Value"] for item in res.get("TagList", [])
-            }
+            ret["response"] = {item["Key"]: item["Value"] for item in res.get("TagList", [])}
         except (ParamValidationError, ClientError) as exp:
             ret.update({"error": __utils__["boto3.get_error"](exp)["message"]})
     return ret
@@ -990,9 +956,7 @@ def remove_tags(
         salt myminion boto3_elasticsearch.remove_tags '["foo", "bar"]' domain_name=my_domain
     """
     if not any((arn, domain_name)):
-        raise SaltInvocationError(
-            "At least one of domain_name or arn must be specified."
-        )
+        raise SaltInvocationError("At least one of domain_name or arn must be specified.")
     ret = {"result": False}
     if arn is None:
         res = describe_elasticsearch_domain(
@@ -1005,13 +969,7 @@ def remove_tags(
         if "error" in res:
             ret.update(res)
         elif not res["result"]:
-            ret.update(
-                {
-                    "error": 'The domain with name "{}" does not exist.'.format(
-                        domain_name
-                    )
-                }
-            )
+            ret.update({"error": 'The domain with name "{}" does not exist.'.format(domain_name)})
         else:
             arn = res["response"].get("ARN")
     if arn:
@@ -1205,9 +1163,7 @@ def update_elasticsearch_domain_config(
             ret["result"] = True
             ret["response"] = res["DomainConfig"]
         if blocking:
-            waiter = __utils__["boto3_elasticsearch.get_waiter"](
-                conn, waiter="ESDomainAvailable"
-            )
+            waiter = __utils__["boto3_elasticsearch.get_waiter"](conn, waiter="ESDomainAvailable")
             waiter.wait(DomainName=domain_name)
     except (ParamValidationError, ClientError, WaiterError) as exp:
         ret.update({"error": __utils__["boto3.get_error"](exp)["message"]})
@@ -1271,9 +1227,7 @@ def upgrade_elasticsearch_domain(
             ret["result"] = True
             ret["response"] = res
         if blocking:
-            waiter = __utils__["boto3_elasticsearch.get_waiter"](
-                conn, waiter="ESUpgradeFinished"
-            )
+            waiter = __utils__["boto3_elasticsearch.get_waiter"](conn, waiter="ESUpgradeFinished")
             waiter.wait(DomainName=domain_name)
     except (ParamValidationError, ClientError, WaiterError) as exp:
         ret.update({"error": __utils__["boto3.get_error"](exp)["message"]})
@@ -1320,9 +1274,7 @@ def wait_for_upgrade(domain_name, region=None, keyid=None, key=None, profile=Non
     ret = {"result": False}
     try:
         conn = _get_conn(region=region, keyid=keyid, key=key, profile=profile)
-        waiter = __utils__["boto3_elasticsearch.get_waiter"](
-            conn, waiter="ESUpgradeFinished"
-        )
+        waiter = __utils__["boto3_elasticsearch.get_waiter"](conn, waiter="ESUpgradeFinished")
         waiter.wait(DomainName=domain_name)
         ret["result"] = True
     except (ParamValidationError, ClientError, WaiterError) as exp:
@@ -1396,14 +1348,10 @@ def check_upgrade_eligibility(
     )
     if "error" in res:
         return res
-    res = wait_for_upgrade(
-        domain_name, region=region, keyid=keyid, key=key, profile=profile
-    )
+    res = wait_for_upgrade(domain_name, region=region, keyid=keyid, key=key, profile=profile)
     if "error" in res:
         return res
-    res = get_upgrade_status(
-        domain_name, region=region, keyid=keyid, key=key, profile=profile
-    )
+    res = get_upgrade_status(domain_name, region=region, keyid=keyid, key=key, profile=profile)
     ret["result"] = True
     ret["response"] = (
         res["response"]["UpgradeStep"] == "PRE_UPGRADE_CHECK"

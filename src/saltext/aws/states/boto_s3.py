@@ -47,8 +47,6 @@ config:
 
 :depends: boto3
 """
-
-
 import copy
 import difflib
 import logging
@@ -170,9 +168,7 @@ def object_present(
 
     if extra_args is None:
         extra_args = {}
-    combined_extra_args = copy.deepcopy(
-        __salt__["config.option"](extra_args_from_pillar, {})
-    )
+    combined_extra_args = copy.deepcopy(__salt__["config.option"](extra_args_from_pillar, {}))
     __utils__["dictupdate.update"](combined_extra_args, extra_args)
     if combined_extra_args:
         supported_args = STORED_EXTRA_ARGS | UPLOAD_ONLY_EXTRA_ARGS
@@ -189,12 +185,18 @@ def object_present(
         digest = salt.utils.hashutils.get_hash(source, form=hash_type)
     except OSError as e:
         ret["result"] = False
-        ret["comment"] = "Could not read local file {}: {}".format(source, e,)
+        ret["comment"] = "Could not read local file {}: {}".format(
+            source,
+            e,
+        )
         return ret
     except ValueError as e:
         # Invalid hash type exception from get_hash
         ret["result"] = False
-        ret["comment"] = "Could not hash local file {}: {}".format(source, e,)
+        ret["comment"] = "Could not hash local file {}: {}".format(
+            source,
+            e,
+        )
         return ret
 
     HASH_METADATA_KEY = "salt_managed_content_hash"
@@ -229,7 +231,9 @@ def object_present(
     )
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to check if S3 object exists: {}.".format(r["error"],)
+        ret["comment"] = "Failed to check if S3 object exists: {}.".format(
+            r["error"],
+        )
         return ret
 
     if r["result"]:
@@ -286,7 +290,10 @@ def object_present(
 
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to {} S3 object: {}.".format(action, r["error"],)
+        ret["comment"] = "Failed to {} S3 object: {}.".format(
+            action,
+            r["error"],
+        )
         return ret
 
     ret["result"] = True

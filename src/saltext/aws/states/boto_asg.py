@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Manage Autoscale Groups
 =======================
@@ -191,15 +190,10 @@ Overriding the alarm values on the resource:
               attributes:
                 threshold: 50.0
 """
-
-# Import Python libs
-from __future__ import absolute_import, print_function, unicode_literals
-
 import copy
 import hashlib
 import logging
 
-# Import Salt libs
 import salt.utils.dictupdate as dictupdate
 import salt.utils.stringutils
 from salt.exceptions import SaltInvocationError
@@ -451,11 +445,11 @@ def present(
                 "subnet", name=i, region=region, key=key, keyid=keyid, profile=profile
             )
             if "error" in r:
-                ret["comment"] = "Error looking up subnet ids: {0}".format(r["error"])
+                ret["comment"] = "Error looking up subnet ids: {}".format(r["error"])
                 ret["result"] = False
                 return ret
             if "id" not in r:
-                ret["comment"] = "Subnet {0} does not exist.".format(i)
+                ret["comment"] = "Subnet {} does not exist.".format(i)
                 ret["result"] = False
                 return ret
             vpc_zone_identifier.append(r["id"])
@@ -475,9 +469,7 @@ def present(
         launch_config_bytes = salt.utils.stringutils.to_bytes(
             str(launch_config)
         )  # future lint: disable=blacklisted-function
-        launch_config_name = (
-            launch_config_name + "-" + hashlib.md5(launch_config_bytes).hexdigest()
-        )
+        launch_config_name = launch_config_name + "-" + hashlib.md5(launch_config_bytes).hexdigest()
         args = {
             "name": launch_config_name,
             "region": region,
@@ -500,9 +492,7 @@ def present(
                 if image_ids:  # find_images() returns False on failure
                     launch_config[index]["image_id"] = image_ids[0]
                 else:
-                    log.warning(
-                        "Couldn't find AMI named `%s`, passing literally.", image_name
-                    )
+                    log.warning("Couldn't find AMI named `%s`, passing literally.", image_name)
                     launch_config[index]["image_id"] = image_name
                 del launch_config[index]["image_name"]
                 break
@@ -542,9 +532,7 @@ def present(
     termination_policies = _determine_termination_policies(
         termination_policies, termination_policies_from_pillar
     )
-    scaling_policies = _determine_scaling_policies(
-        scaling_policies, scaling_policies_from_pillar
-    )
+    scaling_policies = _determine_scaling_policies(scaling_policies, scaling_policies_from_pillar)
     scheduled_actions = _determine_scheduled_actions(
         scheduled_actions, scheduled_actions_from_pillar
     )
@@ -604,7 +592,7 @@ def present(
                 if "min_adjustment_step" not in policy:
                     policy["min_adjustment_step"] = None
         if scheduled_actions:
-            for s_name, action in six.iteritems(scheduled_actions):
+            for s_name, action in scheduled_actions.items():
                 if "end_time" not in action:
                     action["end_time"] = None
         config = {
@@ -635,7 +623,7 @@ def present(
         if scheduled_actions is None:
             config["scheduled_actions"] = {}
         # allow defaults on start_time
-        for s_name, action in six.iteritems(scheduled_actions):
+        for s_name, action in scheduled_actions.items():
             if "start_time" not in action:
                 asg_action = asg["scheduled_actions"].get(s_name, {})
                 if "start_time" in asg_action:
@@ -643,7 +631,7 @@ def present(
         proposed = {}
         # note: do not loop using "key, value" - this can modify the value of
         # the aws access key
-        for asg_property, value in six.iteritems(config):
+        for asg_property, value in config.items():
             # Only modify values being specified; introspection is difficult
             # otherwise since it's hard to track default values, which will
             # always be returned from AWS.
@@ -708,9 +696,7 @@ def present(
                 if deleted:
                     if "launch_config" not in ret["changes"]:
                         ret["changes"]["launch_config"] = {}
-                    ret["changes"]["launch_config"]["deleted"] = asg[
-                        "launch_config_name"
-                    ]
+                    ret["changes"]["launch_config"]["deleted"] = asg["launch_config_name"]
             if updated:
                 ret["changes"]["old"] = asg
                 asg = __salt__["boto_asg.get_config"](name, region, key, keyid, profile)
@@ -739,9 +725,7 @@ def present(
     return ret
 
 
-def _determine_termination_policies(
-    termination_policies, termination_policies_from_pillar
-):
+def _determine_termination_policies(termination_policies, termination_policies_from_pillar):
     """
     helper method for present.  ensure that termination_policies are set
     """
@@ -785,9 +769,7 @@ def _determine_notification_info(
     """
     helper method for present.  ensure that notification_configs are set
     """
-    pillar_arn_list = copy.deepcopy(
-        __salt__["config.option"](notification_arn_from_pillar, {})
-    )
+    pillar_arn_list = copy.deepcopy(__salt__["config.option"](notification_arn_from_pillar, {}))
     pillar_arn = None
     if len(pillar_arn_list) > 0:
         pillar_arn = pillar_arn_list[0]
@@ -819,12 +801,10 @@ def _alarms_present(
         tmp = dictupdate.update(tmp, alarms)
     # set alarms, using boto_cloudwatch_alarm.present
     merged_return_value = {"name": name, "result": True, "comment": "", "changes": {}}
-    for _, info in six.iteritems(tmp):
+    for _, info in tmp.items():
         # add asg to name and description
         info["name"] = name + " " + info["name"]
-        info["attributes"]["description"] = (
-            name + " " + info["attributes"]["description"]
-        )
+        info["attributes"]["description"] = name + " " + info["attributes"]["description"]
         # add dimension attribute
         if "dimensions" not in info["attributes"]:
             info["attributes"]["dimensions"] = {"AutoScalingGroupName": [name]}
@@ -837,7 +817,7 @@ def _alarms_present(
                     if "scaling_policy" not in action:
                         scaling_policy_actions_only = False
                     if ":self:" in action:
-                        action = action.replace(":self:", ":{0}:".format(name))
+                        action = action.replace(":self:", ":{}:".format(name))
                     new_actions.append(action)
                 info["attributes"][action_type] = new_actions
         # skip alarms that only have actions for scaling policy, if min_size == max_size for this ASG
@@ -862,9 +842,7 @@ def _alarms_present(
     return merged_return_value
 
 
-def absent(
-    name, force=False, region=None, key=None, keyid=None, profile=None, remove_lc=False
-):
+def absent(name, force=False, region=None, key=None, keyid=None, profile=None, remove_lc=False):
     """
     Ensure the named autoscale group is deleted.
 
@@ -900,7 +878,7 @@ def absent(
             ret["comment"] = "Autoscale group set to be deleted."
             ret["result"] = None
             if remove_lc:
-                msg = "Launch configuration {0} is set to be deleted.".format(
+                msg = "Launch configuration {} is set to be deleted.".format(
                     asg["launch_config_name"]
                 )
                 ret["comment"] = " ".join([ret["comment"], msg])
@@ -914,9 +892,7 @@ def absent(
                 if lc_deleted:
                     if "launch_config" not in ret["changes"]:
                         ret["changes"]["launch_config"] = {}
-                    ret["changes"]["launch_config"]["deleted"] = asg[
-                        "launch_config_name"
-                    ]
+                    ret["changes"]["launch_config"]["deleted"] = asg["launch_config_name"]
                 else:
                     ret["result"] = False
                     ret["comment"] = " ".join(

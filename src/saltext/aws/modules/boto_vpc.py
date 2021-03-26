@@ -122,8 +122,6 @@ Deleting VPC peering connection via this module
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 import random
 import socket
@@ -131,7 +129,8 @@ import time
 
 import salt.utils.compat
 import salt.utils.versions
-from salt.exceptions import CommandExecutionError, SaltInvocationError
+from salt.exceptions import CommandExecutionError
+from salt.exceptions import SaltInvocationError
 
 # from salt.utils import exactly_one
 # TODO: Uncomment this and s/_exactly_one/exactly_one/
@@ -196,7 +195,12 @@ def __init__(opts):
 
 
 def check_vpc(
-    vpc_id=None, vpc_name=None, region=None, key=None, keyid=None, profile=None,
+    vpc_id=None,
+    vpc_name=None,
+    region=None,
+    key=None,
+    keyid=None,
+    profile=None,
 ):
     """
     Check whether a VPC with the given name or id exists.
@@ -214,30 +218,17 @@ def check_vpc(
     """
 
     if not _exactly_one((vpc_name, vpc_id)):
-        raise SaltInvocationError(
-            "One (but not both) of vpc_id or vpc_name " "must be provided."
-        )
+        raise SaltInvocationError("One (but not both) of vpc_id or vpc_name " "must be provided.")
     if vpc_name:
-        vpc_id = _get_id(
-            vpc_name=vpc_name, region=region, key=key, keyid=keyid, profile=profile
-        )
-    elif not _find_vpcs(
-        vpc_id=vpc_id, region=region, key=key, keyid=keyid, profile=profile
-    ):
+        vpc_id = _get_id(vpc_name=vpc_name, region=region, key=key, keyid=keyid, profile=profile)
+    elif not _find_vpcs(vpc_id=vpc_id, region=region, key=key, keyid=keyid, profile=profile):
         log.info("VPC %s does not exist.", vpc_id)
         return None
     return vpc_id
 
 
 def _create_resource(
-    resource,
-    name=None,
-    tags=None,
-    region=None,
-    key=None,
-    keyid=None,
-    profile=None,
-    **kwargs
+    resource, name=None, tags=None, region=None, key=None, keyid=None, profile=None, **kwargs
 ):
     """
     Create a VPC resource. Returns the resource id if created, or False
@@ -259,9 +250,7 @@ def _create_resource(
         ):
             return {
                 "created": False,
-                "error": {
-                    "message": "A {} named {} already exists.".format(resource, name)
-                },
+                "error": {"message": "A {} named {} already exists.".format(resource, name)},
             }
 
         r = create_resource(**kwargs)
@@ -297,23 +286,14 @@ def _create_resource(
 
 
 def _delete_resource(
-    resource,
-    name=None,
-    resource_id=None,
-    region=None,
-    key=None,
-    keyid=None,
-    profile=None,
-    **kwargs
+    resource, name=None, resource_id=None, region=None, key=None, keyid=None, profile=None, **kwargs
 ):
     """
     Delete a VPC resource. Returns True if successful, otherwise False.
     """
 
     if not _exactly_one((name, resource_id)):
-        raise SaltInvocationError(
-            "One (but not both) of name or id must be " "provided."
-        )
+        raise SaltInvocationError("One (but not both) of name or id must be " "provided.")
 
     try:
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
@@ -332,9 +312,7 @@ def _delete_resource(
             if not resource_id:
                 return {
                     "deleted": False,
-                    "error": {
-                        "message": "{} {} does not exist.".format(resource, name)
-                    },
+                    "error": {"message": "{} {} does not exist.".format(resource, name)},
                 }
 
         if delete_resource(resource_id, **kwargs):
@@ -374,9 +352,7 @@ def _get_resource(
     """
 
     if not _exactly_one((name, resource_id)):
-        raise SaltInvocationError(
-            "One (but not both) of name or id must be " "provided."
-        )
+        raise SaltInvocationError("One (but not both) of name or id must be " "provided.")
 
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
 
@@ -482,9 +458,7 @@ def _get_resource_id(resource, name, region=None, key=None, keyid=None, profile=
     if _id:
         return _id
 
-    r = _get_resource(
-        resource, name=name, region=region, key=key, keyid=keyid, profile=profile
-    )
+    r = _get_resource(resource, name=name, region=region, key=key, keyid=keyid, profile=profile)
 
     if r:
         return r.id
@@ -601,9 +575,7 @@ def _find_vpcs(
             filter_parameters["filters"]["tag:{}".format(tag_name)] = tag_value
 
     vpcs = conn.get_all_vpcs(**filter_parameters)
-    log.debug(
-        "The filters criteria %s matched the following VPCs:%s", filter_parameters, vpcs
-    )
+    log.debug("The filters criteria %s matched the following VPCs:%s", filter_parameters, vpcs)
 
     if vpcs:
         if not any((vpc_id, vpc_name, cidr, tags)):
@@ -633,9 +605,7 @@ def _get_id(
         )
 
     if vpc_name and not any((cidr, tags)):
-        vpc_id = _cache_id(
-            vpc_name, region=region, key=key, keyid=keyid, profile=profile
-        )
+        vpc_id = _cache_id(vpc_name, region=region, key=key, keyid=keyid, profile=profile)
         if vpc_id:
             return vpc_id
 
@@ -663,16 +633,20 @@ def _get_id(
                 )
             return vpc_id
         else:
-            raise CommandExecutionError(
-                "Found more than one VPC matching the criteria."
-            )
+            raise CommandExecutionError("Found more than one VPC matching the criteria.")
     else:
         log.info("No VPC found.")
         return None
 
 
 def get_id(
-    name=None, cidr=None, tags=None, region=None, key=None, keyid=None, profile=None,
+    name=None,
+    cidr=None,
+    tags=None,
+    region=None,
+    key=None,
+    keyid=None,
+    profile=None,
 ):
     """
     Given VPC properties, return the VPC id if a match is found.
@@ -727,8 +701,7 @@ def exists(
 
     if not any((vpc_id, name, tags, cidr)):
         raise SaltInvocationError(
-            "At least one of the following must be "
-            "provided: vpc_id, vpc_name, cidr or tags."
+            "At least one of the following must be " "provided: vpc_id, vpc_name, cidr or tags."
         )
 
     try:
@@ -836,15 +809,11 @@ def delete(
     """
 
     if name:
-        log.warning(
-            "boto_vpc.delete: name parameter is deprecated " "use vpc_name instead."
-        )
+        log.warning("boto_vpc.delete: name parameter is deprecated " "use vpc_name instead.")
         vpc_name = name
 
     if not _exactly_one((vpc_name, vpc_id)):
-        raise SaltInvocationError(
-            "One (but not both) of vpc_name or vpc_id must be " "provided."
-        )
+        raise SaltInvocationError("One (but not both) of vpc_name or vpc_id must be " "provided.")
     try:
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
         if not vpc_id:
@@ -883,7 +852,12 @@ def delete(
 
 
 def describe(
-    vpc_id=None, vpc_name=None, region=None, key=None, keyid=None, profile=None,
+    vpc_id=None,
+    vpc_name=None,
+    region=None,
+    key=None,
+    keyid=None,
+    profile=None,
 ):
     """
     Describe a VPC's properties. If no VPC ID/Name is spcified then describe the default VPC.
@@ -1024,8 +998,7 @@ def _find_subnets(subnet_name=None, vpc_id=None, cidr=None, tags=None, conn=None
 
     if not any([subnet_name, tags, cidr]):
         raise SaltInvocationError(
-            "At least one of the following must be "
-            "specified: subnet_name, cidr or tags."
+            "At least one of the following must be " "specified: subnet_name, cidr or tags."
         )
 
     filter_parameters = {"filters": {}}
@@ -1094,9 +1067,7 @@ def create_subnet(
         if not vpc_id:
             return {
                 "created": False,
-                "error": {
-                    "message": "VPC {} does not exist.".format(vpc_name or vpc_id)
-                },
+                "error": {"message": "VPC {} does not exist.".format(vpc_name or vpc_id)},
             }
     except BotoServerError as e:
         return {"created": False, "error": __utils__["boto.get_error"](e)}
@@ -1182,8 +1153,7 @@ def subnet_exists(
     """
     if name:
         log.warning(
-            "boto_vpc.subnet_exists: name parameter is deprecated "
-            "use subnet_name instead."
+            "boto_vpc.subnet_exists: name parameter is deprecated " "use subnet_name instead."
         )
         subnet_name = name
 
@@ -1268,9 +1238,7 @@ def get_subnet_association(subnets, region=None, key=None, keyid=None, profile=N
     for subnet in subnets:
         log.debug("examining subnet id: %s for vpc_id", subnet.id)
         if subnet in subnets:
-            log.debug(
-                "subnet id: %s is associated with vpc id: %s", subnet.id, subnet.vpc_id
-            )
+            log.debug("subnet id: %s is associated with vpc id: %s", subnet.id, subnet.vpc_id)
             vpc_ids.add(subnet.vpc_id)
     if not vpc_ids:
         return {"vpc_id": None}
@@ -1327,9 +1295,7 @@ def describe_subnet(
         profile=profile,
     )
     if explicit_route_table_assoc:
-        ret["subnet"][
-            "explicit_route_table_association_id"
-        ] = explicit_route_table_assoc
+        ret["subnet"]["explicit_route_table_association_id"] = explicit_route_table_assoc
     return ret
 
 
@@ -1405,9 +1371,7 @@ def describe_subnets(
                 subnet["id"], subnet["vpc_id"], conn=conn
             )
             if explicit_route_table_assoc:
-                subnet[
-                    "explicit_route_table_association_id"
-                ] = explicit_route_table_assoc
+                subnet["explicit_route_table_association_id"] = explicit_route_table_assoc
             subnets_list.append(subnet)
         return {"subnets": subnets_list}
 
@@ -1448,9 +1412,7 @@ def create_internet_gateway(
             if not vpc_id:
                 return {
                     "created": False,
-                    "error": {
-                        "message": "VPC {} does not exist.".format(vpc_name or vpc_id)
-                    },
+                    "error": {"message": "VPC {} does not exist.".format(vpc_name or vpc_id)},
                 }
 
         r = _create_resource(
@@ -1465,9 +1427,7 @@ def create_internet_gateway(
         if r.get("created") and vpc_id:
             conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
             conn.attach_internet_gateway(r["id"], vpc_id)
-            log.info(
-                "Attached internet gateway %s to VPC %s", r["id"], vpc_name or vpc_id
-            )
+            log.info("Attached internet gateway %s to VPC %s", r["id"], vpc_name or vpc_id)
         return r
     except BotoServerError as e:
         return {"created": False, "error": __utils__["boto.get_error"](e)}
@@ -1512,9 +1472,7 @@ def delete_internet_gateway(
             return {
                 "deleted": False,
                 "error": {
-                    "message": "internet gateway {} does not exist.".format(
-                        internet_gateway_name
-                    )
+                    "message": "internet gateway {} does not exist.".format(internet_gateway_name)
                 },
             }
 
@@ -1532,17 +1490,13 @@ def delete_internet_gateway(
                 return {
                     "deleted": False,
                     "error": {
-                        "message": "internet gateway {} does not exist.".format(
-                            internet_gateway_id
-                        )
+                        "message": "internet gateway {} does not exist.".format(internet_gateway_id)
                     },
                 }
 
             if igw.attachments:
                 conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-                conn.detach_internet_gateway(
-                    internet_gateway_id, igw.attachments[0].vpc_id
-                )
+                conn.detach_internet_gateway(internet_gateway_id, igw.attachments[0].vpc_id)
         return _delete_resource(
             "internet_gateway",
             resource_id=internet_gateway_id,
@@ -1740,9 +1694,7 @@ def create_nat_gateway(
 
     try:
         if all((subnet_id, subnet_name)):
-            raise SaltInvocationError(
-                "Only one of subnet_name or subnet_id may be " "provided."
-            )
+            raise SaltInvocationError("Only one of subnet_name or subnet_id may be " "provided.")
         if subnet_name:
             subnet_id = _get_resource_id(
                 "subnet",
@@ -1755,9 +1707,7 @@ def create_nat_gateway(
             if not subnet_id:
                 return {
                     "created": False,
-                    "error": {
-                        "message": "Subnet {} does not exist.".format(subnet_name)
-                    },
+                    "error": {"message": "Subnet {} does not exist.".format(subnet_name)},
                 }
         else:
             if not _get_resource(
@@ -2021,9 +1971,7 @@ def create_dhcp_options(
             if not vpc_id:
                 return {
                     "created": False,
-                    "error": {
-                        "message": "VPC {} does not exist.".format(vpc_name or vpc_id)
-                    },
+                    "error": {"message": "VPC {} does not exist.".format(vpc_name or vpc_id)},
                 }
 
         r = _create_resource(
@@ -2163,9 +2111,7 @@ def associate_dhcp_options_to_vpc(
         if not vpc_id:
             return {
                 "associated": False,
-                "error": {
-                    "message": "VPC {} does not exist.".format(vpc_name or vpc_id)
-                },
+                "error": {"message": "VPC {} does not exist.".format(vpc_name or vpc_id)},
             }
 
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
@@ -2274,9 +2220,7 @@ def create_network_acl(
         }
 
     if all((subnet_id, subnet_name)):
-        raise SaltInvocationError(
-            "Only one of subnet_name or subnet_id may be " "provided."
-        )
+        raise SaltInvocationError("Only one of subnet_name or subnet_id may be " "provided.")
     if subnet_name:
         subnet_id = _get_resource_id(
             "subnet", subnet_name, region=region, key=key, keyid=keyid, profile=profile
@@ -2454,9 +2398,7 @@ def associate_network_acl_to_subnet(
         if not network_acl_id:
             return {
                 "associated": False,
-                "error": {
-                    "message": "Network ACL {} does not exist.".format(network_acl_name)
-                },
+                "error": {"message": "Network ACL {} does not exist.".format(network_acl_name)},
             }
     if subnet_name:
         subnet_id = _get_resource_id(
@@ -2533,9 +2475,7 @@ def disassociate_network_acl(
             if not subnet_id:
                 return {
                     "disassociated": False,
-                    "error": {
-                        "message": "Subnet {} does not exist.".format(subnet_name)
-                    },
+                    "error": {"message": "Subnet {} does not exist.".format(subnet_name)},
                 }
 
         if vpc_name or vpc_id:
@@ -2573,8 +2513,7 @@ def _create_network_acl_entry(
 
     if not _exactly_one((network_acl_name, network_acl_id)):
         raise SaltInvocationError(
-            "One (but not both) of network_acl_id or "
-            "network_acl_name must be provided."
+            "One (but not both) of network_acl_id or " "network_acl_name must be provided."
         )
 
     for v in ("rule_number", "protocol", "rule_action", "cidr_block"):
@@ -2724,8 +2663,7 @@ def delete_network_acl_entry(
     """
     if not _exactly_one((network_acl_name, network_acl_id)):
         raise SaltInvocationError(
-            "One (but not both) of network_acl_id or "
-            "network_acl_name must be provided."
+            "One (but not both) of network_acl_id or " "network_acl_name must be provided."
         )
 
     for v in ("rule_number", "egress"):
@@ -2752,9 +2690,7 @@ def delete_network_acl_entry(
         }
     try:
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-        deleted = conn.delete_network_acl_entry(
-            network_acl_id, rule_number, egress=egress
-        )
+        deleted = conn.delete_network_acl_entry(network_acl_id, rule_number, egress=egress)
         if deleted:
             log.info("Network ACL entry was deleted")
         else:
@@ -2990,9 +2926,7 @@ def associate_route_table(
     """
 
     if all((subnet_id, subnet_name)):
-        raise SaltInvocationError(
-            "Only one of subnet_name or subnet_id may be " "provided."
-        )
+        raise SaltInvocationError("Only one of subnet_name or subnet_id may be " "provided.")
     if subnet_name:
         subnet_id = _get_resource_id(
             "subnet", subnet_name, region=region, key=key, keyid=keyid, profile=profile
@@ -3019,25 +2953,19 @@ def associate_route_table(
         if not route_table_id:
             return {
                 "associated": False,
-                "error": {
-                    "message": "Route table {} does not exist.".format(route_table_name)
-                },
+                "error": {"message": "Route table {} does not exist.".format(route_table_name)},
             }
 
     try:
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
         association_id = conn.associate_route_table(route_table_id, subnet_id)
-        log.info(
-            "Route table %s was associated with subnet %s", route_table_id, subnet_id
-        )
+        log.info("Route table %s was associated with subnet %s", route_table_id, subnet_id)
         return {"association_id": association_id}
     except BotoServerError as e:
         return {"associated": False, "error": __utils__["boto.get_error"](e)}
 
 
-def disassociate_route_table(
-    association_id, region=None, key=None, keyid=None, profile=None
-):
+def disassociate_route_table(association_id, region=None, key=None, keyid=None, profile=None):
     """
     Disassociates a route table.
 
@@ -3132,8 +3060,7 @@ def create_route(
 
     if not _exactly_one((route_table_name, route_table_id)):
         raise SaltInvocationError(
-            "One (but not both) of route_table_id or route_table_name "
-            "must be provided."
+            "One (but not both) of route_table_id or route_table_name " "must be provided."
         )
 
     if not _exactly_one(
@@ -3171,11 +3098,7 @@ def create_route(
             if not route_table_id:
                 return {
                     "created": False,
-                    "error": {
-                        "message": "route table {} does not exist.".format(
-                            route_table_name
-                        )
-                    },
+                    "error": {"message": "route table {} does not exist.".format(route_table_name)},
                 }
 
         if internet_gateway_name:
@@ -3306,8 +3229,7 @@ def delete_route(
 
     if not _exactly_one((route_table_name, route_table_id)):
         raise SaltInvocationError(
-            "One (but not both) of route_table_id or route_table_name "
-            "must be provided."
+            "One (but not both) of route_table_id or route_table_name " "must be provided."
         )
 
     if destination_cidr_block is None:
@@ -3326,11 +3248,7 @@ def delete_route(
             if not route_table_id:
                 return {
                     "created": False,
-                    "error": {
-                        "message": "route table {} does not exist.".format(
-                            route_table_name
-                        )
-                    },
+                    "error": {"message": "route table {} does not exist.".format(route_table_name)},
                 }
     except BotoServerError as e:
         return {"created": False, "error": __utils__["boto.get_error"](e)}
@@ -3372,8 +3290,7 @@ def replace_route(
 
     if not _exactly_one((route_table_name, route_table_id)):
         raise SaltInvocationError(
-            "One (but not both) of route_table_id or route_table_name "
-            "must be provided."
+            "One (but not both) of route_table_id or route_table_name " "must be provided."
         )
 
     if destination_cidr_block is None:
@@ -3392,11 +3309,7 @@ def replace_route(
             if not route_table_id:
                 return {
                     "replaced": False,
-                    "error": {
-                        "message": "route table {} does not exist.".format(
-                            route_table_name
-                        )
-                    },
+                    "error": {"message": "route table {} does not exist.".format(route_table_name)},
                 }
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
 
@@ -3467,9 +3380,7 @@ def describe_route_tables(
             filter_parameters["Filters"].append({"Name": "vpc-id", "Values": [vpc_id]})
 
         if route_table_name:
-            filter_parameters["Filters"].append(
-                {"Name": "tag:Name", "Values": [route_table_name]}
-            )
+            filter_parameters["Filters"].append({"Name": "tag:Name", "Values": [route_table_name]})
 
         if tags:
             for tag_name, tag_value in tags.items():
@@ -3477,9 +3388,7 @@ def describe_route_tables(
                     {"Name": "tag:{}".format(tag_name), "Values": [tag_value]}
                 )
 
-        route_tables = conn3.describe_route_tables(**filter_parameters).get(
-            "RouteTables", []
-        )
+        route_tables = conn3.describe_route_tables(**filter_parameters).get("RouteTables", [])
 
         if not route_tables:
             return []
@@ -3517,9 +3426,7 @@ def describe_route_tables(
                     elif outkey == "tags":
                         route_table[outkey] = {}
                         for tagitem in item.get(inkey, []):
-                            route_table[outkey][tagitem.get("Key")] = tagitem.get(
-                                "Value"
-                            )
+                            route_table[outkey][tagitem.get("Key")] = tagitem.get("Value")
                     else:
                         route_table[outkey] = item.get(inkey)
             tables.append(route_table)
@@ -3715,9 +3622,7 @@ def request_vpc_peering_connection(
             "Exactly one of requester_vpc_id or " "requester_vpc_name is required"
         )
     if not _exactly_one((peer_vpc_id, peer_vpc_name)):
-        raise SaltInvocationError(
-            "Exactly one of peer_vpc_id or " "peer_vpc_name is required."
-        )
+        raise SaltInvocationError("Exactly one of peer_vpc_id or " "peer_vpc_name is required.")
 
     if requester_vpc_name:
         requester_vpc_id = _get_id(
@@ -3728,19 +3633,13 @@ def request_vpc_peering_connection(
             profile=profile,
         )
         if not requester_vpc_id:
-            return {
-                "error": "Could not resolve VPC name {} to an ID".format(
-                    requester_vpc_name
-                )
-            }
+            return {"error": "Could not resolve VPC name {} to an ID".format(requester_vpc_name)}
     if peer_vpc_name:
         peer_vpc_id = _get_id(
             vpc_name=peer_vpc_name, region=region, key=key, keyid=keyid, profile=profile
         )
         if not peer_vpc_id:
-            return {
-                "error": "Could not resolve VPC name {} to an ID".format(peer_vpc_name)
-            }
+            return {"error": "Could not resolve VPC name {} to an ID".format(peer_vpc_name)}
 
     try:
         log.debug("Trying to request vpc peering connection")
@@ -3762,9 +3661,7 @@ def request_vpc_peering_connection(
 
         if name:
             log.debug("Adding name tag to vpc peering connection")
-            conn.create_tags(
-                Resources=[peering_conn_id], Tags=[{"Key": "Name", "Value": name}]
-            )
+            conn.create_tags(Resources=[peering_conn_id], Tags=[{"Key": "Name", "Value": name}])
             log.debug("Applied name tag to vpc peering connection")
             msg += " With name {}.".format(name)
 
@@ -3795,9 +3692,7 @@ def _get_peering_connection_ids(name, conn):
     return [x["VpcPeeringConnectionId"] for x in peerings]
 
 
-def describe_vpc_peering_connection(
-    name, region=None, key=None, keyid=None, profile=None
-):
+def describe_vpc_peering_connection(name, region=None, key=None, keyid=None, profile=None):
     """
     Returns any VPC peering connection id(s) for the given VPC
     peering connection name.
@@ -3861,9 +3756,7 @@ def accept_vpc_peering_connection(  # pylint: disable=too-many-arguments
     """
     if not _exactly_one((conn_id, name)):
         raise SaltInvocationError(
-            "One (but not both) of "
-            "vpc_peering_connection_id or name "
-            "must be provided."
+            "One (but not both) of " "vpc_peering_connection_id or name " "must be provided."
         )
 
     conn = _get_conn3(region=region, key=key, keyid=keyid, profile=profile)
@@ -3882,9 +3775,7 @@ def accept_vpc_peering_connection(  # pylint: disable=too-many-arguments
             )
     try:
         log.debug("Trying to accept vpc peering connection")
-        conn.accept_vpc_peering_connection(
-            DryRun=dry_run, VpcPeeringConnectionId=conn_id
-        )
+        conn.accept_vpc_peering_connection(DryRun=dry_run, VpcPeeringConnectionId=conn_id)
         return {"msg": "VPC peering connection accepted."}
     except botocore.exceptions.ClientError as err:
         log.error("Got an error while trying to accept vpc peering")
@@ -3961,23 +3852,18 @@ def delete_vpc_peering_connection(
 
     """
     if not _exactly_one((conn_id, conn_name)):
-        raise SaltInvocationError(
-            "Exactly one of conn_id or " "conn_name must be provided."
-        )
+        raise SaltInvocationError("Exactly one of conn_id or " "conn_name must be provided.")
 
     conn = _get_conn3(region=region, key=key, keyid=keyid, profile=profile)
     if conn_name:
         conn_id = _vpc_peering_conn_id_for_name(conn_name, conn)
         if not conn_id:
             raise SaltInvocationError(
-                "Couldn't resolve VPC peering connection "
-                "{} to an ID".format(conn_name)
+                "Couldn't resolve VPC peering connection " "{} to an ID".format(conn_name)
             )
     try:
         log.debug("Trying to delete vpc peering connection")
-        conn.delete_vpc_peering_connection(
-            DryRun=dry_run, VpcPeeringConnectionId=conn_id
-        )
+        conn.delete_vpc_peering_connection(DryRun=dry_run, VpcPeeringConnectionId=conn_id)
         return {"msg": "VPC peering connection deleted."}
     except botocore.exceptions.ClientError as err:
         e = __utils__["boto.get_error"](err)
@@ -4024,16 +3910,14 @@ def is_peering_connection_pending(
 
     """
     if not _exactly_one((conn_id, conn_name)):
-        raise SaltInvocationError(
-            "Exactly one of conn_id or conn_name must be provided."
-        )
+        raise SaltInvocationError("Exactly one of conn_id or conn_name must be provided.")
 
     conn = _get_conn3(region=region, key=key, keyid=keyid, profile=profile)
 
     if conn_id:
-        vpcs = conn.describe_vpc_peering_connections(
-            VpcPeeringConnectionIds=[conn_id]
-        ).get("VpcPeeringConnections", [])
+        vpcs = conn.describe_vpc_peering_connections(VpcPeeringConnectionIds=[conn_id]).get(
+            "VpcPeeringConnections", []
+        )
     else:
         filters = [
             {"Name": "tag:Name", "Values": [conn_name]},
@@ -4108,17 +3992,13 @@ def peering_connection_pending_from_vpc(
 
     """
     if not _exactly_one((conn_id, conn_name)):
-        raise SaltInvocationError(
-            "Exactly one of conn_id or conn_name must be provided."
-        )
+        raise SaltInvocationError("Exactly one of conn_id or conn_name must be provided.")
 
     if not _exactly_one((vpc_id, vpc_name)):
         raise SaltInvocationError("Exactly one of vpc_id or vpc_name must be provided.")
 
     if vpc_name:
-        vpc_id = check_vpc(
-            vpc_name=vpc_name, region=region, key=key, keyid=keyid, profile=profile
-        )
+        vpc_id = check_vpc(vpc_name=vpc_name, region=region, key=key, keyid=keyid, profile=profile)
         if not vpc_id:
             log.warning("Could not resolve VPC name %s to an ID", vpc_name)
             return False
@@ -4133,9 +4013,7 @@ def peering_connection_pending_from_vpc(
     else:
         filters += [{"Name": "tag:Name", "Values": [conn_name]}]
 
-    vpcs = conn.describe_vpc_peering_connections(Filters=filters).get(
-        "VpcPeeringConnections", []
-    )
+    vpcs = conn.describe_vpc_peering_connections(Filters=filters).get("VpcPeeringConnections", [])
 
     if not vpcs:
         return False

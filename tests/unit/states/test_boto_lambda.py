@@ -8,12 +8,16 @@ import salt.loader
 import salt.states.boto_lambda as boto_lambda
 import salt.utils.json
 from salt.utils.versions import LooseVersion
+
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
-from tests.support.unit import TestCase, skipIf
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
+from tests.support.unit import skipIf
+from tests.support.unit import TestCase
+from tests.unit.modules.test_boto_lambda import BotoLambdaTestCaseMixin
+from tests.unit.modules.test_boto_lambda import TempZipFile
 
 # pylint: disable=import-error,no-name-in-module
-from tests.unit.modules.test_boto_lambda import BotoLambdaTestCaseMixin, TempZipFile
 
 try:
     import boto3
@@ -41,9 +45,7 @@ conn_parameters = {
     "keyid": secret_key,
     "profile": {},
 }
-error_message = (
-    "An error occurred (101) when calling the {0} operation: Test-defined error"
-)
+error_message = "An error occurred (101) when calling the {0} operation: Test-defined error"
 error_content = {"Error": {"Code": 101, "Message": "Test-defined error"}}
 function_ret = dict(
     FunctionName="testfunction",
@@ -180,9 +182,7 @@ class BotoLambdaFunctionTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCase
             {"Functions": [function_ret]},
         ]
         self.conn.create_function.return_value = function_ret
-        with patch.dict(
-            self.funcs, {"boto_iam.get_account_id": MagicMock(return_value="1234")}
-        ):
+        with patch.dict(self.funcs, {"boto_iam.get_account_id": MagicMock(return_value="1234")}):
             with TempZipFile() as zipfile:
                 result = self.salt_states["boto_lambda.function_present"](
                     "function present",
@@ -193,20 +193,15 @@ class BotoLambdaFunctionTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCase
                     ZipFile=zipfile,
                 )
 
-        self.assertTrue(result["result"])
-        self.assertEqual(
-            result["changes"]["new"]["function"]["FunctionName"],
-            function_ret["FunctionName"],
-        )
+        assert result["result"]
+        assert result["changes"]["new"]["function"]["FunctionName"] == function_ret["FunctionName"]
 
     @pytest.mark.slow_test
     def test_present_when_function_exists(self):
         self.conn.list_functions.return_value = {"Functions": [function_ret]}
         self.conn.update_function_code.return_value = function_ret
 
-        with patch.dict(
-            self.funcs, {"boto_iam.get_account_id": MagicMock(return_value="1234")}
-        ):
+        with patch.dict(self.funcs, {"boto_iam.get_account_id": MagicMock(return_value="1234")}):
             with TempZipFile() as zipfile:
                 with patch("hashlib.sha256") as sha256:
                     with patch("os.path.getsize", return_value=199):
@@ -224,8 +219,8 @@ class BotoLambdaFunctionTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCase
                             Description=function_ret["Description"],
                             Timeout=function_ret["Timeout"],
                         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_present_with_failure(self):
@@ -233,12 +228,8 @@ class BotoLambdaFunctionTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCase
             {"Functions": []},
             {"Functions": [function_ret]},
         ]
-        self.conn.create_function.side_effect = ClientError(
-            error_content, "create_function"
-        )
-        with patch.dict(
-            self.funcs, {"boto_iam.get_account_id": MagicMock(return_value="1234")}
-        ):
+        self.conn.create_function.side_effect = ClientError(error_content, "create_function")
+        with patch.dict(self.funcs, {"boto_iam.get_account_id": MagicMock(return_value="1234")}):
             with TempZipFile() as zipfile:
                 with patch("hashlib.sha256") as sha256:
                     with patch("os.path.getsize", return_value=199):
@@ -256,8 +247,8 @@ class BotoLambdaFunctionTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCase
                             Description=function_ret["Description"],
                             Timeout=function_ret["Timeout"],
                         )
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]
 
     def test_absent_when_function_does_not_exist(self):
         """
@@ -265,27 +256,25 @@ class BotoLambdaFunctionTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCase
         """
         self.conn.list_functions.return_value = {"Functions": [function_ret]}
         result = self.salt_states["boto_lambda.function_absent"]("test", "myfunc")
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     def test_absent_when_function_exists(self):
         self.conn.list_functions.return_value = {"Functions": [function_ret]}
         result = self.salt_states["boto_lambda.function_absent"](
             "test", function_ret["FunctionName"]
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"]["new"]["function"], None)
+        assert result["result"]
+        assert result["changes"]["new"]["function"] == None
 
     def test_absent_with_failure(self):
         self.conn.list_functions.return_value = {"Functions": [function_ret]}
-        self.conn.delete_function.side_effect = ClientError(
-            error_content, "delete_function"
-        )
+        self.conn.delete_function.side_effect = ClientError(error_content, "delete_function")
         result = self.salt_states["boto_lambda.function_absent"](
             "test", function_ret["FunctionName"]
         )
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]
 
     @pytest.mark.slow_test
     def test_present_when_function_exists_and_permissions(self):
@@ -314,9 +303,7 @@ class BotoLambdaFunctionTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCase
             )
         }
 
-        with patch.dict(
-            self.funcs, {"boto_iam.get_account_id": MagicMock(return_value="1234")}
-        ):
+        with patch.dict(self.funcs, {"boto_iam.get_account_id": MagicMock(return_value="1234")}):
             with TempZipFile() as zipfile:
                 with patch("hashlib.sha256") as sha256:
                     with patch("os.path.getsize", return_value=199):
@@ -334,22 +321,19 @@ class BotoLambdaFunctionTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCase
                             Description=function_ret["Description"],
                             Timeout=function_ret["Timeout"],
                         )
-        self.assertTrue(result["result"])
-        self.assertEqual(
-            result["changes"],
-            {
-                "old": {
-                    "Permissions": {
-                        "AWSEvents_foo-bar999999999999": {
-                            "Action": "lambda:InvokeFunction",
-                            "Principal": "events.amazonaws.com",
-                            "SourceArn": "arn:aws:events:us-east-1:9999999999:rule/fooo",
-                        }
+        assert result["result"]
+        assert result["changes"] == {
+            "old": {
+                "Permissions": {
+                    "AWSEvents_foo-bar999999999999": {
+                        "Action": "lambda:InvokeFunction",
+                        "Principal": "events.amazonaws.com",
+                        "SourceArn": "arn:aws:events:us-east-1:9999999999:rule/fooo",
                     }
-                },
-                "new": {"Permissions": {"AWSEvents_foo-bar999999999999": {}}},
+                }
             },
-        )
+            "new": {"Permissions": {"AWSEvents_foo-bar999999999999": {}}},
+        }
 
 
 @skipIf(HAS_BOTO is False, "The boto module must be installed.")
@@ -380,8 +364,8 @@ class BotoLambdaAliasTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCaseMix
             FunctionVersion=alias_ret["FunctionVersion"],
         )
 
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"]["new"]["alias"]["Name"], alias_ret["Name"])
+        assert result["result"]
+        assert result["changes"]["new"]["alias"]["Name"] == alias_ret["Name"]
 
     def test_present_when_alias_exists(self):
         self.conn.list_aliases.return_value = {"Aliases": [alias_ret]}
@@ -393,8 +377,8 @@ class BotoLambdaAliasTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCaseMix
             FunctionVersion=alias_ret["FunctionVersion"],
             Description=alias_ret["Description"],
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_present_with_failure(self):
@@ -406,8 +390,8 @@ class BotoLambdaAliasTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCaseMix
             Name=alias_ret["Name"],
             FunctionVersion=alias_ret["FunctionVersion"],
         )
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]
 
     def test_absent_when_alias_does_not_exist(self):
         """
@@ -417,16 +401,16 @@ class BotoLambdaAliasTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCaseMix
         result = self.salt_states["boto_lambda.alias_absent"](
             "alias absent", FunctionName="testfunc", Name="myalias"
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     def test_absent_when_alias_exists(self):
         self.conn.list_aliases.return_value = {"Aliases": [alias_ret]}
         result = self.salt_states["boto_lambda.alias_absent"](
             "alias absent", FunctionName="testfunc", Name=alias_ret["Name"]
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"]["new"]["alias"], None)
+        assert result["result"]
+        assert result["changes"]["new"]["alias"] == None
 
     def test_absent_with_failure(self):
         self.conn.list_aliases.return_value = {"Aliases": [alias_ret]}
@@ -434,8 +418,8 @@ class BotoLambdaAliasTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCaseMix
         result = self.salt_states["boto_lambda.alias_absent"](
             "alias absent", FunctionName="testfunc", Name=alias_ret["Name"]
         )
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]
 
 
 @skipIf(HAS_BOTO is False, "The boto module must be installed.")
@@ -448,9 +432,7 @@ class BotoLambdaAliasTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCaseMix
         )
     ),
 )
-class BotoLambdaEventSourceMappingTestCase(
-    BotoLambdaStateTestCaseBase, BotoLambdaTestCaseMixin
-):
+class BotoLambdaEventSourceMappingTestCase(BotoLambdaStateTestCaseBase, BotoLambdaTestCaseMixin):
     """
     TestCase for salt.modules.boto_lambda state.module event_source_mappings
     """
@@ -472,10 +454,10 @@ class BotoLambdaEventSourceMappingTestCase(
             StartingPosition="LATEST",
         )
 
-        self.assertTrue(result["result"])
-        self.assertEqual(
-            result["changes"]["new"]["event_source_mapping"]["UUID"],
-            event_source_mapping_ret["UUID"],
+        assert result["result"]
+        assert (
+            result["changes"]["new"]["event_source_mapping"]["UUID"]
+            == event_source_mapping_ret["UUID"]
         )
 
     def test_present_when_event_source_mapping_exists(self):
@@ -491,8 +473,8 @@ class BotoLambdaEventSourceMappingTestCase(
             StartingPosition="LATEST",
             BatchSize=event_source_mapping_ret["BatchSize"],
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     @pytest.mark.slow_test
     def test_present_with_failure(self):
@@ -511,8 +493,8 @@ class BotoLambdaEventSourceMappingTestCase(
             StartingPosition="LATEST",
             BatchSize=event_source_mapping_ret["BatchSize"],
         )
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]
 
     def test_absent_when_event_source_mapping_does_not_exist(self):
         """
@@ -524,8 +506,8 @@ class BotoLambdaEventSourceMappingTestCase(
             EventSourceArn=event_source_mapping_ret["EventSourceArn"],
             FunctionName="myfunc",
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"], {})
+        assert result["result"]
+        assert result["changes"] == {}
 
     def test_absent_when_event_source_mapping_exists(self):
         self.conn.list_event_source_mappings.return_value = {
@@ -537,8 +519,8 @@ class BotoLambdaEventSourceMappingTestCase(
             EventSourceArn=event_source_mapping_ret["EventSourceArn"],
             FunctionName="myfunc",
         )
-        self.assertTrue(result["result"])
-        self.assertEqual(result["changes"]["new"]["event_source_mapping"], None)
+        assert result["result"]
+        assert result["changes"]["new"]["event_source_mapping"] == None
 
     def test_absent_with_failure(self):
         self.conn.list_event_source_mappings.return_value = {
@@ -553,5 +535,5 @@ class BotoLambdaEventSourceMappingTestCase(
             EventSourceArn=event_source_mapping_ret["EventSourceArn"],
             FunctionName="myfunc",
         )
-        self.assertFalse(result["result"])
-        self.assertTrue("An error occurred" in result["comment"])
+        assert not result["result"]
+        assert "An error occurred" in result["comment"]

@@ -76,8 +76,6 @@ as a passed in dict, or as a string to pull from pillars or minion config:
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 import random
 import time
@@ -158,9 +156,7 @@ def function_exists(FunctionName, region=None, key=None, keyid=None, profile=Non
     """
 
     try:
-        func = _find_function(
-            FunctionName, region=region, key=key, keyid=keyid, profile=profile
-        )
+        func = _find_function(FunctionName, region=region, key=key, keyid=keyid, profile=profile)
         return {"exists": bool(func)}
     except ClientError as e:
         return {"error": __utils__["boto3.get_error"](e)}
@@ -242,11 +238,7 @@ def create_function(
 
         .. code-block:: python
 
-            {
-                'Variables': {
-                    'VariableName': 'VariableValue'
-                }
-            }
+            {"Variables": {"VariableName": "VariableValue"}}
 
     Returns ``{'created': True}`` if the function was created and ``{created:
     False}`` if the function was not created.
@@ -266,8 +258,7 @@ def create_function(
         if ZipFile:
             if S3Bucket or S3Key or S3ObjectVersion:
                 raise SaltInvocationError(
-                    "Either ZipFile must be specified, or "
-                    "S3Bucket and S3Key must be provided."
+                    "Either ZipFile must be specified, or " "S3Bucket and S3Key must be provided."
                 )
             if "://" in ZipFile:  # Looks like a remote URL to me...
                 dlZipFile = __salt__["cp.cache_file"](path=ZipFile)
@@ -282,8 +273,7 @@ def create_function(
         else:
             if not S3Bucket or not S3Key:
                 raise SaltInvocationError(
-                    "Either ZipFile must be specified, or "
-                    "S3Bucket and S3Key must be provided."
+                    "Either ZipFile must be specified, or " "S3Bucket and S3Key must be provided."
                 )
             code = {
                 "S3Bucket": S3Bucket,
@@ -319,16 +309,13 @@ def create_function(
             except ClientError as e:
                 if (
                     retry > 1
-                    and e.response.get("Error", {}).get("Code")
-                    == "InvalidParameterValueException"
+                    and e.response.get("Error", {}).get("Code") == "InvalidParameterValueException"
                 ):
                     log.info(
                         "Function not created but IAM role may not have propagated, will retry"
                     )
                     # exponential backoff
-                    time.sleep(
-                        (2 ** (RoleRetries - retry)) + (random.randint(0, 1000) / 1000)
-                    )
+                    time.sleep((2 ** (RoleRetries - retry)) + (random.randint(0, 1000) / 1000))
                     continue
                 else:
                     raise
@@ -345,9 +332,7 @@ def create_function(
         return {"created": False, "error": __utils__["boto3.get_error"](e)}
 
 
-def delete_function(
-    FunctionName, Qualifier=None, region=None, key=None, keyid=None, profile=None
-):
+def delete_function(FunctionName, Qualifier=None, region=None, key=None, keyid=None, profile=None):
     """
     Given a function name and optional version qualifier, delete it.
 
@@ -388,9 +373,7 @@ def describe_function(FunctionName, region=None, key=None, keyid=None, profile=N
     """
 
     try:
-        func = _find_function(
-            FunctionName, region=region, key=key, keyid=keyid, profile=profile
-        )
+        func = _find_function(FunctionName, region=region, key=key, keyid=keyid, profile=profile)
         if func:
             keys = (
                 "FunctionName",
@@ -441,11 +424,7 @@ def update_function_config(
 
         .. code-block:: python
 
-            {
-                'Variables': {
-                    'VariableName': 'VariableValue'
-                }
-            }
+            {"Variables": {"VariableName": "VariableValue"}}
 
     Returns ``{'updated': True}`` if the function was updated, and
     ``{'updated': False}`` if the function was not updated.
@@ -489,16 +468,13 @@ def update_function_config(
             except ClientError as e:
                 if (
                     retry > 1
-                    and e.response.get("Error", {}).get("Code")
-                    == "InvalidParameterValueException"
+                    and e.response.get("Error", {}).get("Code") == "InvalidParameterValueException"
                 ):
                     log.info(
                         "Function not updated but IAM role may not have propagated, will retry"
                     )
                     # exponential backoff
-                    time.sleep(
-                        (2 ** (RoleRetries - retry)) + (random.randint(0, 1000) / 1000)
-                    )
+                    time.sleep((2 ** (RoleRetries - retry)) + (random.randint(0, 1000) / 1000))
                     continue
                 else:
                     raise
@@ -559,8 +535,7 @@ def update_function_code(
         if ZipFile:
             if S3Bucket or S3Key or S3ObjectVersion:
                 raise SaltInvocationError(
-                    "Either ZipFile must be specified, or "
-                    "S3Bucket and S3Key must be provided."
+                    "Either ZipFile must be specified, or " "S3Bucket and S3Key must be provided."
                 )
             r = conn.update_function_code(
                 FunctionName=FunctionName, ZipFile=_filedata(ZipFile), Publish=Publish
@@ -568,8 +543,7 @@ def update_function_code(
         else:
             if not S3Bucket or not S3Key:
                 raise SaltInvocationError(
-                    "Either ZipFile must be specified, or "
-                    "S3Bucket and S3Key must be provided."
+                    "Either ZipFile must be specified, or " "S3Bucket and S3Key must be provided."
                 )
             args = {
                 "S3Bucket": S3Bucket,
@@ -577,9 +551,7 @@ def update_function_code(
             }
             if S3ObjectVersion:
                 args["S3ObjectVersion"] = S3ObjectVersion
-            r = conn.update_function_code(
-                FunctionName=FunctionName, Publish=Publish, **args
-            )
+            r = conn.update_function_code(FunctionName=FunctionName, Publish=Publish, **args)
         if r:
             keys = (
                 "FunctionName",
@@ -638,9 +610,7 @@ def add_permission(
         kwargs = {}
         for key in ("SourceArn", "SourceAccount", "Qualifier"):
             if locals()[key] is not None:
-                kwargs[key] = str(
-                    locals()[key]
-                )  # future lint: disable=blacklisted-function
+                kwargs[key] = str(locals()[key])  # future lint: disable=blacklisted-function
         conn.add_permission(
             FunctionName=FunctionName,
             StatementId=StatementId,
@@ -681,17 +651,13 @@ def remove_permission(
         kwargs = {}
         if Qualifier is not None:
             kwargs["Qualifier"] = Qualifier
-        conn.remove_permission(
-            FunctionName=FunctionName, StatementId=StatementId, **kwargs
-        )
+        conn.remove_permission(FunctionName=FunctionName, StatementId=StatementId, **kwargs)
         return {"updated": True}
     except ClientError as e:
         return {"updated": False, "error": __utils__["boto3.get_error"](e)}
 
 
-def get_permissions(
-    FunctionName, Qualifier=None, region=None, key=None, keyid=None, profile=None
-):
+def get_permissions(FunctionName, Qualifier=None, region=None, key=None, keyid=None, profile=None):
     """
     Get resource permissions for the given lambda function
 
@@ -734,9 +700,7 @@ def get_permissions(
             if "ArnLike" in condition:
                 permission["SourceArn"] = condition["ArnLike"].get("AWS:SourceArn")
             if "StringEquals" in condition:
-                permission["SourceAccount"] = condition["StringEquals"].get(
-                    "AWS:SourceAccount"
-                )
+                permission["SourceAccount"] = condition["StringEquals"].get("AWS:SourceAccount")
             permissions[statement.get("Sid")] = permission
         return {"permissions": permissions}
     except ClientError as e:
@@ -765,9 +729,7 @@ def list_functions(region=None, key=None, keyid=None, profile=None):
     return ret
 
 
-def list_function_versions(
-    FunctionName, region=None, key=None, keyid=None, profile=None
-):
+def list_function_versions(FunctionName, region=None, key=None, keyid=None, profile=None):
     """
     List the versions available for the given function.
 
@@ -1047,9 +1009,7 @@ def get_event_source_mapping_ids(
             EventSourceArn=EventSourceArn,
             FunctionName=FunctionName,
         ):
-            mappings.extend(
-                [mapping["UUID"] for mapping in maps["EventSourceMappings"]]
-            )
+            mappings.extend([mapping["UUID"] for mapping in maps["EventSourceMappings"]])
         return mappings
     except ClientError as e:
         return {"error": __utils__["boto3.get_error"](e)}

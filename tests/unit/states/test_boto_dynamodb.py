@@ -1,16 +1,11 @@
-# -*- coding: utf-8 -*-
 """
     :codeauthor: Jayesh Kariya <jayeshk@saltstack.com>
 """
-# Import Python libs
-from __future__ import absolute_import, print_function, unicode_literals
-
-# Import Salt Libs
 import salt.states.boto_dynamodb as boto_dynamodb
 
-# Import Salt Testing Libs
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
 from tests.support.unit import TestCase
 
 
@@ -52,12 +47,12 @@ class BotoDynamodbTestCase(TestCase, LoaderModuleMockMixin):
                 "All global secondary indexes match,\n".format(name)
             )
             ret.update({"comment": comt})
-            self.assertDictEqual(boto_dynamodb.present(name), ret)
+            assert boto_dynamodb.present(name) == ret
 
             with patch.dict(boto_dynamodb.__opts__, {"test": True}):
-                comt = "DynamoDB table {0} would be created.".format(name)
+                comt = "DynamoDB table {} would be created.".format(name)
                 ret.update({"comment": comt, "result": None})
-                self.assertDictEqual(boto_dynamodb.present(name), ret)
+                assert boto_dynamodb.present(name) == ret
 
             changes = {
                 "new": {
@@ -75,11 +70,11 @@ class BotoDynamodbTestCase(TestCase, LoaderModuleMockMixin):
 
             with patch.dict(boto_dynamodb.__opts__, {"test": False}):
                 comt = (
-                    "DynamoDB table {0} was successfully created,\n"
+                    "DynamoDB table {} was successfully created,\n"
                     "DynamoDB table new_table throughput matches,\n".format(name)
                 )
                 ret.update({"comment": comt, "result": True, "changes": changes})
-                self.assertDictEqual(ret, boto_dynamodb.present(name))
+                assert ret == boto_dynamodb.present(name)
 
     # 'absent' function tests: 1
 
@@ -97,14 +92,14 @@ class BotoDynamodbTestCase(TestCase, LoaderModuleMockMixin):
             boto_dynamodb.__salt__,
             {"boto_dynamodb.exists": mock, "boto_dynamodb.delete": mock_bool},
         ):
-            comt = "DynamoDB table {0} does not exist".format(name)
+            comt = "DynamoDB table {} does not exist".format(name)
             ret.update({"comment": comt})
-            self.assertDictEqual(boto_dynamodb.absent(name), ret)
+            assert boto_dynamodb.absent(name) == ret
 
             with patch.dict(boto_dynamodb.__opts__, {"test": True}):
-                comt = "DynamoDB table {0} is set to be deleted".format(name)
+                comt = "DynamoDB table {} is set to be deleted".format(name)
                 ret.update({"comment": comt, "result": None})
-                self.assertDictEqual(boto_dynamodb.absent(name), ret)
+                assert boto_dynamodb.absent(name) == ret
 
             changes = {
                 "new": "Table new_table deleted",
@@ -112,6 +107,6 @@ class BotoDynamodbTestCase(TestCase, LoaderModuleMockMixin):
             }
 
             with patch.dict(boto_dynamodb.__opts__, {"test": False}):
-                comt = "Deleted DynamoDB table {0}".format(name)
+                comt = "Deleted DynamoDB table {}".format(name)
                 ret.update({"comment": comt, "result": True, "changes": changes})
-                self.assertDictEqual(boto_dynamodb.absent(name), ret)
+                assert boto_dynamodb.absent(name) == ret

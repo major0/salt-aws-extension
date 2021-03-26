@@ -1,17 +1,13 @@
-# -*- coding: utf-8 -*-
 """
     :codeauthor: Jayesh Kariya <jayeshk@saltstack.com>
 """
-# Import Python libs
-from __future__ import absolute_import, print_function, unicode_literals
-
-# Import Salt Libs
+import pytest
 import salt.states.boto_lc as boto_lc
 from salt.exceptions import SaltInvocationError
 
-# Import Salt Testing Libs
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
 from tests.support.unit import TestCase
 
 
@@ -34,7 +30,7 @@ class BotoLcTestCase(TestCase, LoaderModuleMockMixin):
 
         ret = {"name": name, "result": True, "changes": {}, "comment": ""}
 
-        self.assertRaises(
+        pytest.raises(
             SaltInvocationError,
             boto_lc.present,
             name,
@@ -44,17 +40,15 @@ class BotoLcTestCase(TestCase, LoaderModuleMockMixin):
         )
 
         mock = MagicMock(side_effect=[True, False])
-        with patch.dict(
-            boto_lc.__salt__, {"boto_asg.launch_configuration_exists": mock}
-        ):
+        with patch.dict(boto_lc.__salt__, {"boto_asg.launch_configuration_exists": mock}):
             comt = "Launch configuration present."
             ret.update({"comment": comt})
-            self.assertDictEqual(boto_lc.present(name, image_id), ret)
+            assert boto_lc.present(name, image_id) == ret
 
             with patch.dict(boto_lc.__opts__, {"test": True}):
                 comt = "Launch configuration set to be created."
                 ret.update({"comment": comt, "result": None})
-                self.assertDictEqual(boto_lc.present(name, image_id), ret)
+                assert boto_lc.present(name, image_id) == ret
 
     # 'absent' function tests: 1
 
@@ -67,14 +61,12 @@ class BotoLcTestCase(TestCase, LoaderModuleMockMixin):
         ret = {"name": name, "result": True, "changes": {}, "comment": ""}
 
         mock = MagicMock(side_effect=[False, True])
-        with patch.dict(
-            boto_lc.__salt__, {"boto_asg.launch_configuration_exists": mock}
-        ):
+        with patch.dict(boto_lc.__salt__, {"boto_asg.launch_configuration_exists": mock}):
             comt = "Launch configuration does not exist."
             ret.update({"comment": comt})
-            self.assertDictEqual(boto_lc.absent(name), ret)
+            assert boto_lc.absent(name) == ret
 
             with patch.dict(boto_lc.__opts__, {"test": True}):
                 comt = "Launch configuration set to be deleted."
                 ret.update({"comment": comt, "result": None})
-                self.assertDictEqual(boto_lc.absent(name), ret)
+                assert boto_lc.absent(name) == ret

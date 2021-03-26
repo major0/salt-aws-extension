@@ -1,28 +1,22 @@
-# -*- coding: utf-8 -*-
 """
     Tests for salt.modules.boto3_elasticsearch
 """
-
-# Import Python libs
-from __future__ import absolute_import, print_function, unicode_literals
-
 import datetime
 import random
 import string
 import textwrap
 
-# Import Salt libs
 import salt.loader
 import salt.modules.boto3_elasticsearch as boto3_elasticsearch
 from salt.ext.six.moves import range
 from salt.utils.versions import LooseVersion
 
-# Import Salt Testing libs
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
-from tests.support.unit import TestCase, skipIf
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
+from tests.support.unit import skipIf
+from tests.support.unit import TestCase
 
-# Import 3rd-party libs
 try:
     import boto3
     from botocore.exceptions import ClientError
@@ -64,9 +58,7 @@ CONN_PARAMETERS = {
     "keyid": SECRET_KEY,
     "profile": {},
 }
-ERROR_MESSAGE = (
-    "An error occurred ({}) when calling the {} operation: Test-defined error"
-)
+ERROR_MESSAGE = "An error occurred ({}) when calling the {} operation: Test-defined error"
 ERROR_CONTENT = {"Error": {"Code": 101, "Message": "Test-defined error"}}
 NOT_FOUND_ERROR = ClientError(
     {"Error": {"Code": "ResourceNotFoundException", "Message": "Test-defined error"}},
@@ -129,9 +121,7 @@ DOMAIN_RET = {
 @skipIf(HAS_BOTO3 is False, "The boto module must be installed.")
 @skipIf(
     LooseVersion(boto3.__version__) < LooseVersion(REQUIRED_BOTO3_VERSION),
-    "The boto3 module must be greater or equal to version {}".format(
-        REQUIRED_BOTO3_VERSION
-    ),
+    "The boto3 module must be greater or equal to version {}".format(REQUIRED_BOTO3_VERSION),
 )
 class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
     """
@@ -150,7 +140,7 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
         return {boto3_elasticsearch: {"__utils__": utils}}
 
     def setUp(self):
-        super(Boto3ElasticsearchTestCase, self).setUp()
+        super().setUp()
         boto3_elasticsearch.__init__(self.opts)
         del self.opts
 
@@ -187,12 +177,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "describe_elasticsearch_domain",
             return_value={"DomainStatus": DOMAIN_RET},
         ):
-            self.assertEqual(
-                boto3_elasticsearch.describe_elasticsearch_domain(
-                    domain_name="testdomain", **CONN_PARAMETERS
-                ),
-                {"result": True, "response": DOMAIN_RET},
-            )
+            assert boto3_elasticsearch.describe_elasticsearch_domain(
+                domain_name="testdomain", **CONN_PARAMETERS
+            ) == {"result": True, "response": DOMAIN_RET}
 
     def test_describe_elasticsearch_domain_error(self):
         """
@@ -200,17 +187,14 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
         the .exists method returns a dict with 'result': False
         and 'error' with boto's ResourceNotFoundException.
         """
-        with patch.object(
-            self.conn, "describe_elasticsearch_domain", side_effect=NOT_FOUND_ERROR
-        ):
+        with patch.object(self.conn, "describe_elasticsearch_domain", side_effect=NOT_FOUND_ERROR):
             result = boto3_elasticsearch.describe_elasticsearch_domain(
                 domain_name="testdomain", **CONN_PARAMETERS
             )
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format("ResourceNotFoundException", "msg"),
+            assert result.get("error", "") == ERROR_MESSAGE.format(
+                "ResourceNotFoundException", "msg"
             )
-            self.assertFalse(result["result"])
+            assert not result["result"]
 
     def test_create_elasticsearch_domain_positive(self):
         """
@@ -225,9 +209,7 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
         ):
             kwargs = {
                 "elasticsearch_version": DOMAIN_RET["ElasticsearchVersion"],
-                "elasticsearch_cluster_config": DOMAIN_RET[
-                    "ElasticsearchClusterConfig"
-                ],
+                "elasticsearch_cluster_config": DOMAIN_RET["ElasticsearchClusterConfig"],
                 "ebs_options": DOMAIN_RET["EBSOptions"],
                 "access_policies": DOMAIN_RET["AccessPolicies"],
                 "snapshot_options": DOMAIN_RET["SnapshotOptions"],
@@ -237,12 +219,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
                 "advanced_options": DOMAIN_RET["AdvancedOptions"],
             }
             kwargs.update(CONN_PARAMETERS)
-            self.assertEqual(
-                boto3_elasticsearch.create_elasticsearch_domain(
-                    domain_name="testdomain", **kwargs
-                ),
-                {"result": True, "response": DOMAIN_RET},
-            )
+            assert boto3_elasticsearch.create_elasticsearch_domain(
+                domain_name="testdomain", **kwargs
+            ) == {"result": True, "response": DOMAIN_RET}
 
     def test_create_elasticsearch_domain_error(self):
         """
@@ -257,9 +236,7 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
         ):
             kwargs = {
                 "elasticsearch_version": DOMAIN_RET["ElasticsearchVersion"],
-                "elasticsearch_cluster_config": DOMAIN_RET[
-                    "ElasticsearchClusterConfig"
-                ],
+                "elasticsearch_cluster_config": DOMAIN_RET["ElasticsearchClusterConfig"],
                 "ebs_options": DOMAIN_RET["EBSOptions"],
                 "access_policies": DOMAIN_RET["AccessPolicies"],
                 "snapshot_options": DOMAIN_RET["SnapshotOptions"],
@@ -269,12 +246,8 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
                 "advanced_options": DOMAIN_RET["AdvancedOptions"],
             }
             kwargs.update(CONN_PARAMETERS)
-            result = boto3_elasticsearch.create_elasticsearch_domain(
-                "testdomain", **kwargs
-            )
-            self.assertEqual(
-                result.get("error", ""), ERROR_MESSAGE.format(101, "create_domain")
-            )
+            result = boto3_elasticsearch.create_elasticsearch_domain("testdomain", **kwargs)
+            assert result.get("error", "") == ERROR_MESSAGE.format(101, "create_domain")
 
     def test_delete_domain_positive(self):
         """
@@ -282,12 +255,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
         the .delete method returns {'result': True}.
         """
         with patch.object(self.conn, "delete_elasticsearch_domain"):
-            self.assertEqual(
-                boto3_elasticsearch.delete_elasticsearch_domain(
-                    "testdomain", **CONN_PARAMETERS
-                ),
-                {"result": True},
-            )
+            assert boto3_elasticsearch.delete_elasticsearch_domain(
+                "testdomain", **CONN_PARAMETERS
+            ) == {"result": True}
 
     def test_delete_domain_error(self):
         """
@@ -302,10 +272,8 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             result = boto3_elasticsearch.delete_elasticsearch_domain(
                 "testdomain", **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""), ERROR_MESSAGE.format(101, "delete_domain")
-            )
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(101, "delete_domain")
 
     def test_update_domain_positive(self):
         """
@@ -317,9 +285,7 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             return_value={"DomainConfig": DOMAIN_RET},
         ):
             kwargs = {
-                "elasticsearch_cluster_config": DOMAIN_RET[
-                    "ElasticsearchClusterConfig"
-                ],
+                "elasticsearch_cluster_config": DOMAIN_RET["ElasticsearchClusterConfig"],
                 "ebs_options": DOMAIN_RET["EBSOptions"],
                 "snapshot_options": DOMAIN_RET["SnapshotOptions"],
                 "vpc_options": DOMAIN_RET["VPCOptions"],
@@ -330,12 +296,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             }
 
             kwargs.update(CONN_PARAMETERS)
-            self.assertEqual(
-                boto3_elasticsearch.update_elasticsearch_domain_config(
-                    "testdomain", **kwargs
-                ),
-                {"result": True, "response": DOMAIN_RET},
-            )
+            assert boto3_elasticsearch.update_elasticsearch_domain_config(
+                "testdomain", **kwargs
+            ) == {"result": True, "response": DOMAIN_RET}
 
     def test_update_domain_error(self):
         """
@@ -348,9 +311,7 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             side_effect=ClientError(ERROR_CONTENT, "update_domain"),
         ):
             kwargs = {
-                "elasticsearch_cluster_config": DOMAIN_RET[
-                    "ElasticsearchClusterConfig"
-                ],
+                "elasticsearch_cluster_config": DOMAIN_RET["ElasticsearchClusterConfig"],
                 "ebs_options": DOMAIN_RET["EBSOptions"],
                 "snapshot_options": DOMAIN_RET["SnapshotOptions"],
                 "vpc_options": DOMAIN_RET["VPCOptions"],
@@ -360,12 +321,8 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
                 "log_publishing_options": {},
             }
             kwargs.update(CONN_PARAMETERS)
-            result = boto3_elasticsearch.update_elasticsearch_domain_config(
-                "testdomain", **kwargs
-            )
-            self.assertEqual(
-                result.get("error", ""), ERROR_MESSAGE.format(101, "update_domain")
-            )
+            result = boto3_elasticsearch.update_elasticsearch_domain_config("testdomain", **kwargs)
+            assert result.get("error", "") == ERROR_MESSAGE.format(101, "update_domain")
 
     def test_add_tags_positive(self):
         """
@@ -376,12 +333,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "describe_elasticsearch_domain",
             return_value={"DomainStatus": DOMAIN_RET},
         ):
-            self.assertEqual(
-                boto3_elasticsearch.add_tags(
-                    "testdomain", tags={"foo": "bar", "baz": "qux"}, **CONN_PARAMETERS
-                ),
-                {"result": True},
-            )
+            assert boto3_elasticsearch.add_tags(
+                "testdomain", tags={"foo": "bar", "baz": "qux"}, **CONN_PARAMETERS
+            ) == {"result": True}
 
     def test_add_tags_error(self):
         """
@@ -398,10 +352,8 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             result = boto3_elasticsearch.add_tags(
                 "testdomain", tags={"foo": "bar", "baz": "qux"}, **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""), ERROR_MESSAGE.format(101, "add_tags")
-            )
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(101, "add_tags")
 
     def test_remove_tags_positive(self):
         """
@@ -412,12 +364,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "describe_elasticsearch_domain",
             return_value={"DomainStatus": DOMAIN_RET},
         ):
-            self.assertEqual(
-                boto3_elasticsearch.remove_tags(
-                    tag_keys=["foo", "bar"], domain_name="testdomain", **CONN_PARAMETERS
-                ),
-                {"result": True},
-            )
+            assert boto3_elasticsearch.remove_tags(
+                tag_keys=["foo", "bar"], domain_name="testdomain", **CONN_PARAMETERS
+            ) == {"result": True}
 
     def test_remove_tag_error(self):
         """
@@ -436,10 +385,8 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             result = boto3_elasticsearch.remove_tags(
                 tag_keys=["foo", "bar"], domain_name="testdomain", **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""), ERROR_MESSAGE.format(101, "remove_tags")
-            )
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(101, "remove_tags")
 
     def test_list_tags_positive(self):
         """
@@ -457,10 +404,8 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "list_tags",
             return_value={"TagList": [{"Key": "foo", "Value": "bar"}]},
         ):
-            result = boto3_elasticsearch.list_tags(
-                domain_name="testdomain", **CONN_PARAMETERS
-            )
-            self.assertEqual(result, {"result": True, "response": {"foo": "bar"}})
+            result = boto3_elasticsearch.list_tags(domain_name="testdomain", **CONN_PARAMETERS)
+            assert result == {"result": True, "response": {"foo": "bar"}}
 
     def test_list_tags_error(self):
         """
@@ -474,13 +419,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "describe_elasticsearch_domain",
             return_value={"DomainStatus": DOMAIN_RET},
         ):
-            result = boto3_elasticsearch.list_tags(
-                domain_name="testdomain", **CONN_PARAMETERS
-            )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""), ERROR_MESSAGE.format(101, "list_tags")
-            )
+            result = boto3_elasticsearch.list_tags(domain_name="testdomain", **CONN_PARAMETERS)
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(101, "list_tags")
 
     def test_cancel_elasticsearch_service_software_update_positive(self):
         """
@@ -506,7 +447,7 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             result = boto3_elasticsearch.cancel_elasticsearch_service_software_update(
                 domain_name="testdomain", **CONN_PARAMETERS
             )
-            self.assertEqual(result, {"result": True})
+            assert result == {"result": True}
 
     def test_cancel_elasticsearch_service_software_update_error(self):
         """
@@ -516,19 +457,14 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
         with patch.object(
             self.conn,
             "cancel_elasticsearch_service_software_update",
-            side_effect=ClientError(
-                ERROR_CONTENT, "cancel_elasticsearch_service_software_update"
-            ),
+            side_effect=ClientError(ERROR_CONTENT, "cancel_elasticsearch_service_software_update"),
         ):
             result = boto3_elasticsearch.cancel_elasticsearch_service_software_update(
                 domain_name="testdomain", **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format(
-                    101, "cancel_elasticsearch_service_software_update"
-                ),
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(
+                101, "cancel_elasticsearch_service_software_update"
             )
 
     def test_delete_elasticsearch_service_role_positive(self):
@@ -536,13 +472,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
         Test that when calling delete_elasticsearch_service_role and
         it is successful, it returns {'result': True}.
         """
-        with patch.object(
-            self.conn, "delete_elasticsearch_service_role", return_value=None
-        ):
-            result = boto3_elasticsearch.delete_elasticsearch_service_role(
-                **CONN_PARAMETERS
-            )
-            self.assertEqual(result, {"result": True})
+        with patch.object(self.conn, "delete_elasticsearch_service_role", return_value=None):
+            result = boto3_elasticsearch.delete_elasticsearch_service_role(**CONN_PARAMETERS)
+            assert result == {"result": True}
 
     def test_delete_elasticsearch_service_role_error(self):
         """
@@ -554,13 +486,10 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "delete_elasticsearch_service_role",
             side_effect=ClientError(ERROR_CONTENT, "delete_elasticsearch_service_role"),
         ):
-            result = boto3_elasticsearch.delete_elasticsearch_service_role(
-                **CONN_PARAMETERS
-            )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format(101, "delete_elasticsearch_service_role"),
+            result = boto3_elasticsearch.delete_elasticsearch_service_role(**CONN_PARAMETERS)
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(
+                101, "delete_elasticsearch_service_role"
             )
 
     def test_describe_elasticsearch_domain_config_positive(self):
@@ -573,12 +502,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "describe_elasticsearch_domain_config",
             return_value={"DomainConfig": DOMAIN_RET},
         ):
-            self.assertEqual(
-                boto3_elasticsearch.describe_elasticsearch_domain_config(
-                    "testdomain", **CONN_PARAMETERS
-                ),
-                {"result": True, "response": DOMAIN_RET},
-            )
+            assert boto3_elasticsearch.describe_elasticsearch_domain_config(
+                "testdomain", **CONN_PARAMETERS
+            ) == {"result": True, "response": DOMAIN_RET}
 
     def test_describe_elasticsearch_domain_config_error(self):
         """
@@ -588,17 +514,14 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
         with patch.object(
             self.conn,
             "describe_elasticsearch_domain_config",
-            side_effect=ClientError(
-                ERROR_CONTENT, "describe_elasticsearch_domain_config"
-            ),
+            side_effect=ClientError(ERROR_CONTENT, "describe_elasticsearch_domain_config"),
         ):
             result = boto3_elasticsearch.describe_elasticsearch_domain_config(
                 domain_name="testdomain", **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format(101, "describe_elasticsearch_domain_config"),
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(
+                101, "describe_elasticsearch_domain_config"
             )
 
     def test_describe_elasticsearch_domains_positive(self):
@@ -611,12 +534,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "describe_elasticsearch_domains",
             return_value={"DomainStatusList": [DOMAIN_RET]},
         ):
-            self.assertEqual(
-                boto3_elasticsearch.describe_elasticsearch_domains(
-                    domain_names=["test_domain"], **CONN_PARAMETERS
-                ),
-                {"result": True, "response": [DOMAIN_RET]},
-            )
+            assert boto3_elasticsearch.describe_elasticsearch_domains(
+                domain_names=["test_domain"], **CONN_PARAMETERS
+            ) == {"result": True, "response": [DOMAIN_RET]}
 
     def test_describe_elasticsearch_domains_error(self):
         """
@@ -631,10 +551,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             result = boto3_elasticsearch.describe_elasticsearch_domains(
                 domain_names=["testdomain"], **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format(101, "describe_elasticsearch_domains"),
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(
+                101, "describe_elasticsearch_domains"
             )
 
     def test_describe_elasticsearch_instance_type_limits_positive(self):
@@ -660,9 +579,7 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
                             "MaximumInstanceCount": 123,
                         }
                     },
-                    "AdditionalLimits": [
-                        {"LimitName": "string", "LimitValues": ["string"]}
-                    ],
+                    "AdditionalLimits": [{"LimitName": "string", "LimitValues": ["string"]}],
                 }
             }
         }
@@ -671,15 +588,12 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "describe_elasticsearch_instance_type_limits",
             return_value=ret_val,
         ):
-            self.assertEqual(
-                boto3_elasticsearch.describe_elasticsearch_instance_type_limits(
-                    domain_name="testdomain",
-                    instance_type="foo",
-                    elasticsearch_version="1.0",
-                    **CONN_PARAMETERS
-                ),
-                {"result": True, "response": ret_val["LimitsByRole"]},
-            )
+            assert boto3_elasticsearch.describe_elasticsearch_instance_type_limits(
+                domain_name="testdomain",
+                instance_type="foo",
+                elasticsearch_version="1.0",
+                **CONN_PARAMETERS
+            ) == {"result": True, "response": ret_val["LimitsByRole"]}
 
     def test_describe_elasticsearch_instance_type_limits_error(self):
         """
@@ -689,9 +603,7 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
         with patch.object(
             self.conn,
             "describe_elasticsearch_instance_type_limits",
-            side_effect=ClientError(
-                ERROR_CONTENT, "describe_elasticsearch_instance_type_limits"
-            ),
+            side_effect=ClientError(ERROR_CONTENT, "describe_elasticsearch_instance_type_limits"),
         ):
             result = boto3_elasticsearch.describe_elasticsearch_instance_type_limits(
                 domain_name="testdomain",
@@ -699,12 +611,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
                 elasticsearch_version="1.0",
                 **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format(
-                    101, "describe_elasticsearch_instance_type_limits"
-                ),
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(
+                101, "describe_elasticsearch_instance_type_limits"
             )
 
     def test_describe_reserved_elasticsearch_instance_offerings_positive(self):
@@ -733,15 +642,12 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             ],
         }
         with patch.object(self.paginator, "paginate", return_value=[ret_val]):
-            self.assertEqual(
-                boto3_elasticsearch.describe_reserved_elasticsearch_instance_offerings(
-                    reserved_elasticsearch_instance_offering_id="foo", **CONN_PARAMETERS
-                ),
-                {
-                    "result": True,
-                    "response": ret_val["ReservedElasticsearchInstanceOfferings"],
-                },
-            )
+            assert boto3_elasticsearch.describe_reserved_elasticsearch_instance_offerings(
+                reserved_elasticsearch_instance_offering_id="foo", **CONN_PARAMETERS
+            ) == {
+                "result": True,
+                "response": ret_val["ReservedElasticsearchInstanceOfferings"],
+            }
 
     def test_describe_reserved_elasticsearch_instance_offerings_error(self):
         """
@@ -758,12 +664,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             result = boto3_elasticsearch.describe_reserved_elasticsearch_instance_offerings(
                 reserved_elasticsearch_instance_offering_id="foo", **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format(
-                    101, "describe_reserved_elasticsearch_instance_offerings"
-                ),
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(
+                101, "describe_reserved_elasticsearch_instance_offerings"
             )
 
     def test_describe_reserved_elasticsearch_instances_positive(self):
@@ -797,12 +700,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             ],
         }
         with patch.object(self.paginator, "paginate", return_value=[ret_val]):
-            self.assertEqual(
-                boto3_elasticsearch.describe_reserved_elasticsearch_instances(
-                    reserved_elasticsearch_instance_id="foo", **CONN_PARAMETERS
-                ),
-                {"result": True, "response": ret_val["ReservedElasticsearchInstances"]},
-            )
+            assert boto3_elasticsearch.describe_reserved_elasticsearch_instances(
+                reserved_elasticsearch_instance_id="foo", **CONN_PARAMETERS
+            ) == {"result": True, "response": ret_val["ReservedElasticsearchInstances"]}
 
     def test_describe_reserved_elasticsearch_instances_error(self):
         """
@@ -812,17 +712,14 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
         with patch.object(
             self.paginator,
             "paginate",
-            side_effect=ClientError(
-                ERROR_CONTENT, "describe_reserved_elasticsearch_instances"
-            ),
+            side_effect=ClientError(ERROR_CONTENT, "describe_reserved_elasticsearch_instances"),
         ):
             result = boto3_elasticsearch.describe_reserved_elasticsearch_instances(
                 reserved_elasticsearch_instance_id="foo", **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format(101, "describe_reserved_elasticsearch_instances"),
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(
+                101, "describe_reserved_elasticsearch_instances"
             )
 
     def test_get_compatible_elasticsearch_versions_positive(self):
@@ -835,18 +732,13 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
                 {"SourceVersion": "string", "TargetVersions": ["string"]}
             ]
         }
-        with patch.object(
-            self.conn, "get_compatible_elasticsearch_versions", return_value=ret_val
-        ):
-            self.assertEqual(
-                boto3_elasticsearch.get_compatible_elasticsearch_versions(
-                    domain_name="testdomain", **CONN_PARAMETERS
-                ),
-                {
-                    "result": True,
-                    "response": ret_val["CompatibleElasticsearchVersions"],
-                },
-            )
+        with patch.object(self.conn, "get_compatible_elasticsearch_versions", return_value=ret_val):
+            assert boto3_elasticsearch.get_compatible_elasticsearch_versions(
+                domain_name="testdomain", **CONN_PARAMETERS
+            ) == {
+                "result": True,
+                "response": ret_val["CompatibleElasticsearchVersions"],
+            }
 
     def test_get_compatible_elasticsearch_versions_error(self):
         """
@@ -856,17 +748,14 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
         with patch.object(
             self.conn,
             "get_compatible_elasticsearch_versions",
-            side_effect=ClientError(
-                ERROR_CONTENT, "get_compatible_elasticsearch_versions"
-            ),
+            side_effect=ClientError(ERROR_CONTENT, "get_compatible_elasticsearch_versions"),
         ):
             result = boto3_elasticsearch.get_compatible_elasticsearch_versions(
                 domain_name="testdomain", **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format(101, "get_compatible_elasticsearch_versions"),
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(
+                101, "get_compatible_elasticsearch_versions"
             )
 
     def test_get_upgrade_history_positive(self):
@@ -893,12 +782,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "NextToken": "string",
         }
         with patch.object(self.paginator, "paginate", return_value=[ret_val]):
-            self.assertEqual(
-                boto3_elasticsearch.get_upgrade_history(
-                    domain_name="testdomain", **CONN_PARAMETERS
-                ),
-                {"result": True, "response": ret_val["UpgradeHistories"]},
-            )
+            assert boto3_elasticsearch.get_upgrade_history(
+                domain_name="testdomain", **CONN_PARAMETERS
+            ) == {"result": True, "response": ret_val["UpgradeHistories"]}
 
     def test_get_upgrade_history_error(self):
         """
@@ -913,11 +799,8 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             result = boto3_elasticsearch.get_upgrade_history(
                 domain_name="testdomain", **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format(101, "get_upgrade_history"),
-            )
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(101, "get_upgrade_history")
 
     def test_get_upgrade_status_positive(self):
         """
@@ -931,12 +814,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "ResponseMetadata": None,
         }
         with patch.object(self.conn, "get_upgrade_status", return_value=ret_val):
-            self.assertEqual(
-                boto3_elasticsearch.get_upgrade_status(
-                    domain_name="testdomain", **CONN_PARAMETERS
-                ),
-                {"result": True, "response": ret_val},
-            )
+            assert boto3_elasticsearch.get_upgrade_status(
+                domain_name="testdomain", **CONN_PARAMETERS
+            ) == {"result": True, "response": ret_val}
 
     def test_get_upgrade_status_error(self):
         """
@@ -951,10 +831,8 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             result = boto3_elasticsearch.get_upgrade_status(
                 domain_name="testdomain", **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""), ERROR_MESSAGE.format(101, "get_upgrade_status")
-            )
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(101, "get_upgrade_status")
 
     def test_list_domain_names_positive(self):
         """
@@ -963,13 +841,10 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
         """
         ret_val = {"DomainNames": [{"DomainName": "string"}]}
         with patch.object(self.conn, "list_domain_names", return_value=ret_val):
-            self.assertEqual(
-                boto3_elasticsearch.list_domain_names(**CONN_PARAMETERS),
-                {
-                    "result": True,
-                    "response": [item["DomainName"] for item in ret_val["DomainNames"]],
-                },
-            )
+            assert boto3_elasticsearch.list_domain_names(**CONN_PARAMETERS) == {
+                "result": True,
+                "response": [item["DomainName"] for item in ret_val["DomainNames"]],
+            }
 
     def test_list_domain_names_error(self):
         """
@@ -982,10 +857,8 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             side_effect=ClientError(ERROR_CONTENT, "list_domain_names"),
         ):
             result = boto3_elasticsearch.list_domain_names(**CONN_PARAMETERS)
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""), ERROR_MESSAGE.format(101, "list_domain_names")
-            )
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(101, "list_domain_names")
 
     def test_list_elasticsearch_instance_types_positive(self):
         """
@@ -1038,12 +911,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "NextToken": "string",
         }
         with patch.object(self.paginator, "paginate", return_value=[ret_val]):
-            self.assertEqual(
-                boto3_elasticsearch.list_elasticsearch_instance_types(
-                    elasticsearch_version="1.0", **CONN_PARAMETERS
-                ),
-                {"result": True, "response": ret_val["ElasticsearchInstanceTypes"]},
-            )
+            assert boto3_elasticsearch.list_elasticsearch_instance_types(
+                elasticsearch_version="1.0", **CONN_PARAMETERS
+            ) == {"result": True, "response": ret_val["ElasticsearchInstanceTypes"]}
 
     def test_list_elasticsearch_instance_types_error(self):
         """
@@ -1058,10 +928,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             result = boto3_elasticsearch.list_elasticsearch_instance_types(
                 elasticsearch_version="1.0", **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format(101, "list_elasticsearch_instance_types"),
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(
+                101, "list_elasticsearch_instance_types"
             )
 
     def test_list_elasticsearch_versions_positive(self):
@@ -1071,10 +940,10 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
         """
         ret_val = {"ElasticsearchVersions": ["string"], "NextToken": "string"}
         with patch.object(self.paginator, "paginate", return_value=[ret_val]):
-            self.assertEqual(
-                boto3_elasticsearch.list_elasticsearch_versions(**CONN_PARAMETERS),
-                {"result": True, "response": ret_val["ElasticsearchVersions"]},
-            )
+            assert boto3_elasticsearch.list_elasticsearch_versions(**CONN_PARAMETERS) == {
+                "result": True,
+                "response": ret_val["ElasticsearchVersions"],
+            }
 
     def test_list_elasticsearch_versions_error(self):
         """
@@ -1087,10 +956,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             side_effect=ClientError(ERROR_CONTENT, "list_elasticsearch_versions"),
         ):
             result = boto3_elasticsearch.list_elasticsearch_versions(**CONN_PARAMETERS)
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format(101, "list_elasticsearch_versions"),
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(
+                101, "list_elasticsearch_versions"
             )
 
     def test_purchase_reserved_elasticsearch_instance_offering_positive(self):
@@ -1107,14 +975,11 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "purchase_reserved_elasticsearch_instance_offering",
             return_value=ret_val,
         ):
-            self.assertEqual(
-                boto3_elasticsearch.purchase_reserved_elasticsearch_instance_offering(
-                    reserved_elasticsearch_instance_offering_id="foo",
-                    reservation_name="bar",
-                    **CONN_PARAMETERS
-                ),
-                {"result": True, "response": ret_val},
-            )
+            assert boto3_elasticsearch.purchase_reserved_elasticsearch_instance_offering(
+                reserved_elasticsearch_instance_offering_id="foo",
+                reservation_name="bar",
+                **CONN_PARAMETERS
+            ) == {"result": True, "response": ret_val}
 
     def test_purchase_reserved_elasticsearch_instance_offering_error(self):
         """
@@ -1133,12 +998,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
                 reservation_name="bar",
                 **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format(
-                    101, "purchase_reserved_elasticsearch_instance_offering"
-                ),
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(
+                101, "purchase_reserved_elasticsearch_instance_offering"
             )
 
     def test_start_elasticsearch_service_software_update_positive(self):
@@ -1162,12 +1024,9 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "start_elasticsearch_service_software_update",
             return_value=ret_val,
         ):
-            self.assertEqual(
-                boto3_elasticsearch.start_elasticsearch_service_software_update(
-                    domain_name="testdomain", **CONN_PARAMETERS
-                ),
-                {"result": True, "response": ret_val["ServiceSoftwareOptions"]},
-            )
+            assert boto3_elasticsearch.start_elasticsearch_service_software_update(
+                domain_name="testdomain", **CONN_PARAMETERS
+            ) == {"result": True, "response": ret_val["ServiceSoftwareOptions"]}
 
     def test_start_elasticsearch_service_software_update_error(self):
         """
@@ -1177,19 +1036,14 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
         with patch.object(
             self.conn,
             "start_elasticsearch_service_software_update",
-            side_effect=ClientError(
-                ERROR_CONTENT, "start_elasticsearch_service_software_update"
-            ),
+            side_effect=ClientError(ERROR_CONTENT, "start_elasticsearch_service_software_update"),
         ):
             result = boto3_elasticsearch.start_elasticsearch_service_software_update(
                 domain_name="testdomain", **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format(
-                    101, "start_elasticsearch_service_software_update"
-                ),
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(
+                101, "start_elasticsearch_service_software_update"
             )
 
     def test_upgrade_elasticsearch_domain_positive(self):
@@ -1202,15 +1056,10 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             "TargetVersion": "string",
             "PerformCheckOnly": True,
         }
-        with patch.object(
-            self.conn, "upgrade_elasticsearch_domain", return_value=ret_val
-        ):
-            self.assertEqual(
-                boto3_elasticsearch.upgrade_elasticsearch_domain(
-                    domain_name="testdomain", target_version="1.1", **CONN_PARAMETERS
-                ),
-                {"result": True, "response": ret_val},
-            )
+        with patch.object(self.conn, "upgrade_elasticsearch_domain", return_value=ret_val):
+            assert boto3_elasticsearch.upgrade_elasticsearch_domain(
+                domain_name="testdomain", target_version="1.1", **CONN_PARAMETERS
+            ) == {"result": True, "response": ret_val}
 
     def test_upgrade_elasticsearch_domain_error(self):
         """
@@ -1225,8 +1074,7 @@ class Boto3ElasticsearchTestCase(TestCase, LoaderModuleMockMixin):
             result = boto3_elasticsearch.upgrade_elasticsearch_domain(
                 domain_name="testdomain", target_version="1.1", **CONN_PARAMETERS
             )
-            self.assertFalse(result["result"])
-            self.assertEqual(
-                result.get("error", ""),
-                ERROR_MESSAGE.format(101, "upgrade_elasticsearch_domain"),
+            assert not result["result"]
+            assert result.get("error", "") == ERROR_MESSAGE.format(
+                101, "upgrade_elasticsearch_domain"
             )

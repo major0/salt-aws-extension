@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Manage Launch Configurations
 
@@ -98,8 +97,6 @@ and autoscale groups are completely dependent on each other.
             key: askdjghsdfjkghWupUjasdflkdfklgjsdfjajkghs
             region: us-east-1
 """
-from __future__ import absolute_import, print_function, unicode_literals
-
 from salt.exceptions import SaltInvocationError
 
 
@@ -246,9 +243,7 @@ def present(
         that contains a dict with region, key and keyid.
     """
     if user_data and cloud_init:
-        raise SaltInvocationError(
-            "user_data and cloud_init are mutually" " exclusive options."
-        )
+        raise SaltInvocationError("user_data and cloud_init are mutually" " exclusive options.")
     ret = {"name": name, "result": True, "comment": "", "changes": {}}
     exists = __salt__["boto_asg.launch_configuration_exists"](
         name, region=region, key=key, keyid=keyid, profile=profile

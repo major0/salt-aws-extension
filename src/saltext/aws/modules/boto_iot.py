@@ -47,8 +47,6 @@ The dependencies listed above can be installed via package or pip.
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import datetime
 import logging
 
@@ -197,9 +195,7 @@ def create_thing_type(
         )
 
         if thingtype:
-            log.info(
-                "The newly created thing type ARN is %s", thingtype["thingTypeArn"]
-            )
+            log.info("The newly created thing type ARN is %s", thingtype["thingTypeArn"])
 
             return {"created": True, "thingTypeArn": thingtype["thingTypeArn"]}
         else:
@@ -231,9 +227,7 @@ def deprecate_thing_type(
 
     try:
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-        conn.deprecate_thing_type(
-            thingTypeName=thingTypeName, undoDeprecate=undoDeprecate
-        )
+        conn.deprecate_thing_type(thingTypeName=thingTypeName, undoDeprecate=undoDeprecate)
         deprecated = True if undoDeprecate is False else False
         return {"deprecated": deprecated}
     except ClientError as e:
@@ -294,9 +288,7 @@ def policy_exists(policyName, region=None, key=None, keyid=None, profile=None):
         return {"error": err}
 
 
-def create_policy(
-    policyName, policyDocument, region=None, key=None, keyid=None, profile=None
-):
+def create_policy(policyName, policyDocument, region=None, key=None, keyid=None, profile=None):
     """
     Given a valid config, create a policy.
 
@@ -319,13 +311,9 @@ def create_policy(
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
         if not isinstance(policyDocument, string_types):
             policyDocument = salt.utils.json.dumps(policyDocument)
-        policy = conn.create_policy(
-            policyName=policyName, policyDocument=policyDocument
-        )
+        policy = conn.create_policy(policyName=policyName, policyDocument=policyDocument)
         if policy:
-            log.info(
-                "The newly created policy version is %s", policy["policyVersionId"]
-            )
+            log.info("The newly created policy version is %s", policy["policyVersionId"])
 
             return {"created": True, "versionId": policy["policyVersionId"]}
         else:
@@ -406,9 +394,7 @@ def policy_version_exists(
 
     try:
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-        policy = conn.get_policy_version(
-            policyName=policyName, policyversionId=policyVersionId
-        )
+        policy = conn.get_policy_version(policyName=policyName, policyversionId=policyVersionId)
         return {"exists": bool(policy)}
     except ClientError as e:
         err = __utils__["boto3.get_error"](e)
@@ -451,9 +437,7 @@ def create_policy_version(
             setAsDefault=setAsDefault,
         )
         if policy:
-            log.info(
-                "The newly created policy version is %s", policy["policyVersionId"]
-            )
+            log.info("The newly created policy version is %s", policy["policyVersionId"])
 
             return {"created": True, "name": policy["policyVersionId"]}
         else:
@@ -482,9 +466,7 @@ def delete_policy_version(
 
     try:
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-        conn.delete_policy_version(
-            policyName=policyName, policyVersionId=policyVersionId
-        )
+        conn.delete_policy_version(policyName=policyName, policyVersionId=policyVersionId)
         return {"deleted": True}
     except ClientError as e:
         return {"deleted": False, "error": __utils__["boto3.get_error"](e)}
@@ -508,9 +490,7 @@ def describe_policy_version(
 
     try:
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-        policy = conn.get_policy_version(
-            policyName=policyName, policyVersionId=policyVersionId
-        )
+        policy = conn.get_policy_version(policyName=policyName, policyVersionId=policyVersionId)
         if policy:
             keys = (
                 "policyName",
@@ -664,9 +644,7 @@ def list_principal_policies(principal, region=None, key=None, keyid=None, profil
         return {"error": __utils__["boto3.get_error"](e)}
 
 
-def attach_principal_policy(
-    policyName, principal, region=None, key=None, keyid=None, profile=None
-):
+def attach_principal_policy(policyName, principal, region=None, key=None, keyid=None, profile=None):
     """
     Attach the specified policy to the specified principal (certificate or other
     credential.)
@@ -689,9 +667,7 @@ def attach_principal_policy(
         return {"attached": False, "error": __utils__["boto3.get_error"](e)}
 
 
-def detach_principal_policy(
-    policyName, principal, region=None, key=None, keyid=None, profile=None
-):
+def detach_principal_policy(policyName, principal, region=None, key=None, keyid=None, profile=None):
     """
     Detach the specified policy from the specified principal (certificate or other
     credential.)
@@ -913,10 +889,7 @@ def list_topic_rules(
             kwargs["ruleDisabled"] = ruleDisabled
         rules = []
         for ret in __utils__["boto3.paged_call"](
-            conn.list_topic_rules,
-            marker_flag="nextToken",
-            marker_arg="nextToken",
-            **kwargs
+            conn.list_topic_rules, marker_flag="nextToken", marker_arg="nextToken", **kwargs
         ):
             rules.extend(ret["rules"])
         if not bool(rules):

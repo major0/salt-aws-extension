@@ -42,8 +42,6 @@ Connection module for Amazon Elasticache
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 import time
 
@@ -142,9 +140,7 @@ def create_replication_group(
     if not conn:
         return None
     try:
-        cc = conn.create_replication_group(
-            name, primary_cluster_id, replication_group_description
-        )
+        cc = conn.create_replication_group(name, primary_cluster_id, replication_group_description)
         if not wait:
             log.info("Created cache cluster %s.", name)
             return True
@@ -394,9 +390,7 @@ def get_group_host(name, region=None, key=None, keyid=None, profile=None):
     return host
 
 
-def get_all_cache_subnet_groups(
-    name=None, region=None, key=None, keyid=None, profile=None
-):
+def get_all_cache_subnet_groups(name=None, region=None, key=None, keyid=None, profile=None):
     """
     Return a list of all cache subnet groups with details
 
@@ -411,9 +405,7 @@ def get_all_cache_subnet_groups(
         marker = ""
         groups = []
         while marker is not None:
-            ret = conn.describe_cache_subnet_groups(
-                cache_subnet_group_name=name, marker=marker
-            )
+            ret = conn.describe_cache_subnet_groups(cache_subnet_group_name=name, marker=marker)
             trimmed = ret.get("DescribeCacheSubnetGroupsResponse", {}).get(
                 "DescribeCacheSubnetGroupsResult", {}
             )
@@ -427,9 +419,7 @@ def get_all_cache_subnet_groups(
         return []
 
 
-def list_cache_subnet_groups(
-    name=None, region=None, key=None, keyid=None, profile=None
-):
+def list_cache_subnet_groups(name=None, region=None, key=None, keyid=None, profile=None):
     """
     Return a list of all cache subnet group names
 
@@ -445,9 +435,7 @@ def list_cache_subnet_groups(
     ]
 
 
-def subnet_group_exists(
-    name, tags=None, region=None, key=None, keyid=None, profile=None
-):
+def subnet_group_exists(name, tags=None, region=None, key=None, keyid=None, profile=None):
     """
     Check to see if an ElastiCache subnet group exists.
 
@@ -704,9 +692,7 @@ def delete(name, wait=False, region=None, key=None, keyid=None, profile=None):
         return False
 
 
-def create_cache_security_group(
-    name, description, region=None, key=None, keyid=None, profile=None
-):
+def create_cache_security_group(name, description, region=None, key=None, keyid=None, profile=None):
     """
     Create a cache security group.
 

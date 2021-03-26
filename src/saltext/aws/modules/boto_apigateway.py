@@ -76,8 +76,6 @@ Connection module for Amazon APIGateway
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import datetime
 import logging
 
@@ -167,9 +165,7 @@ def _multi_call(function, contentkey, *args, **kwargs):
     return ret.get(contentkey)
 
 
-def _find_apis_by_name(
-    name, description=None, region=None, key=None, keyid=None, profile=None
-):
+def _find_apis_by_name(name, description=None, region=None, key=None, keyid=None, profile=None):
     """
     get and return list of matching rest api information by the given name and desc.
     If rest api name evaluates to False, return all apis w/o filtering the name.
@@ -186,9 +182,7 @@ def _find_apis_by_name(
         return {"error": __utils__["boto3.get_error"](e)}
 
 
-def describe_apis(
-    name=None, description=None, region=None, key=None, keyid=None, profile=None
-):
+def describe_apis(name=None, description=None, region=None, key=None, keyid=None, profile=None):
     """
     Returns all rest apis in the defined region.  If optional parameter name is included,
     returns all rest apis matching the name in the defined region.
@@ -247,9 +241,7 @@ def api_exists(name, description=None, region=None, key=None, keyid=None, profil
     return {"exists": bool(apis.get("restapi"))}
 
 
-def create_api(
-    name, description, cloneFrom=None, region=None, key=None, keyid=None, profile=None
-):
+def create_api(name, description, cloneFrom=None, region=None, key=None, keyid=None, profile=None):
     """
     Create a new REST API Service with the given name
 
@@ -266,9 +258,7 @@ def create_api(
     try:
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
         if cloneFrom:
-            api = conn.create_rest_api(
-                name=name, description=description, cloneFrom=cloneFrom
-            )
+            api = conn.create_rest_api(name=name, description=description, cloneFrom=cloneFrom)
         else:
             api = conn.create_rest_api(name=name, description=description)
         api = _convert_datetime_str(api)
@@ -331,9 +321,7 @@ def describe_api_resources(restApiId, region=None, key=None, keyid=None, profile
         return {"error": __utils__["boto3.get_error"](e)}
 
 
-def describe_api_resource(
-    restApiId, path, region=None, key=None, keyid=None, profile=None
-):
+def describe_api_resource(restApiId, path, region=None, key=None, keyid=None, profile=None):
     """
     Given rest api id, and an absolute resource path, returns the resource id for
     the given path.
@@ -345,9 +333,7 @@ def describe_api_resource(
         salt myminion boto_apigateway.describe_api_resource myapi_id resource_path
 
     """
-    r = describe_api_resources(
-        restApiId, region=region, key=key, keyid=keyid, profile=profile
-    )
+    r = describe_api_resources(restApiId, region=region, key=key, keyid=keyid, profile=profile)
     resources = r.get("resources")
     if resources is None:
         return r
@@ -357,9 +343,7 @@ def describe_api_resource(
     return {"resource": None}
 
 
-def create_api_resources(
-    restApiId, path, region=None, key=None, keyid=None, profile=None
-):
+def create_api_resources(restApiId, path, region=None, key=None, keyid=None, profile=None):
     """
     Given rest api id, and an absolute resource path, create all the resources and
     return all resources in the resourcepath, returns False on failure.
@@ -404,9 +388,7 @@ def create_api_resources(
         return {"created": False, "error": __utils__["boto3.get_error"](e)}
 
 
-def delete_api_resources(
-    restApiId, path, region=None, key=None, keyid=None, profile=None
-):
+def delete_api_resources(restApiId, path, region=None, key=None, keyid=None, profile=None):
     """
     Given restApiId and an absolute resource path, delete the resources starting
     from the absolute resource path. If resourcepath is the root resource '/',
@@ -594,9 +576,7 @@ def _api_key_patch_add(conn, apiKey, pvlist):
     """
     the add patch operation for a list of (path, value) tuples on an ApiKey resource list path
     """
-    response = conn.update_api_key(
-        apiKey=apiKey, patchOperations=_api_key_patchops("add", pvlist)
-    )
+    response = conn.update_api_key(apiKey=apiKey, patchOperations=_api_key_patchops("add", pvlist))
     return response
 
 
@@ -715,9 +695,7 @@ def disassociate_api_key_stagekeys(
         return {"disassociated": False, "error": __utils__["boto3.get_error"](e)}
 
 
-def describe_api_deployments(
-    restApiId, region=None, key=None, keyid=None, profile=None
-):
+def describe_api_deployments(restApiId, region=None, key=None, keyid=None, profile=None):
     """
     Gets information about the defined API Deployments.  Return list of api deployments.
 
@@ -742,11 +720,7 @@ def describe_api_deployments(
                     restApiId=restApiId, position=_deployments["position"]
                 )
 
-        return {
-            "deployments": [
-                _convert_datetime_str(deployment) for deployment in deployments
-            ]
-        }
+        return {"deployments": [_convert_datetime_str(deployment) for deployment in deployments]}
     except ClientError as e:
         return {"error": __utils__["boto3.get_error"](e)}
 
@@ -790,9 +764,7 @@ def activate_api_deployment(
         response = conn.update_stage(
             restApiId=restApiId,
             stageName=stageName,
-            patchOperations=[
-                {"op": "replace", "path": "/deploymentId", "value": deploymentId}
-            ],
+            patchOperations=[{"op": "replace", "path": "/deploymentId", "value": deploymentId}],
         )
         return {"set": True, "response": _convert_datetime_str(response)}
     except ClientError as e:
@@ -841,9 +813,7 @@ def create_api_deployment(
         return {"created": False, "error": __utils__["boto3.get_error"](e)}
 
 
-def delete_api_deployment(
-    restApiId, deploymentId, region=None, key=None, keyid=None, profile=None
-):
+def delete_api_deployment(restApiId, deploymentId, region=None, key=None, keyid=None, profile=None):
     """
     Deletes API deployment for a given restApiId and deploymentID
 
@@ -894,14 +864,10 @@ def overwrite_api_stage_variables(
         patch_ops = []
         for old_var in old_vars:
             if old_var not in variables:
-                patch_ops.append(
-                    dict(op="remove", path="/variables/{}".format(old_var), value="")
-                )
+                patch_ops.append(dict(op="remove", path="/variables/{}".format(old_var), value=""))
         for var, val in variables.items():
             if var not in old_vars or old_vars[var] != val:
-                patch_ops.append(
-                    dict(op="replace", path="/variables/{}".format(var), value=val)
-                )
+                patch_ops.append(dict(op="replace", path="/variables/{}".format(var), value=val))
 
         if patch_ops:
             stage = conn.update_stage(
@@ -913,9 +879,7 @@ def overwrite_api_stage_variables(
         return {"overwrite": False, "error": __utils__["boto3.get_error"](e)}
 
 
-def describe_api_stage(
-    restApiId, stageName, region=None, key=None, keyid=None, profile=None
-):
+def describe_api_stage(restApiId, stageName, region=None, key=None, keyid=None, profile=None):
     """
     Get API stage for a given apiID and stage name
 
@@ -934,9 +898,7 @@ def describe_api_stage(
         return {"error": __utils__["boto3.get_error"](e)}
 
 
-def describe_api_stages(
-    restApiId, deploymentId, region=None, key=None, keyid=None, profile=None
-):
+def describe_api_stages(restApiId, deploymentId, region=None, key=None, keyid=None, profile=None):
     """
     Get all API stages for a given apiID and deploymentID
 
@@ -997,9 +959,7 @@ def create_api_stage(
         return {"created": False, "error": __utils__["boto3.get_error"](e)}
 
 
-def delete_api_stage(
-    restApiId, stageName, region=None, key=None, keyid=None, profile=None
-):
+def delete_api_stage(restApiId, stageName, region=None, key=None, keyid=None, profile=None):
     """
     Deletes stage identified by stageName from API identified by restApiId
 
@@ -1018,9 +978,7 @@ def delete_api_stage(
         return {"deleted": False, "error": __utils__["boto3.get_error"](e)}
 
 
-def flush_api_stage_cache(
-    restApiId, stageName, region=None, key=None, keyid=None, profile=None
-):
+def flush_api_stage_cache(restApiId, stageName, region=None, key=None, keyid=None, profile=None):
     """
     Flushes cache for the stage identified by stageName from API identified by restApiId
 
@@ -1073,9 +1031,7 @@ def create_api_method(
             profile=profile,
         ).get("resource")
         if resource:
-            requestParameters = (
-                dict() if requestParameters is None else requestParameters
-            )
+            requestParameters = dict() if requestParameters is None else requestParameters
             requestModels = dict() if requestModels is None else requestModels
 
             conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
@@ -1194,9 +1150,7 @@ def create_api_method_response(
             profile=profile,
         ).get("resource")
         if resource:
-            responseParameters = (
-                dict() if responseParameters is None else responseParameters
-            )
+            responseParameters = dict() if responseParameters is None else responseParameters
             responseModels = dict() if responseModels is None else responseModels
 
             conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
@@ -1334,17 +1288,13 @@ def describe_api_model(
     """
     try:
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-        model = conn.get_model(
-            restApiId=restApiId, modelName=modelName, flatten=flatten
-        )
+        model = conn.get_model(restApiId=restApiId, modelName=modelName, flatten=flatten)
         return {"model": _convert_datetime_str(model)}
     except ClientError as e:
         return {"error": __utils__["boto3.get_error"](e)}
 
 
-def api_model_exists(
-    restApiId, modelName, region=None, key=None, keyid=None, profile=None
-):
+def api_model_exists(restApiId, modelName, region=None, key=None, keyid=None, profile=None):
     """
     Check to see if the given modelName exists in the given restApiId
 
@@ -1387,21 +1337,15 @@ def update_api_model_schema(
 
     """
     try:
-        schema_json = (
-            salt.utils.json.dumps(schema) if isinstance(schema, dict) else schema
-        )
+        schema_json = salt.utils.json.dumps(schema) if isinstance(schema, dict) else schema
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-        response = _api_model_patch_replace(
-            conn, restApiId, modelName, "/schema", schema_json
-        )
+        response = _api_model_patch_replace(conn, restApiId, modelName, "/schema", schema_json)
         return {"updated": True, "model": _convert_datetime_str(response)}
     except ClientError as e:
         return {"updated": False, "error": __utils__["boto3.get_error"](e)}
 
 
-def delete_api_model(
-    restApiId, modelName, region=None, key=None, keyid=None, profile=None
-):
+def delete_api_model(restApiId, modelName, region=None, key=None, keyid=None, profile=None):
     """
     Delete a model identified by name in a given API
 
@@ -1443,9 +1387,7 @@ def create_api_model(
 
     """
     try:
-        schema_json = (
-            salt.utils.json.dumps(schema) if isinstance(schema, dict) else schema
-        )
+        schema_json = salt.utils.json.dumps(schema) if isinstance(schema, dict) else schema
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
         model = conn.create_model(
             restApiId=restApiId,
@@ -1670,9 +1612,7 @@ def create_api_integration(
             profile=profile,
         ).get("resource")
         if resource:
-            requestParameters = (
-                dict() if requestParameters is None else requestParameters
-            )
+            requestParameters = dict() if requestParameters is None else requestParameters
             requestTemplates = dict() if requestTemplates is None else requestTemplates
 
             conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
@@ -1731,12 +1671,8 @@ def create_api_integration_response(
             profile=profile,
         ).get("resource")
         if resource:
-            responseParameters = (
-                dict() if responseParameters is None else responseParameters
-            )
-            responseTemplates = (
-                dict() if responseTemplates is None else responseTemplates
-            )
+            responseParameters = dict() if responseParameters is None else responseParameters
+            responseTemplates = dict() if responseTemplates is None else responseTemplates
 
             conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
             response = conn.put_integration_response(
@@ -1761,9 +1697,7 @@ def _filter_plans(attr, name, plans):
     return [plan for plan in plans if plan[attr] == name]
 
 
-def describe_usage_plans(
-    name=None, plan_id=None, region=None, key=None, keyid=None, profile=None
-):
+def describe_usage_plans(name=None, plan_id=None, region=None, key=None, keyid=None, profile=None):
     """
     Returns a list of existing usage plans, optionally filtered to match a given plan name
 
@@ -1798,9 +1732,7 @@ def _validate_throttle(throttle):
     """
     if throttle is not None:
         if not isinstance(throttle, dict):
-            raise TypeError(
-                "throttle must be a dictionary, provided value: {}".format(throttle)
-            )
+            raise TypeError("throttle must be a dictionary, provided value: {}".format(throttle))
 
 
 def _validate_quota(quota):
@@ -1809,9 +1741,7 @@ def _validate_quota(quota):
     """
     if quota is not None:
         if not isinstance(quota, dict):
-            raise TypeError(
-                "quota must be a dictionary, provided value: {}".format(quota)
-            )
+            raise TypeError("quota must be a dictionary, provided value: {}".format(quota))
         periods = ["DAY", "WEEK", "MONTH"]
         if "period" not in quota or quota["period"] not in periods:
             raise ValueError(
@@ -1980,9 +1910,7 @@ def update_usage_plan(
                 )  # future lint: disable=blacklisted-function
 
         if patchOperations:
-            res = conn.update_usage_plan(
-                usagePlanId=plan_id, patchOperations=patchOperations
-            )
+            res = conn.update_usage_plan(usagePlanId=plan_id, patchOperations=patchOperations)
             return {"updated": True, "result": res}
 
         return {"updated": False}
@@ -2022,9 +1950,7 @@ def delete_usage_plan(plan_id, region=None, key=None, keyid=None, profile=None):
         return {"error": __utils__["boto3.get_error"](e)}
 
 
-def _update_usage_plan_apis(
-    plan_id, apis, op, region=None, key=None, keyid=None, profile=None
-):
+def _update_usage_plan_apis(plan_id, apis, op, region=None, key=None, keyid=None, profile=None):
     """
     Helper function that updates the usage plan identified by plan_id by adding or removing it to each of the stages, specified by apis parameter.
 
@@ -2053,9 +1979,7 @@ def _update_usage_plan_apis(
         res = None
         if patchOperations:
             conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-            res = conn.update_usage_plan(
-                usagePlanId=plan_id, patchOperations=patchOperations
-            )
+            res = conn.update_usage_plan(usagePlanId=plan_id, patchOperations=patchOperations)
         return {"success": True, "result": res}
     except ClientError as e:
         return {"error": __utils__["boto3.get_error"](e)}
@@ -2063,9 +1987,7 @@ def _update_usage_plan_apis(
         return {"error": e}
 
 
-def attach_usage_plan_to_apis(
-    plan_id, apis, region=None, key=None, keyid=None, profile=None
-):
+def attach_usage_plan_to_apis(plan_id, apis, region=None, key=None, keyid=None, profile=None):
     """
     Attaches given usage plan to each of the apis provided in a list of apiId and stage values
 
@@ -2092,9 +2014,7 @@ def attach_usage_plan_to_apis(
     )
 
 
-def detach_usage_plan_from_apis(
-    plan_id, apis, region=None, key=None, keyid=None, profile=None
-):
+def detach_usage_plan_from_apis(plan_id, apis, region=None, key=None, keyid=None, profile=None):
     """
     Detaches given usage plan from each of the apis provided in a list of apiId and stage value
 

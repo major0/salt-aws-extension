@@ -44,8 +44,6 @@ Connection module for Amazon RDS
 # pylint: disable=E0602
 # pylint whinging perfectly valid code
 # pylint: disable=W0106
-
-
 import logging
 import time
 
@@ -151,9 +149,7 @@ def exists(name, tags=None, region=None, key=None, keyid=None, profile=None):
         return {"error": __utils__["boto3.get_error"](e)}
 
 
-def option_group_exists(
-    name, tags=None, region=None, key=None, keyid=None, profile=None
-):
+def option_group_exists(name, tags=None, region=None, key=None, keyid=None, profile=None):
     """
     Check to see if an RDS option group exists.
 
@@ -172,9 +168,7 @@ def option_group_exists(
         return {"error": __utils__["boto3.get_error"](e)}
 
 
-def parameter_group_exists(
-    name, tags=None, region=None, key=None, keyid=None, profile=None
-):
+def parameter_group_exists(name, tags=None, region=None, key=None, keyid=None, profile=None):
     """
     Check to see if an RDS parameter group exists.
 
@@ -198,9 +192,7 @@ def parameter_group_exists(
         return resp
 
 
-def subnet_group_exists(
-    name, tags=None, region=None, key=None, keyid=None, profile=None
-):
+def subnet_group_exists(name, tags=None, region=None, key=None, keyid=None, profile=None):
     """
     Check to see if an RDS subnet group exists.
 
@@ -294,9 +286,7 @@ def create(
     if wait_status:
         wait_stati = ["available", "modifying", "backing-up"]
         if wait_status not in wait_stati:
-            raise SaltInvocationError(
-                "wait_status can be one of: {}".format(wait_stati)
-            )
+            raise SaltInvocationError("wait_status can be one of: {}".format(wait_stati))
     if vpc_security_groups:
         v_tmp = __salt__["boto_secgroup.convert_to_group_ids"](
             groups=vpc_security_groups,
@@ -305,9 +295,7 @@ def create(
             keyid=keyid,
             profile=profile,
         )
-        vpc_security_group_ids = (
-            vpc_security_group_ids + v_tmp if vpc_security_group_ids else v_tmp
-        )
+        vpc_security_group_ids = vpc_security_group_ids + v_tmp if vpc_security_group_ids else v_tmp
 
     try:
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
@@ -361,8 +349,7 @@ def create(
             if stat == wait_status:
                 return {
                     "created": True,
-                    "message": "RDS instance {} created (current status "
-                    "{})".format(name, stat),
+                    "message": "RDS instance {} created (current status " "{})".format(name, stat),
                 }
             time.sleep(10)
             log.info("Instance status after 10 seconds is: %s", stat)
@@ -420,9 +407,7 @@ def create_read_replica(
         kwargs = {}
         for key in ("OptionGroupName", "MonitoringRoleArn"):
             if locals()[key] is not None:
-                kwargs[key] = str(
-                    locals()[key]
-                )  # future lint: disable=blacklisted-function
+                kwargs[key] = str(locals()[key])  # future lint: disable=blacklisted-function
 
         for key in ("MonitoringInterval", "Iops", "Port"):
             if locals()[key] is not None:
@@ -470,9 +455,7 @@ def create_option_group(
         salt myminion boto_rds.create_option_group my-opt-group mysql 5.6 \
                 "group description"
     """
-    res = __salt__["boto_rds.option_group_exists"](
-        name, tags, region, key, keyid, profile
-    )
+    res = __salt__["boto_rds.option_group_exists"](name, tags, region, key, keyid, profile)
     if res.get("exists"):
         return {"exists": bool(res)}
 
@@ -513,9 +496,7 @@ def create_parameter_group(
         salt myminion boto_rds.create_parameter_group my-param-group mysql5.6 \
                 "group description"
     """
-    res = __salt__["boto_rds.parameter_group_exists"](
-        name, tags, region, key, keyid, profile
-    )
+    res = __salt__["boto_rds.parameter_group_exists"](name, tags, region, key, keyid, profile)
     if res.get("exists"):
         return {"exists": bool(res)}
 
@@ -564,9 +545,7 @@ def create_subnet_group(
             "group description" '[subnet-12345678, subnet-87654321]' \
             region=us-east-1
     """
-    res = __salt__["boto_rds.subnet_group_exists"](
-        name, tags, region, key, keyid, profile
-    )
+    res = __salt__["boto_rds.subnet_group_exists"](name, tags, region, key, keyid, profile)
     if res.get("exists"):
         return {"exists": bool(res)}
 
@@ -610,9 +589,7 @@ def update_parameter_group(
                 region=us-east-1
     """
 
-    res = __salt__["boto_rds.parameter_group_exists"](
-        name, tags, region, key, keyid, profile
-    )
+    res = __salt__["boto_rds.parameter_group_exists"](name, tags, region, key, keyid, profile)
     if not res.get("exists"):
         return {
             "exists": bool(res),
@@ -627,9 +604,7 @@ def update_parameter_group(
         if type(value) is bool:
             item.update({"ParameterValue": "on" if value else "off"})
         else:
-            item.update(
-                {"ParameterValue": str(value)}
-            )  # future lint: disable=blacklisted-function
+            item.update({"ParameterValue": str(value)})  # future lint: disable=blacklisted-function
         param_list.append(item)
 
     if not param_list:
@@ -640,9 +615,7 @@ def update_parameter_group(
         if not conn:
             return {"results": bool(conn)}
 
-        res = conn.modify_db_parameter_group(
-            DBParameterGroupName=name, Parameters=param_list
-        )
+        res = conn.modify_db_parameter_group(DBParameterGroupName=name, Parameters=param_list)
         return {"results": bool(res)}
     except ClientError as e:
         return {"error": __utils__["boto3.get_error"](e)}
@@ -672,11 +645,9 @@ def describe(name, tags=None, region=None, key=None, keyid=None, profile=None):
             return {"results": bool(conn)}
 
         rds = conn.describe_db_instances(DBInstanceIdentifier=name)
-        rds = [
-            i
-            for i in rds.get("DBInstances", [])
-            if i.get("DBInstanceIdentifier") == name
-        ].pop(0)
+        rds = [i for i in rds.get("DBInstances", []) if i.get("DBInstanceIdentifier") == name].pop(
+            0
+        )
 
         if rds:
             keys = (
@@ -1015,9 +986,7 @@ def describe_parameter_group(
         kwargs = {}
         for key in ("Marker", "Filters"):
             if locals()[key] is not None:
-                kwargs[key] = str(
-                    locals()[key]
-                )  # future lint: disable=blacklisted-function
+                kwargs[key] = str(locals()[key])  # future lint: disable=blacklisted-function
 
         if locals()["MaxRecords"] is not None:
             kwargs["MaxRecords"] = int(locals()["MaxRecords"])
@@ -1076,9 +1045,7 @@ def describe_parameters(
         kwargs.update({"DBParameterGroupName": name})
         for key in ("Marker", "Source"):
             if locals()[key] is not None:
-                kwargs[key] = str(
-                    locals()[key]
-                )  # future lint: disable=blacklisted-function
+                kwargs[key] = str(locals()[key])  # future lint: disable=blacklisted-function
 
         if locals()["MaxRecords"] is not None:
             kwargs["MaxRecords"] = int(locals()["MaxRecords"])

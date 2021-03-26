@@ -140,8 +140,6 @@ Delete also accepts a VPC peering connection id.
         - conn_id: pcx-1873c371
 
 """
-
-
 import logging
 
 import salt.utils.dictupdate as dictupdate
@@ -419,9 +417,7 @@ def dhcp_options_present(
     )
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to validate DHCP options: {}.".format(
-            r["error"]["message"]
-        )
+        ret["comment"] = "Failed to validate DHCP options: {}.".format(r["error"]["message"])
         return ret
 
     if r.get("exists"):
@@ -450,9 +446,7 @@ def dhcp_options_present(
         )
         if not r.get("created"):
             ret["result"] = False
-            ret["comment"] = "Failed to create DHCP options: {}".format(
-                r["error"]["message"]
-            )
+            ret["comment"] = "Failed to create DHCP options: {}".format(r["error"]["message"])
             return ret
 
         ret["changes"]["old"] = {"dhcp_options": None}
@@ -501,9 +495,7 @@ def dhcp_options_absent(
     )
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to delete DHCP options: {}.".format(
-            r["error"]["message"]
-        )
+        ret["comment"] = "Failed to delete DHCP options: {}.".format(r["error"]["message"])
         return ret
 
     _id = r.get("id")
@@ -522,9 +514,7 @@ def dhcp_options_absent(
     )
     if not r.get("deleted"):
         ret["result"] = False
-        ret["comment"] = "Failed to delete DHCP options: {}".format(
-            r["error"]["message"]
-        )
+        ret["comment"] = "Failed to delete DHCP options: {}".format(r["error"]["message"])
         return ret
 
     ret["changes"]["old"] = {"dhcp_options": _id}
@@ -662,9 +652,7 @@ def subnet_present(
                         )
         if not route_table_found:
             ret["result"] = False
-            ret["comment"] = "The specified route table {} could not be found.".format(
-                rtid
-            )
+            ret["comment"] = "The specified route table {} could not be found.".format(rtid)
             return ret
 
     if not r.get("exists"):
@@ -787,9 +775,7 @@ def _verify_subnet_association(route_table_desc, subnet_id):
     return False
 
 
-def subnet_absent(
-    name=None, subnet_id=None, region=None, key=None, keyid=None, profile=None
-):
+def subnet_absent(name=None, subnet_id=None, region=None, key=None, keyid=None, profile=None):
     """
     Ensure subnet with passed properties is absent.
 
@@ -897,9 +883,7 @@ def internet_gateway_present(
     )
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to create internet gateway: {}.".format(
-            r["error"]["message"]
-        )
+        ret["comment"] = "Failed to create internet gateway: {}.".format(r["error"]["message"])
         return ret
 
     if not r.get("exists"):
@@ -919,9 +903,7 @@ def internet_gateway_present(
         )
         if not r.get("created"):
             ret["result"] = False
-            ret["comment"] = "Failed to create internet gateway: {}".format(
-                r["error"]["message"]
-            )
+            ret["comment"] = "Failed to create internet gateway: {}".format(r["error"]["message"])
             return ret
 
         ret["changes"]["old"] = {"internet_gateway": None}
@@ -932,9 +914,7 @@ def internet_gateway_present(
     return ret
 
 
-def internet_gateway_absent(
-    name, detach=False, region=None, key=None, keyid=None, profile=None
-):
+def internet_gateway_absent(name, detach=False, region=None, key=None, keyid=None, profile=None):
     """
     Ensure the named internet gateway is absent.
 
@@ -970,9 +950,7 @@ def internet_gateway_absent(
     )
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to delete internet gateway: {}.".format(
-            r["error"]["message"]
-        )
+        ret["comment"] = "Failed to delete internet gateway: {}.".format(r["error"]["message"])
         return ret
 
     igw_id = r["id"]
@@ -994,9 +972,7 @@ def internet_gateway_absent(
     )
     if not r.get("deleted"):
         ret["result"] = False
-        ret["comment"] = "Failed to delete internet gateway: {}.".format(
-            r["error"]["message"]
-        )
+        ret["comment"] = "Failed to delete internet gateway: {}.".format(r["error"]["message"])
         return ret
     ret["changes"]["old"] = {"internet_gateway": igw_id}
     ret["changes"]["new"] = {"internet_gateway": None}
@@ -1153,9 +1129,7 @@ def _route_table_present(
     )
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to create route table: {}.".format(
-            r["error"]["message"]
-        )
+        ret["comment"] = "Failed to create route table: {}.".format(r["error"]["message"])
         return ret
 
     _id = r.get("id")
@@ -1179,9 +1153,7 @@ def _route_table_present(
         )
         if not r.get("created"):
             ret["result"] = False
-            ret["comment"] = "Failed to create route table: {}.".format(
-                r["error"]["message"]
-            )
+            ret["comment"] = "Failed to create route table: {}.".format(r["error"]["message"])
             return ret
 
         ret["changes"]["old"] = {"route_table": None}
@@ -1428,9 +1400,7 @@ def _subnets_present(
         profile=profile,
     )
     if not route_table:
-        msg = "Could not retrieve configuration for route table {}.".format(
-            route_table_name
-        )
+        msg = "Could not retrieve configuration for route table {}.".format(route_table_name)
         ret["comment"] = msg
         ret["result"] = False
         return ret
@@ -1547,9 +1517,7 @@ def route_table_absent(name, region=None, key=None, keyid=None, profile=None):
     )
     if "error" in r:
         ret["result"] = False
-        ret["comment"] = "Failed to delete route table: {}".format(
-            r["error"]["message"]
-        )
+        ret["comment"] = "Failed to delete route table: {}".format(r["error"]["message"])
         return ret
     ret["changes"]["old"] = {"route_table": rtbl_id}
     ret["changes"]["new"] = {"route_table": None}
@@ -1636,9 +1604,7 @@ def nat_gateway_present(
         )
         if not r.get("created"):
             ret["result"] = False
-            ret["comment"] = "Failed to create nat gateway: {}.".format(
-                r["error"]["message"]
-            )
+            ret["comment"] = "Failed to create nat gateway: {}.".format(r["error"]["message"])
             return ret
 
         ret["changes"]["old"] = {"nat_gateway": None}
@@ -1734,13 +1700,9 @@ def nat_gateway_absent(
         )
         if "error" in r:
             ret["result"] = False
-            ret["comment"] = "Failed to delete nat gateway: {}".format(
-                r["error"]["message"]
-            )
+            ret["comment"] = "Failed to delete nat gateway: {}".format(r["error"]["message"])
             return ret
-        ret["comment"] = ", ".join(
-            (ret["comment"], "Nat gateway {} deleted.".format(rtbl_id))
-        )
+        ret["comment"] = ", ".join((ret["comment"], "Nat gateway {} deleted.".format(rtbl_id)))
     ret["changes"]["old"] = {"nat_gateway": rtbl_id}
     ret["changes"]["new"] = {"nat_gateway": None}
     return ret
@@ -1821,9 +1783,7 @@ def accept_vpc_peering_connection(
         return ret
 
     if __opts__["test"]:
-        ret["changes"].update(
-            {"old": "Pending VPC peering connection found and can be accepted"}
-        )
+        ret["changes"].update({"old": "Pending VPC peering connection found and can be accepted"})
         return ret
     fun = "boto_vpc.accept_vpc_peering_connection"
     log.debug("Calling `%s()` to accept this VPC peering connection", fun)
@@ -2035,11 +1995,10 @@ def vpc_peering_connection_present(
             keyid=keyid,
             profile=profile,
         ):
-            ret["comment"] = (
-                "VPC peering {} already requested - pending "
-                "acceptance by {}".format(
-                    conn_name, peer_owner_id or peer_vpc_name or peer_vpc_id
-                )
+            ret[
+                "comment"
+            ] = "VPC peering {} already requested - pending " "acceptance by {}".format(
+                conn_name, peer_owner_id or peer_vpc_name or peer_vpc_id
             )
             log.info(ret["comment"])
             return ret
@@ -2069,9 +2028,7 @@ def vpc_peering_connection_present(
 def vpc_peering_connection_absent(
     name, conn_id=None, conn_name=None, region=None, key=None, keyid=None, profile=None
 ):
-    return delete_vpc_peering_connection(
-        name, conn_id, conn_name, region, key, keyid, profile
-    )
+    return delete_vpc_peering_connection(name, conn_id, conn_name, region, key, keyid, profile)
 
 
 # pylint: disable=too-many-arguments

@@ -42,7 +42,6 @@ Connection module for Amazon ELB
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
 import logging
 import time
 
@@ -72,9 +71,7 @@ def __virtual__():
     Only load if boto libraries exist.
     """
     # connection settings were added in 2.33.0
-    has_boto_reqs = salt.utils.versions.check_boto_reqs(
-        boto_ver="2.33.0", check_boto3=False
-    )
+    has_boto_reqs = salt.utils.versions.check_boto_reqs(boto_ver="2.33.0", check_boto3=False)
     if has_boto_reqs is True:
         __utils__["boto.assign_funcs"](__name__, "elb", module="ec2.elb", pack=__salt__)
     return has_boto_reqs
@@ -134,10 +131,7 @@ def list_elbs(region=None, key=None, keyid=None, profile=None):
         salt myminion boto_elb.list_elbs region=us-east-1
     """
 
-    return [
-        e.name
-        for e in get_all_elbs(region=region, key=key, keyid=keyid, profile=profile)
-    ]
+    return [e.name for e in get_all_elbs(region=region, key=key, keyid=keyid, profile=profile)]
 
 
 def get_elb_config(name, region=None, key=None, keyid=None, profile=None):
@@ -375,9 +369,7 @@ def delete_listeners(name, ports, region=None, key=None, keyid=None, profile=Non
         return False
 
 
-def apply_security_groups(
-    name, security_groups, region=None, key=None, keyid=None, profile=None
-):
+def apply_security_groups(name, security_groups, region=None, key=None, keyid=None, profile=None):
     """
     Apply security groups to ELB.
 
@@ -626,9 +618,7 @@ def set_attributes(name, attributes, region=None, key=None, keyid=None, profile=
     if czlb:
         _czlb = CrossZoneLoadBalancingAttribute()
         _czlb.enabled = czlb["enabled"]
-        added_attr = conn.modify_lb_attribute(
-            name, "crossZoneLoadBalancing", _czlb.enabled
-        )
+        added_attr = conn.modify_lb_attribute(name, "crossZoneLoadBalancing", _czlb.enabled)
         if added_attr:
             log.info("Added cross_zone_load_balancing attribute to %s elb.", name)
         else:
@@ -691,9 +681,7 @@ def get_health_check(name, region=None, key=None, keyid=None, profile=None):
             return {}
 
 
-def set_health_check(
-    name, health_check, region=None, key=None, keyid=None, profile=None
-):
+def set_health_check(name, health_check, region=None, key=None, keyid=None, profile=None):
     """
     Set attributes on an ELB.
 
@@ -722,9 +710,7 @@ def set_health_check(
             return False
 
 
-def register_instances(
-    name, instances, region=None, key=None, keyid=None, profile=None
-):
+def register_instances(name, instances, region=None, key=None, keyid=None, profile=None):
     """
     Register instances with an ELB.  Instances is either a string
     instance id or a list of string instance id's.
@@ -757,18 +743,14 @@ def register_instances(
     # able to be registered with the given ELB
     register_failures = set(instances).difference(set(registered_instance_ids))
     if register_failures:
-        log.warning(
-            "Instance(s): %s not registered with ELB %s.", list(register_failures), name
-        )
+        log.warning("Instance(s): %s not registered with ELB %s.", list(register_failures), name)
         register_result = False
     else:
         register_result = True
     return register_result
 
 
-def deregister_instances(
-    name, instances, region=None, key=None, keyid=None, profile=None
-):
+def deregister_instances(name, instances, region=None, key=None, keyid=None, profile=None):
     """
     Deregister instances with an ELB.  Instances is either a string
     instance id or a list of string instance id's.
@@ -826,9 +808,7 @@ def deregister_instances(
     return deregister_result
 
 
-def set_instances(
-    name, instances, test=False, region=None, key=None, keyid=None, profile=None
-):
+def set_instances(name, instances, test=False, region=None, key=None, keyid=None, profile=None):
     """
     Set the instances assigned to an ELB to exactly the list given
 
@@ -839,19 +819,14 @@ def set_instances(
         salt myminion boto_elb.set_instances myelb region=us-east-1 instances="[instance_id,instance_id]"
     """
     ret = True
-    current = {
-        i["instance_id"] for i in get_instance_health(name, region, key, keyid, profile)
-    }
+    current = {i["instance_id"] for i in get_instance_health(name, region, key, keyid, profile)}
     desired = set(instances)
     add = desired - current
     remove = current - desired
     if test:
         return bool(add or remove)
     if remove:
-        if (
-            deregister_instances(name, list(remove), region, key, keyid, profile)
-            is False
-        ):
+        if deregister_instances(name, list(remove), region, key, keyid, profile) is False:
             ret = False
     if add:
         if register_instances(name, list(add), region, key, keyid, profile) is False:
@@ -859,9 +834,7 @@ def set_instances(
     return ret
 
 
-def get_instance_health(
-    name, region=None, key=None, keyid=None, profile=None, instances=None
-):
+def get_instance_health(name, region=None, key=None, keyid=None, profile=None, instances=None):
     """
     Get a list of instances and their health state
 
@@ -967,9 +940,7 @@ def delete_policy(name, policy_name, region=None, key=None, keyid=None, profile=
         return False
 
 
-def set_listener_policy(
-    name, port, policies=None, region=None, key=None, keyid=None, profile=None
-):
+def set_listener_policy(name, port, policies=None, region=None, key=None, keyid=None, profile=None):
     """
     Set the policies of an ELB listener.
 
@@ -1003,9 +974,7 @@ def set_listener_policy(
     return True
 
 
-def set_backend_policy(
-    name, port, policies=None, region=None, key=None, keyid=None, profile=None
-):
+def set_backend_policy(name, port, policies=None, region=None, key=None, keyid=None, profile=None):
     """
     Set the policies of an ELB backend server.
 
@@ -1114,9 +1083,7 @@ def _get_all_tags(conn, load_balancer_names=None):
     """
     params = {}
     if load_balancer_names:
-        conn.build_list_params(
-            params, load_balancer_names, "LoadBalancerNames.member.%d"
-        )
+        conn.build_list_params(params, load_balancer_names, "LoadBalancerNames.member.%d")
 
     tags = conn.get_object(
         "DescribeTags",

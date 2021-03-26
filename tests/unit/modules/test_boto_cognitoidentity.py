@@ -7,9 +7,12 @@ import salt.loader
 import salt.modules.boto_cognitoidentity as boto_cognitoidentity
 from salt.ext.six.moves import range  # pylint: disable=import-error
 from salt.utils.versions import LooseVersion
+
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
-from tests.support.unit import TestCase, skipIf
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
+from tests.support.unit import skipIf
+from tests.support.unit import TestCase
 
 # pylint: disable=import-error,no-name-in-module
 try:
@@ -37,9 +40,7 @@ conn_parameters = {
     "keyid": secret_key,
     "profile": {},
 }
-error_message = (
-    "An error occurred (101) when calling the {0} operation: Test-defined error"
-)
+error_message = "An error occurred (101) when calling the {0} operation: Test-defined error"
 error_content = {"Error": {"Code": 101, "Message": "Test-defined error"}}
 
 first_pool_id = "first_pool_id"
@@ -74,9 +75,7 @@ first_pool_ret = dict(
 
 first_pool_role_ret = dict(
     IdentityPoolId=first_pool_id,
-    Roles=dict(
-        authenticated="first_pool_auth_role", unauthenticated="first_pool_unauth_role"
-    ),
+    Roles=dict(authenticated="first_pool_auth_role", unauthenticated="first_pool_unauth_role"),
 )
 
 second_pool_ret = dict(
@@ -186,13 +185,11 @@ class BotoCognitoIdentityTestCase(
         Tests describing identity pool when the pool's name exists
         """
         self.conn.list_identity_pools.return_value = identity_pools_ret
-        self.conn.describe_identity_pool.side_effect = (
-            self._describe_identity_pool_side_effect
-        )
+        self.conn.describe_identity_pool.side_effect = self._describe_identity_pool_side_effect
         result = boto_cognitoidentity.describe_identity_pools(
             IdentityPoolName=first_pool_name, **conn_parameters
         )
-        self.assertEqual(result.get("identity_pools"), [first_pool_ret, third_pool_ret])
+        assert result.get("identity_pools") == [first_pool_ret, third_pool_ret]
 
     def test_that_when_describing_a_identity_pool_by_its_id_and_pool_exists_the_desribe_identity_pool_method_returns_pools_properties(
         self,
@@ -204,8 +201,8 @@ class BotoCognitoIdentityTestCase(
         result = boto_cognitoidentity.describe_identity_pools(
             IdentityPoolName="", IdentityPoolId=third_pool_id, **conn_parameters
         )
-        self.assertEqual(result.get("identity_pools"), [third_pool_ret])
-        self.assertTrue(self.conn.list_identity_pools.call_count == 0)
+        assert result.get("identity_pools") == [third_pool_ret]
+        assert self.conn.list_identity_pools.call_count == 0
 
     def test_that_when_describing_a_named_identity_pool_and_pool_does_not_exist_the_describe_identity_pool_method_returns_none(
         self,
@@ -218,7 +215,7 @@ class BotoCognitoIdentityTestCase(
         result = boto_cognitoidentity.describe_identity_pools(
             IdentityPoolName="no_such_pool", **conn_parameters
         )
-        self.assertEqual(result.get("identity_pools", "no such key"), None)
+        assert result.get("identity_pools", "no such key") == None
 
     def test_that_when_describing_a_named_identity_pool_and_error_thrown_the_describe_identity_pool_method_returns_error(
         self,
@@ -233,9 +230,8 @@ class BotoCognitoIdentityTestCase(
         result = boto_cognitoidentity.describe_identity_pools(
             IdentityPoolName=first_pool_name, **conn_parameters
         )
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("error on describe identity pool"),
+        assert result.get("error", {}).get("message") == error_message.format(
+            "error on describe identity pool"
         )
 
     def test_that_when_create_identity_pool_the_create_identity_pool_method_returns_created_identity_pool(
@@ -252,10 +248,10 @@ class BotoCognitoIdentityTestCase(
         )
         mock_calls = self.conn.mock_calls
         # name, args, kwargs = mock_calls[0]
-        self.assertTrue(result.get("created"))
-        self.assertEqual(len(mock_calls), 1)
-        self.assertEqual(mock_calls[0][0], "create_identity_pool")
-        self.assertNotIn("DeveloperProviderName", mock_calls[0][2])
+        assert result.get("created")
+        assert len(mock_calls) == 1
+        assert mock_calls[0][0] == "create_identity_pool"
+        assert "DeveloperProviderName" not in mock_calls[0][2]
 
     def test_that_when_create_identity_pool_and_error_thrown_the_create_identity_pool_method_returns_error(
         self,
@@ -269,10 +265,9 @@ class BotoCognitoIdentityTestCase(
         result = boto_cognitoidentity.create_identity_pool(
             IdentityPoolName="default_pool_name", **conn_parameters
         )
-        self.assertIs(result.get("created"), False)
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("create_identity_pool"),
+        assert result.get("created") is False
+        assert result.get("error", {}).get("message") == error_message.format(
+            "create_identity_pool"
         )
 
     def test_that_when_delete_identity_pools_with_multiple_matching_pool_names_the_delete_identity_pools_methos_returns_true_and_deleted_count(
@@ -288,13 +283,13 @@ class BotoCognitoIdentityTestCase(
             IdentityPoolName=first_pool_name, **conn_parameters
         )
         mock_calls = self.conn.mock_calls
-        self.assertTrue(result.get("deleted"))
-        self.assertEqual(result.get("count"), 2)
-        self.assertEqual(len(mock_calls), 3)
-        self.assertEqual(mock_calls[1][0], "delete_identity_pool")
-        self.assertEqual(mock_calls[2][0], "delete_identity_pool")
-        self.assertEqual(mock_calls[1][2].get("IdentityPoolId"), first_pool_id)
-        self.assertEqual(mock_calls[2][2].get("IdentityPoolId"), third_pool_id)
+        assert result.get("deleted")
+        assert result.get("count") == 2
+        assert len(mock_calls) == 3
+        assert mock_calls[1][0] == "delete_identity_pool"
+        assert mock_calls[2][0] == "delete_identity_pool"
+        assert mock_calls[1][2].get("IdentityPoolId") == first_pool_id
+        assert mock_calls[2][2].get("IdentityPoolId") == third_pool_id
 
     def test_that_when_delete_identity_pools_with_no_matching_pool_names_the_delete_identity_pools_method_returns_false(
         self,
@@ -308,9 +303,9 @@ class BotoCognitoIdentityTestCase(
             IdentityPoolName="no_such_pool_name", **conn_parameters
         )
         mock_calls = self.conn.mock_calls
-        self.assertIs(result.get("deleted"), False)
-        self.assertEqual(result.get("count"), 0)
-        self.assertEqual(len(mock_calls), 1)
+        assert result.get("deleted") is False
+        assert result.get("count") == 0
+        assert len(mock_calls) == 1
 
     def test_that_when_delete_identity_pools_and_error_thrown_the_delete_identity_pools_method_returns_false_and_the_error(
         self,
@@ -323,18 +318,15 @@ class BotoCognitoIdentityTestCase(
         )
         # try to delete an unexistent pool id "no_such_pool_id"
         result = boto_cognitoidentity.delete_identity_pools(
-            IdentityPoolName=first_pool_name,
-            IdentityPoolId="no_such_pool_id",
-            **conn_parameters
+            IdentityPoolName=first_pool_name, IdentityPoolId="no_such_pool_id", **conn_parameters
         )
         mock_calls = self.conn.mock_calls
-        self.assertIs(result.get("deleted"), False)
-        self.assertIs(result.get("count"), None)
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("delete_identity_pool"),
+        assert result.get("deleted") is False
+        assert result.get("count") is None
+        assert result.get("error", {}).get("message") == error_message.format(
+            "delete_identity_pool"
         )
-        self.assertEqual(len(mock_calls), 1)
+        assert len(mock_calls) == 1
 
     def _get_identity_pool_roles_side_effect(self, *args, **kwargs):
         if kwargs.get("IdentityPoolId") == first_pool_id:
@@ -352,20 +344,16 @@ class BotoCognitoIdentityTestCase(
         passed through as a list of identity_pool_roles
         """
         self.conn.list_identity_pools.return_value = identity_pools_ret
-        self.conn.get_identity_pool_roles.side_effect = (
-            self._get_identity_pool_roles_side_effect
-        )
+        self.conn.get_identity_pool_roles.side_effect = self._get_identity_pool_roles_side_effect
         result = boto_cognitoidentity.get_identity_pool_roles(
             IdentityPoolName=first_pool_name, **conn_parameters
         )
         id_pool_roles = result.get("identity_pool_roles")
-        self.assertIsNot(id_pool_roles, None)
-        self.assertEqual(
-            result.get("error", "key_should_not_be_there"), "key_should_not_be_there"
-        )
-        self.assertEqual(len(id_pool_roles), 2)
-        self.assertEqual(id_pool_roles[0], first_pool_role_ret)
-        self.assertEqual(id_pool_roles[1], third_pool_role_ret)
+        assert id_pool_roles is not None
+        assert result.get("error", "key_should_not_be_there") == "key_should_not_be_there"
+        assert len(id_pool_roles) == 2
+        assert id_pool_roles[0] == first_pool_role_ret
+        assert id_pool_roles[1] == third_pool_role_ret
 
     def test_that_when_get_identity_pool_roles_with_no_matching_pool_names_the_get_identity_pool_roles_method_returns_none(
         self,
@@ -379,11 +367,9 @@ class BotoCognitoIdentityTestCase(
             IdentityPoolName="no_such_pool_name", **conn_parameters
         )
         mock_calls = self.conn.mock_calls
-        self.assertIs(result.get("identity_pool_roles", "key_should_be_there"), None)
-        self.assertEqual(len(mock_calls), 1)
-        self.assertEqual(
-            result.get("error", "key_should_not_be_there"), "key_should_not_be_there"
-        )
+        assert result.get("identity_pool_roles", "key_should_be_there") is None
+        assert len(mock_calls) == 1
+        assert result.get("error", "key_should_not_be_there") == "key_should_not_be_there"
 
     def test_that_when_get_identity_pool_roles_and_error_thrown_due_to_invalid_pool_id_the_get_identity_pool_roles_method_returns_error(
         self,
@@ -399,11 +385,10 @@ class BotoCognitoIdentityTestCase(
             IdentityPoolName="", IdentityPoolId="no_such_pool_id", **conn_parameters
         )
         mock_calls = self.conn.mock_calls
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("get_identity_pool_roles"),
+        assert result.get("error", {}).get("message") == error_message.format(
+            "get_identity_pool_roles"
         )
-        self.assertEqual(len(mock_calls), 1)
+        assert len(mock_calls) == 1
 
     def test_that_when_set_identity_pool_roles_with_invalid_pool_id_the_set_identity_pool_roles_method_returns_set_false_and_error(
         self,
@@ -418,12 +403,11 @@ class BotoCognitoIdentityTestCase(
             IdentityPoolId="no_such_pool_id", **conn_parameters
         )
         mock_calls = self.conn.mock_calls
-        self.assertIs(result.get("set"), False)
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("set_identity_pool_roles"),
+        assert result.get("set") is False
+        assert result.get("error", {}).get("message") == error_message.format(
+            "set_identity_pool_roles"
         )
-        self.assertEqual(len(mock_calls), 1)
+        assert len(mock_calls) == 1
 
     def test_that_when_set_identity_pool_roles_with_no_roles_specified_the_set_identity_pool_roles_method_unset_the_roles(
         self,
@@ -436,9 +420,9 @@ class BotoCognitoIdentityTestCase(
             IdentityPoolId="some_id", **conn_parameters
         )
         mock_calls = self.conn.mock_calls
-        self.assertTrue(result.get("set"))
-        self.assertEqual(len(mock_calls), 1)
-        self.assertEqual(mock_calls[0][2].get("Roles"), {})
+        assert result.get("set")
+        assert len(mock_calls) == 1
+        assert mock_calls[0][2].get("Roles") == {}
 
     def test_that_when_set_identity_pool_roles_with_only_auth_role_specified_the_set_identity_pool_roles_method_only_set_the_auth_role(
         self,
@@ -450,22 +434,16 @@ class BotoCognitoIdentityTestCase(
         self.conn.set_identity_pool_roles.return_value = None
         with patch.dict(
             boto_cognitoidentity.__salt__,
-            {
-                "boto_iam.describe_role": MagicMock(
-                    return_value={"arn": "my_auth_role_arn"}
-                )
-            },
+            {"boto_iam.describe_role": MagicMock(return_value={"arn": "my_auth_role_arn"})},
         ):
             expected_roles = dict(authenticated="my_auth_role_arn")
             result = boto_cognitoidentity.set_identity_pool_roles(
-                IdentityPoolId="some_id",
-                AuthenticatedRole="my_auth_role",
-                **conn_parameters
+                IdentityPoolId="some_id", AuthenticatedRole="my_auth_role", **conn_parameters
             )
             mock_calls = self.conn.mock_calls
-            self.assertTrue(result.get("set"))
-            self.assertEqual(len(mock_calls), 1)
-            self.assertEqual(mock_calls[0][2].get("Roles"), expected_roles)
+            assert result.get("set")
+            assert len(mock_calls) == 1
+            assert mock_calls[0][2].get("Roles") == expected_roles
 
     def test_that_when_set_identity_pool_roles_with_only_unauth_role_specified_the_set_identity_pool_roles_method_only_set_the_unauth_role(
         self,
@@ -477,22 +455,16 @@ class BotoCognitoIdentityTestCase(
         self.conn.set_identity_pool_roles.return_value = None
         with patch.dict(
             boto_cognitoidentity.__salt__,
-            {
-                "boto_iam.describe_role": MagicMock(
-                    return_value={"arn": "my_unauth_role_arn"}
-                )
-            },
+            {"boto_iam.describe_role": MagicMock(return_value={"arn": "my_unauth_role_arn"})},
         ):
             expected_roles = dict(unauthenticated="my_unauth_role_arn")
             result = boto_cognitoidentity.set_identity_pool_roles(
-                IdentityPoolId="some_id",
-                UnauthenticatedRole="my_unauth_role",
-                **conn_parameters
+                IdentityPoolId="some_id", UnauthenticatedRole="my_unauth_role", **conn_parameters
             )
             mock_calls = self.conn.mock_calls
-            self.assertTrue(result.get("set"))
-            self.assertEqual(len(mock_calls), 1)
-            self.assertEqual(mock_calls[0][2].get("Roles"), expected_roles)
+            assert result.get("set")
+            assert len(mock_calls) == 1
+            assert mock_calls[0][2].get("Roles") == expected_roles
 
     def test_that_when_set_identity_pool_roles_with_both_roles_specified_the_set_identity_pool_role_method_set_both_roles(
         self,
@@ -503,11 +475,7 @@ class BotoCognitoIdentityTestCase(
         self.conn.set_identity_pool_roles.return_value = None
         with patch.dict(
             boto_cognitoidentity.__salt__,
-            {
-                "boto_iam.describe_role": MagicMock(
-                    return_value={"arn": "my_unauth_role_arn"}
-                )
-            },
+            {"boto_iam.describe_role": MagicMock(return_value={"arn": "my_unauth_role_arn"})},
         ):
             expected_roles = dict(
                 authenticated="arn:aws:iam:my_auth_role",
@@ -520,9 +488,9 @@ class BotoCognitoIdentityTestCase(
                 **conn_parameters
             )
             mock_calls = self.conn.mock_calls
-            self.assertTrue(result.get("set"))
-            self.assertEqual(len(mock_calls), 1)
-            self.assertEqual(mock_calls[0][2].get("Roles"), expected_roles)
+            assert result.get("set")
+            assert len(mock_calls) == 1
+            assert mock_calls[0][2].get("Roles") == expected_roles
 
     def test_that_when_set_identity_pool_roles_given_invalid_auth_role_the_set_identity_pool_method_returns_set_false_and_error(
         self,
@@ -535,14 +503,12 @@ class BotoCognitoIdentityTestCase(
             {"boto_iam.describe_role": MagicMock(return_value=False)},
         ):
             result = boto_cognitoidentity.set_identity_pool_roles(
-                IdentityPoolId="some_id",
-                AuthenticatedRole="no_such_auth_role",
-                **conn_parameters
+                IdentityPoolId="some_id", AuthenticatedRole="no_such_auth_role", **conn_parameters
             )
             mock_calls = self.conn.mock_calls
-            self.assertIs(result.get("set"), False)
-            self.assertIn("no_such_auth_role", result.get("error", ""))
-            self.assertEqual(len(mock_calls), 0)
+            assert result.get("set") is False
+            assert "no_such_auth_role" in result.get("error", "")
+            assert len(mock_calls) == 0
 
     def test_that_when_set_identity_pool_roles_given_invalid_unauth_role_the_set_identity_pool_method_returns_set_false_and_error(
         self,
@@ -561,9 +527,9 @@ class BotoCognitoIdentityTestCase(
                 **conn_parameters
             )
             mock_calls = self.conn.mock_calls
-            self.assertIs(result.get("set"), False)
-            self.assertIn("no_such_unauth_role", result.get("error", ""))
-            self.assertEqual(len(mock_calls), 0)
+            assert result.get("set") is False
+            assert "no_such_unauth_role" in result.get("error", "")
+            assert len(mock_calls) == 0
 
     def test_that_when_update_identity_pool_given_invalid_pool_id_the_update_identity_pool_method_returns_updated_false_and_error(
         self,
@@ -577,10 +543,9 @@ class BotoCognitoIdentityTestCase(
         result = boto_cognitoidentity.update_identity_pool(
             IdentityPoolId="no_such_pool_id", **conn_parameters
         )
-        self.assertIs(result.get("updated"), False)
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("error on describe identity pool with pool id"),
+        assert result.get("updated") is False
+        assert result.get("error", {}).get("message") == error_message.format(
+            "error on describe identity pool with pool id"
         )
 
     def test_that_when_update_identity_pool_given_only_valid_pool_id_the_update_identity_pool_method_returns_udpated_identity(
@@ -597,8 +562,8 @@ class BotoCognitoIdentityTestCase(
         result = boto_cognitoidentity.update_identity_pool(
             IdentityPoolId=second_pool_id, **conn_parameters
         )
-        self.assertTrue(result.get("updated"))
-        self.assertEqual(result.get("identity_pool"), second_pool_ret)
+        assert result.get("updated")
+        assert result.get("identity_pool") == second_pool_ret
         self.conn.update_identity_pool.assert_called_with(**expected_params)
 
     def test_that_when_update_identity_pool_given_valid_pool_id_and_pool_name_the_update_identity_pool_method_returns_updated_identity_pool(
@@ -617,8 +582,8 @@ class BotoCognitoIdentityTestCase(
             IdentityPoolName=second_pool_name_updated,
             **conn_parameters
         )
-        self.assertTrue(result.get("updated"))
-        self.assertEqual(result.get("identity_pool"), second_pool_updated_ret)
+        assert result.get("updated")
+        assert result.get("identity_pool") == second_pool_updated_ret
         self.conn.update_identity_pool.assert_called_with(**expected_params)
 
     def test_that_when_update_identity_pool_given_empty_dictionary_for_supported_login_providers_the_update_identity_pool_method_is_called_with_proper_request_params(
@@ -638,8 +603,8 @@ class BotoCognitoIdentityTestCase(
         result = boto_cognitoidentity.update_identity_pool(
             IdentityPoolId=first_pool_id, SupportedLoginProviders={}, **conn_parameters
         )
-        self.assertTrue(result.get("updated"))
-        self.assertEqual(result.get("identity_pool"), first_pool_updated_ret)
+        assert result.get("updated")
+        assert result.get("identity_pool") == first_pool_updated_ret
         self.conn.update_identity_pool.assert_called_with(**expected_params)
 
     def test_that_when_update_identity_pool_given_empty_list_for_openid_connect_provider_arns_the_update_identity_pool_method_is_called_with_proper_request_params(
@@ -657,12 +622,10 @@ class BotoCognitoIdentityTestCase(
         expected_params.pop("DeveloperProviderName")
         expected_params["OpenIdConnectProviderARNs"] = []
         result = boto_cognitoidentity.update_identity_pool(
-            IdentityPoolId=first_pool_id,
-            OpenIdConnectProviderARNs=[],
-            **conn_parameters
+            IdentityPoolId=first_pool_id, OpenIdConnectProviderARNs=[], **conn_parameters
         )
-        self.assertTrue(result.get("updated"))
-        self.assertEqual(result.get("identity_pool"), first_pool_updated_ret)
+        assert result.get("updated")
+        assert result.get("identity_pool") == first_pool_updated_ret
         self.conn.update_identity_pool.assert_called_with(**expected_params)
 
     def test_that_when_update_identity_pool_given_developer_provider_name_when_developer_provider_name_was_set_previously_the_udpate_identity_pool_method_is_called_without_developer_provider_name_param(
@@ -683,8 +646,8 @@ class BotoCognitoIdentityTestCase(
             DeveloperProviderName="this should not change",
             **conn_parameters
         )
-        self.assertTrue(result.get("updated"))
-        self.assertEqual(result.get("identity_pool"), first_pool_ret)
+        assert result.get("updated")
+        assert result.get("identity_pool") == first_pool_ret
         self.conn.update_identity_pool.assert_called_with(**expected_params)
 
     def test_that_when_update_identity_pool_given_developer_provider_name_is_included_in_the_params_when_associated_for_the_first_time(
@@ -704,8 +667,8 @@ class BotoCognitoIdentityTestCase(
             DeveloperProviderName="added_developer_provider",
             **conn_parameters
         )
-        self.assertTrue(result.get("updated"))
-        self.assertEqual(result.get("identity_pool"), second_pool_updated_ret)
+        assert result.get("updated")
+        assert result.get("identity_pool") == second_pool_updated_ret
         self.conn.update_identity_pool.assert_called_with(**expected_params)
 
     def test_that_the_update_identity_pool_method_handles_exception_from_boto3(self):
@@ -723,8 +686,7 @@ class BotoCognitoIdentityTestCase(
             DeveloperProviderName="added_developer_provider",
             **conn_parameters
         )
-        self.assertIs(result.get("updated"), False)
-        self.assertEqual(
-            result.get("error", {}).get("message"),
-            error_message.format("update_identity_pool"),
+        assert result.get("updated") is False
+        assert result.get("error", {}).get("message") == error_message.format(
+            "update_identity_pool"
         )

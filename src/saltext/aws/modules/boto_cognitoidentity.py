@@ -74,8 +74,6 @@ Connection module for Amazon CognitoIdentity
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 
 import salt.utils.compat
@@ -206,9 +204,7 @@ def create_identity_pool(
                              DeveloperProviderName=custom_developer_provider
 
     """
-    SupportedLoginProviders = (
-        dict() if SupportedLoginProviders is None else SupportedLoginProviders
-    )
+    SupportedLoginProviders = dict() if SupportedLoginProviders is None else SupportedLoginProviders
     OpenIdConnectProviderARNs = (
         list() if OpenIdConnectProviderARNs is None else OpenIdConnectProviderARNs
     )
@@ -374,9 +370,7 @@ def set_identity_pool_roles(
             if role_arn is None:
                 return {
                     "set": False,
-                    "error": "invalid UnauthenticatedRole {}".format(
-                        UnauthenticatedRole
-                    ),
+                    "error": "invalid UnauthenticatedRole {}".format(UnauthenticatedRole),
                 }
             UnauthenticatedRole = role_arn
 
@@ -439,17 +433,11 @@ def update_identity_pool(
     id_pool = response.get("identity_pools")[0]
     request_params = id_pool.copy()
     # IdentityPoolName and AllowUnauthenticatedIdentities are required for the call to update_identity_pool
-    if IdentityPoolName is not None and IdentityPoolName != request_params.get(
-        "IdentityPoolName"
-    ):
+    if IdentityPoolName is not None and IdentityPoolName != request_params.get("IdentityPoolName"):
         request_params["IdentityPoolName"] = IdentityPoolName
 
-    if AllowUnauthenticatedIdentities != request_params.get(
-        "AllowUnauthenticatedIdentities"
-    ):
-        request_params[
-            "AllowUnauthenticatedIdentities"
-        ] = AllowUnauthenticatedIdentities
+    if AllowUnauthenticatedIdentities != request_params.get("AllowUnauthenticatedIdentities"):
+        request_params["AllowUnauthenticatedIdentities"] = AllowUnauthenticatedIdentities
 
     current_val = request_params.pop("SupportedLoginProviders", None)
     if SupportedLoginProviders is not None and SupportedLoginProviders != current_val:
@@ -461,10 +449,7 @@ def update_identity_pool(
         request_params["DeveloperProviderName"] = DeveloperProviderName
 
     current_val = request_params.pop("OpenIdConnectProviderARNs", None)
-    if (
-        OpenIdConnectProviderARNs is not None
-        and OpenIdConnectProviderARNs != current_val
-    ):
+    if OpenIdConnectProviderARNs is not None and OpenIdConnectProviderARNs != current_val:
         request_params["OpenIdConnectProviderARNs"] = OpenIdConnectProviderARNs
 
     conn = _get_conn(**conn_params)

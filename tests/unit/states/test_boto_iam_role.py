@@ -1,16 +1,11 @@
-# -*- coding: utf-8 -*-
 """
     :codeauthor: Jayesh Kariya <jayeshk@saltstack.com>
 """
-# Import Python libs
-from __future__ import absolute_import, print_function, unicode_literals
-
-# Import Salt Libs
 import salt.states.boto_iam_role as boto_iam_role
 
-# Import Salt Testing Libs
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
 from tests.support.unit import TestCase
 
 
@@ -71,9 +66,7 @@ class BotoIAMRoleTestCase(TestCase, LoaderModuleMockMixin):
             "path": "/",
             "arn": "arn:aws:iam::12345:role/myfakerole",
         }
-        mock_desc = MagicMock(
-            side_effect=[False, _desc_role, _desc_role, _desc_role2, _desc_role]
-        )
+        mock_desc = MagicMock(side_effect=[False, _desc_role, _desc_role, _desc_role2, _desc_role])
         _build_policy = {
             "Version": "2008-10-17",
             "Statement": [
@@ -105,30 +98,28 @@ class BotoIAMRoleTestCase(TestCase, LoaderModuleMockMixin):
             },
         ):
             with patch.dict(boto_iam_role.__opts__, {"test": False}):
-                comt = " Failed to create {0} IAM role.".format(name)
+                comt = " Failed to create {} IAM role.".format(name)
                 ret.update({"comment": comt})
-                self.assertDictEqual(boto_iam_role.present(name), ret)
+                assert boto_iam_role.present(name) == ret
 
-                comt = (
-                    " myrole role present. " "Failed to create myrole instance profile."
-                )
+                comt = " myrole role present. " "Failed to create myrole instance profile."
                 ret.update({"comment": comt})
-                self.assertDictEqual(boto_iam_role.present(name), ret)
+                assert boto_iam_role.present(name) == ret
 
                 comt = (
                     " myrole role present.  Failed to associate myrole"
                     " instance profile with myrole role."
                 )
                 ret.update({"comment": comt})
-                self.assertDictEqual(boto_iam_role.present(name), ret)
+                assert boto_iam_role.present(name) == ret
 
                 comt = " myrole role present. Failed to update assume role" " policy."
                 ret.update({"comment": comt})
 
-                self.assertDictEqual(boto_iam_role.present(name), ret)
+                assert boto_iam_role.present(name) == ret
                 comt = " myrole role present.    "
                 ret.update({"comment": comt, "result": True})
-                self.assertDictEqual(boto_iam_role.present(name), ret)
+                assert boto_iam_role.present(name) == ret
 
     # 'absent' function tests: 1
 
@@ -182,7 +173,7 @@ class BotoIAMRoleTestCase(TestCase, LoaderModuleMockMixin):
                         },
                     }
                 )
-                self.assertDictEqual(boto_iam_role.absent(name), ret)
+                assert boto_iam_role.absent(name) == ret
 
                 comt = (
                     " No policies in role myrole."
@@ -190,7 +181,7 @@ class BotoIAMRoleTestCase(TestCase, LoaderModuleMockMixin):
                     "myrole instance profile from myrole role."
                 )
                 ret.update({"comment": comt, "changes": {}})
-                self.assertDictEqual(boto_iam_role.absent(name), ret)
+                assert boto_iam_role.absent(name) == ret
 
                 comt = (
                     " No policies in role myrole."
@@ -198,7 +189,7 @@ class BotoIAMRoleTestCase(TestCase, LoaderModuleMockMixin):
                     " Failed to delete myrole instance profile."
                 )
                 ret.update({"comment": comt, "changes": {}})
-                self.assertDictEqual(boto_iam_role.absent(name), ret)
+                assert boto_iam_role.absent(name) == ret
 
                 comt = (
                     " No policies in role myrole."
@@ -206,4 +197,4 @@ class BotoIAMRoleTestCase(TestCase, LoaderModuleMockMixin):
                     "does not exist. Failed to delete myrole iam role."
                 )
                 ret.update({"comment": comt, "changes": {}})
-                self.assertDictEqual(boto_iam_role.absent(name), ret)
+                assert boto_iam_role.absent(name) == ret

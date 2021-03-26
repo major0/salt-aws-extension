@@ -72,8 +72,6 @@ Connection module for Amazon Elasticsearch Service
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 
 import salt.utils.compat
@@ -208,11 +206,7 @@ def describe(DomainName, region=None, key=None, keyid=None, profile=None):
                 "SnapshotOptions",
                 "AdvancedOptions",
             )
-            return {
-                "domain": {
-                    k: domain.get(k, {}).get("Options") for k in keys if k in domain
-                }
-            }
+            return {"domain": {k: domain.get(k, {}).get("Options") for k in keys if k in domain}}
         else:
             return {"domain": None}
     except ClientError as e:
@@ -371,9 +365,7 @@ def update(
         call_args["AccessPolicies"] = salt.utils.json.dumps(call_args["AccessPolicies"])
     try:
         conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-        domain = conn.update_elasticsearch_domain_config(
-            DomainName=DomainName, **call_args
-        )
+        domain = conn.update_elasticsearch_domain_config(DomainName=DomainName, **call_args)
         if not domain or "DomainConfig" not in domain:
             log.warning("Domain was not updated")
             return {"updated": False}
@@ -382,9 +374,7 @@ def update(
         return {"updated": False, "error": __utils__["boto3.get_error"](e)}
 
 
-def add_tags(
-    DomainName=None, ARN=None, region=None, key=None, keyid=None, profile=None, **kwargs
-):
+def add_tags(DomainName=None, ARN=None, region=None, key=None, keyid=None, profile=None, **kwargs):
     """
     Add tags to a domain
 
@@ -423,9 +413,7 @@ def add_tags(
                 return {"tagged": False}
             ARN = domaindata.get("domain", {}).get("ARN")
         elif DomainName is not None:
-            raise SaltInvocationError(
-                "One (but not both) of ARN or " "domain must be specified."
-            )
+            raise SaltInvocationError("One (but not both) of ARN or " "domain must be specified.")
         conn.add_tags(ARN=ARN, TagList=tagslist)
         return {"tagged": True}
     except ClientError as e:
@@ -468,18 +456,14 @@ def remove_tags(
                 return {"tagged": False}
             ARN = domaindata.get("domain", {}).get("ARN")
         elif DomainName is not None:
-            raise SaltInvocationError(
-                "One (but not both) of ARN or " "domain must be specified."
-            )
+            raise SaltInvocationError("One (but not both) of ARN or " "domain must be specified.")
         conn.remove_tags(ARN=domaindata.get("domain", {}).get("ARN"), TagKeys=TagKeys)
         return {"tagged": True}
     except ClientError as e:
         return {"tagged": False, "error": __utils__["boto3.get_error"](e)}
 
 
-def list_tags(
-    DomainName=None, ARN=None, region=None, key=None, keyid=None, profile=None
-):
+def list_tags(DomainName=None, ARN=None, region=None, key=None, keyid=None, profile=None):
     """
     List tags of a trail
 
@@ -515,9 +499,7 @@ def list_tags(
                 return {"tagged": False}
             ARN = domaindata.get("domain", {}).get("ARN")
         elif DomainName is not None:
-            raise SaltInvocationError(
-                "One (but not both) of ARN or " "domain must be specified."
-            )
+            raise SaltInvocationError("One (but not both) of ARN or " "domain must be specified.")
         ret = conn.list_tags(ARN=ARN)
         log.warning(ret)
         tlist = ret.get("TagList", [])

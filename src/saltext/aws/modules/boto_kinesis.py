@@ -43,8 +43,6 @@ Connection module for Amazon Kinesis
 """
 # keep lint from choking on _get_conn
 # pylint: disable=E0602
-
-
 import logging
 import random
 import time
@@ -116,17 +114,13 @@ def _get_full_stream(stream_name, region=None, key=None, keyid=None, profile=Non
             ExclusiveStartShardId=stream["StreamDescription"]["Shards"][-1]["ShardId"],
         )
         stream = stream["result"]
-        full_stream["StreamDescription"]["Shards"] += stream["StreamDescription"][
-            "Shards"
-        ]
+        full_stream["StreamDescription"]["Shards"] += stream["StreamDescription"]["Shards"]
 
     r["result"] = full_stream
     return r
 
 
-def get_stream_when_active(
-    stream_name, region=None, key=None, keyid=None, profile=None
-):
+def get_stream_when_active(stream_name, region=None, key=None, keyid=None, profile=None):
     """
     Get complete stream info from AWS, returning only when the stream is in the ACTIVE state.
     Continues to retry when stream is updating or creating.
@@ -183,9 +177,7 @@ def exists(stream_name, region=None, key=None, keyid=None, profile=None):
     return r
 
 
-def create_stream(
-    stream_name, num_shards, region=None, key=None, keyid=None, profile=None
-):
+def create_stream(stream_name, num_shards, region=None, key=None, keyid=None, profile=None):
     """
     Create a stream with name stream_name and initial number of shards num_shards.
 
@@ -196,9 +188,7 @@ def create_stream(
         salt myminion boto_kinesis.create_stream my_stream N region=us-east-1
     """
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
-    r = _execute_with_retries(
-        conn, "create_stream", ShardCount=num_shards, StreamName=stream_name
-    )
+    r = _execute_with_retries(conn, "create_stream", ShardCount=num_shards, StreamName=stream_name)
     if "error" not in r:
         r["result"] = True
     return r
@@ -344,9 +334,7 @@ def get_info_for_reshard(stream_details):
         shard["HashKeyRange"]["StartingHashKey"] = long_int(
             shard["HashKeyRange"]["StartingHashKey"]
         )
-        shard["HashKeyRange"]["EndingHashKey"] = long_int(
-            shard["HashKeyRange"]["EndingHashKey"]
-        )
+        shard["HashKeyRange"]["EndingHashKey"] = long_int(shard["HashKeyRange"]["EndingHashKey"])
         if shard["HashKeyRange"]["StartingHashKey"] < min_hash_key:
             min_hash_key = shard["HashKeyRange"]["StartingHashKey"]
         if shard["HashKeyRange"]["EndingHashKey"] > max_hash_key:
@@ -611,10 +599,7 @@ def _execute_with_retries(conn, function, **kwargs):
             return r
         except botocore.exceptions.ClientError as e:
             error_code = e.response["Error"]["Code"]
-            if (
-                "LimitExceededException" in error_code
-                or "ResourceInUseException" in error_code
-            ):
+            if "LimitExceededException" in error_code or "ResourceInUseException" in error_code:
                 # could be rate limited by AWS or another command is blocking,
                 # retry with exponential backoff
                 log.debug("Retrying due to AWS exception", exc_info=True)

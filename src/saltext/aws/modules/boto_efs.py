@@ -46,12 +46,8 @@ Connection module for Amazon EFS
 
 :depends: boto3
 """
-
-
-# Import python libs
 import logging
 
-# Import salt libs
 import salt.utils.versions
 
 try:
@@ -236,9 +232,7 @@ def create_mount_target(
     )
 
 
-def create_tags(
-    filesystemid, tags, keyid=None, key=None, profile=None, region=None, **kwargs
-):
+def create_tags(filesystemid, tags, keyid=None, key=None, profile=None, region=None, **kwargs):
     """
     Creates or overwrites tags associated with a file system.
     Each tag is a key-value pair. If a tag key specified in the request
@@ -267,9 +261,7 @@ def create_tags(
     client.create_tags(FileSystemId=filesystemid, Tags=new_tags)
 
 
-def delete_file_system(
-    filesystemid, keyid=None, key=None, profile=None, region=None, **kwargs
-):
+def delete_file_system(filesystemid, keyid=None, key=None, profile=None, region=None, **kwargs):
     """
     Deletes a file system, permanently severing access to its contents.
     Upon return, the file system no longer exists and you can't access
@@ -292,9 +284,7 @@ def delete_file_system(
     client.delete_file_system(FileSystemId=filesystemid)
 
 
-def delete_mount_target(
-    mounttargetid, keyid=None, key=None, profile=None, region=None, **kwargs
-):
+def delete_mount_target(mounttargetid, keyid=None, key=None, profile=None, region=None, **kwargs):
     """
     Deletes the specified mount target.
 
@@ -323,9 +313,7 @@ def delete_mount_target(
     client.delete_mount_target(MountTargetId=mounttargetid)
 
 
-def delete_tags(
-    filesystemid, tags, keyid=None, key=None, profile=None, region=None, **kwargs
-):
+def delete_tags(filesystemid, tags, keyid=None, key=None, profile=None, region=None, **kwargs):
     """
     Deletes the specified tags from a file system.
 
@@ -406,13 +394,7 @@ def get_file_systems(
 
 
 def get_mount_targets(
-    filesystemid=None,
-    mounttargetid=None,
-    keyid=None,
-    key=None,
-    profile=None,
-    region=None,
-    **kwargs
+    filesystemid=None, mounttargetid=None, keyid=None, key=None, profile=None, region=None, **kwargs
 ):
     """
     Get all the EFS mount point properties for a specific filesystemid or
@@ -476,22 +458,14 @@ def get_tags(filesystemid, keyid=None, key=None, profile=None, region=None, **kw
     result = response["Tags"]
 
     while "NextMarker" in response:
-        response = client.describe_tags(
-            FileSystemId=filesystemid, Marker=response["NextMarker"]
-        )
+        response = client.describe_tags(FileSystemId=filesystemid, Marker=response["NextMarker"])
         result.extend(response["Tags"])
 
     return result
 
 
 def set_security_groups(
-    mounttargetid,
-    securitygroup,
-    keyid=None,
-    key=None,
-    profile=None,
-    region=None,
-    **kwargs
+    mounttargetid, securitygroup, keyid=None, key=None, profile=None, region=None, **kwargs
 ):
     """
     Modifies the set of security groups in effect for a mount target

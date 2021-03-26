@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Manage DynamoDB Tables
 ======================
@@ -154,9 +153,6 @@ Setting the alarms in a pillar:
                   threshold_percent: 0.90
                   period: 900
 """
-# Import Python libs
-from __future__ import absolute_import, print_function, unicode_literals
-
 import copy
 import datetime
 import logging
@@ -164,8 +160,6 @@ import math
 import sys
 
 import salt.utils.dictupdate as dictupdate
-
-# Import salt libs
 from salt.ext import six
 
 logging.basicConfig(
@@ -275,8 +269,7 @@ def present(
     ret = {"name": name, "result": True, "comment": "", "changes": {}}
     if table_name:
         ret["warnings"] = [
-            "boto_dynamodb.present: `table_name` is deprecated."
-            " Please use `name` instead."
+            "boto_dynamodb.present: `table_name` is deprecated." " Please use `name` instead."
         ]
         ret["name"] = table_name
         name = table_name
@@ -290,7 +283,7 @@ def present(
     if not table_exists:
         if __opts__["test"]:
             ret["result"] = None
-            ret["comment"] = "DynamoDB table {0} would be created.".format(name)
+            ret["comment"] = "DynamoDB table {} would be created.".format(name)
             return ret
         else:
             is_created = __salt__["boto_dynamodb.create_table"](
@@ -310,11 +303,11 @@ def present(
             )
             if not is_created:
                 ret["result"] = False
-                ret["comment"] = "Failed to create table {0}".format(name)
+                ret["comment"] = "Failed to create table {}".format(name)
                 _add_changes(ret, changes_old, changes_new)
                 return ret
 
-            comments.append("DynamoDB table {0} was successfully created".format(name))
+            comments.append("DynamoDB table {} was successfully created".format(name))
             changes_new["table"] = name
             changes_new["read_capacity_units"] = read_capacity_units
             changes_new["write_capacity_units"] = write_capacity_units
@@ -325,13 +318,11 @@ def present(
             changes_new["local_indexes"] = local_indexes
             changes_new["global_indexes"] = global_indexes
     else:
-        comments.append("DynamoDB table {0} exists".format(name))
+        comments.append("DynamoDB table {} exists".format(name))
 
     # Ensure DynamoDB table provisioned throughput matches
     description = __salt__["boto_dynamodb.describe"](name, region, key, keyid, profile)
-    provisioned_throughput = description.get("Table", {}).get(
-        "ProvisionedThroughput", {}
-    )
+    provisioned_throughput = description.get("Table", {}).get("ProvisionedThroughput", {})
     current_write_capacity_units = provisioned_throughput.get("WriteCapacityUnits")
     current_read_capacity_units = provisioned_throughput.get("ReadCapacityUnits")
     throughput_matches = (
@@ -341,7 +332,7 @@ def present(
     if not throughput_matches:
         if __opts__["test"]:
             ret["result"] = None
-            comments.append("DynamoDB table {0} is set to be updated.".format(name))
+            comments.append("DynamoDB table {} is set to be updated.".format(name))
         else:
             is_updated = __salt__["boto_dynamodb.update"](
                 name,
@@ -356,17 +347,17 @@ def present(
             )
             if not is_updated:
                 ret["result"] = False
-                ret["comment"] = "Failed to update table {0}".format(name)
+                ret["comment"] = "Failed to update table {}".format(name)
                 _add_changes(ret, changes_old, changes_new)
                 return ret
 
-            comments.append("DynamoDB table {0} was successfully updated".format(name))
+            comments.append("DynamoDB table {} was successfully updated".format(name))
             changes_old["read_capacity_units"] = (current_read_capacity_units,)
             changes_old["write_capacity_units"] = (current_write_capacity_units,)
             changes_new["read_capacity_units"] = (read_capacity_units,)
             changes_new["write_capacity_units"] = (write_capacity_units,)
     else:
-        comments.append("DynamoDB table {0} throughput matches".format(name))
+        comments.append("DynamoDB table {} throughput matches".format(name))
 
     provisioned_indexes = description.get("Table", {}).get("GlobalSecondaryIndexes", [])
 
@@ -411,9 +402,7 @@ def present(
             return ret
 
     # Ensure backup datapipeline is present
-    datapipeline_configs = copy.deepcopy(
-        __salt__["pillar.get"](backup_configs_from_pillars, [])
-    )
+    datapipeline_configs = copy.deepcopy(__salt__["pillar.get"](backup_configs_from_pillars, []))
     for config in datapipeline_configs:
         datapipeline_ret = _ensure_backup_datapipeline_present(
             name=name,
@@ -428,7 +417,7 @@ def present(
             ret["result"] = datapipeline_ret["result"]
             comments.append(datapipeline_ret["comment"])
             if datapipeline_ret.get("changes"):
-                ret["changes"]["backup_datapipeline_{0}".format(config["name"])] = (
+                ret["changes"]["backup_datapipeline_{}".format(config["name"])] = (
                     datapipeline_ret.get("changes"),
                 )
         else:
@@ -463,9 +452,7 @@ def _global_indexes_present(
     """Handles global secondary index for the table present state."""
     ret = {"result": True}
     if provisioned_indexes:
-        provisioned_gsi_config = dict(
-            (index["IndexName"], index) for index in provisioned_indexes
-        )
+        provisioned_gsi_config = {index["IndexName"]: index for index in provisioned_indexes}
     else:
         provisioned_gsi_config = {}
     provisioned_index_names = set(provisioned_gsi_config.keys())
@@ -484,7 +471,7 @@ def _global_indexes_present(
                     index_name = next(iter(entry.values()))
             if not index_name:
                 ret["result"] = False
-                ret["comment"] = "Index name not found for table {0}".format(name)
+                ret["comment"] = "Index name not found for table {}".format(name)
                 return ret
             gsi_config[index_name] = index
 
@@ -497,14 +484,14 @@ def _global_indexes_present(
     if index_names_to_be_deleted:
         ret["result"] = False
         ret["comment"] = (
-            "Deletion of GSIs ({0}) is not supported! Please do this "
+            "Deletion of GSIs ({}) is not supported! Please do this "
             "manually in the AWS console.".format(", ".join(index_names_to_be_deleted))
         )
         return ret
     elif len(new_index_names) > 1:
         ret["result"] = False
         ret["comment"] = (
-            "Creation of multiple GSIs ({0}) is not supported due to API "
+            "Creation of multiple GSIs ({}) is not supported due to API "
             "limitations. Please create them one at a time.".format(new_index_names)
         )
         return ret
@@ -580,16 +567,12 @@ def _add_global_secondary_index(
     """Updates ret iff there was a failure or in test mode."""
     if __opts__["test"]:
         ret["result"] = None
-        ret["comment"] = "Dynamo table {0} will have a GSI added: {1}".format(
-            name, index_name
-        )
+        ret["comment"] = "Dynamo table {} will have a GSI added: {}".format(name, index_name)
         return
     changes_new.setdefault("global_indexes", {})
     success = __salt__["boto_dynamodb.create_global_secondary_index"](
         name,
-        __salt__["boto_dynamodb.extract_index"](
-            gsi_config[index_name], global_index=True
-        ),
+        __salt__["boto_dynamodb.extract_index"](gsi_config[index_name], global_index=True),
         region=region,
         key=key,
         keyid=keyid,
@@ -597,11 +580,11 @@ def _add_global_secondary_index(
     )
 
     if success:
-        comments.append("Created GSI {0}".format(index_name))
+        comments.append("Created GSI {}".format(index_name))
         changes_new["global_indexes"][index_name] = gsi_config[index_name]
     else:
         ret["result"] = False
-        ret["comment"] = "Failed to create GSI {0}".format(index_name)
+        ret["comment"] = "Failed to create GSI {}".format(index_name)
 
 
 def _update_global_secondary_indexes(
@@ -625,36 +608,35 @@ def _update_global_secondary_indexes(
         )
     except GsiNotUpdatableError as e:
         ret["result"] = False
-        ret["comment"] = six.text_type(e)
+        ret["comment"] = str(e)
         return
 
     if index_updates:
         if __opts__["test"]:
             ret["result"] = None
-            ret["comment"] = "Dynamo table {0} will have GSIs updated: {1}".format(
+            ret["comment"] = "Dynamo table {} will have GSIs updated: {}".format(
                 name, ", ".join(index_updates.keys())
             )
             return
         changes_old.setdefault("global_indexes", {})
         changes_new.setdefault("global_indexes", {})
         success = __salt__["boto_dynamodb.update_global_secondary_index"](
-            name, index_updates, region=region, key=key, keyid=keyid, profile=profile,
+            name,
+            index_updates,
+            region=region,
+            key=key,
+            keyid=keyid,
+            profile=profile,
         )
 
         if success:
-            comments.append(
-                "Updated GSIs with new throughputs {0}".format(index_updates)
-            )
+            comments.append("Updated GSIs with new throughputs {}".format(index_updates))
             for index_name in index_updates:
-                changes_old["global_indexes"][index_name] = provisioned_throughputs[
-                    index_name
-                ]
+                changes_old["global_indexes"][index_name] = provisioned_throughputs[index_name]
                 changes_new["global_indexes"][index_name] = index_updates[index_name]
         else:
             ret["result"] = False
-            ret["comment"] = "Failed to update GSI throughputs {0}".format(
-                index_updates
-            )
+            ret["comment"] = "Failed to update GSI throughputs {}".format(index_updates)
 
 
 def _determine_gsi_updates(existing_index_names, provisioned_gsi_config, gsi_config):
@@ -686,9 +668,7 @@ def _determine_gsi_updates(existing_index_names, provisioned_gsi_config, gsi_con
                         )
                 elif new_value != current_value:
                     raise GsiNotUpdatableError(
-                        "GSI property {0} cannot be updated for index {1}".format(
-                            key, index_name
-                        )
+                        "GSI property {} cannot be updated for index {}".format(key, index_name)
                     )
 
         current_throughput = current_config.get("ProvisionedThroughput")
@@ -726,12 +706,10 @@ def _alarms_present(
         tmp = dictupdate.update(tmp, alarms)
     # set alarms, using boto_cloudwatch_alarm.present
     merged_return_value = {"name": name, "result": True, "comment": "", "changes": {}}
-    for _, info in six.iteritems(tmp):
+    for _, info in tmp.items():
         # add dynamodb table to name and description
         info["name"] = name + " " + info["name"]
-        info["attributes"]["description"] = (
-            name + " " + info["attributes"]["description"]
-        )
+        info["attributes"]["description"] = name + " " + info["attributes"]["description"]
         # add dimension attribute
         info["attributes"]["dimensions"] = {"TableName": [name]}
         if (
@@ -777,27 +755,23 @@ def _alarms_present(
     return merged_return_value
 
 
-def _ensure_backup_datapipeline_present(
-    name, schedule_name, period, utc_hour, s3_base_location
-):
+def _ensure_backup_datapipeline_present(name, schedule_name, period, utc_hour, s3_base_location):
 
     kwargs = {
-        "name": "{0}-{1}-backup".format(name, schedule_name),
+        "name": "{}-{}-backup".format(name, schedule_name),
         "pipeline_objects": {
             "DefaultSchedule": {
                 "name": schedule_name,
                 "fields": {
                     "period": period,
                     "type": "Schedule",
-                    "startDateTime": _next_datetime_with_utc_hour(
-                        name, utc_hour
-                    ).isoformat(),
+                    "startDateTime": _next_datetime_with_utc_hour(name, utc_hour).isoformat(),
                 },
             },
         },
         "parameter_values": {
             "myDDBTableName": name,
-            "myOutputS3Loc": "{0}/{1}/".format(s3_base_location, name),
+            "myOutputS3Loc": "{}/{}/".format(s3_base_location, name),
         },
     }
     return __states__["boto_datapipeline.present"](**kwargs)
@@ -863,20 +837,20 @@ def absent(name, region=None, key=None, keyid=None, profile=None):
     ret = {"name": name, "result": True, "comment": "", "changes": {}}
     exists = __salt__["boto_dynamodb.exists"](name, region, key, keyid, profile)
     if not exists:
-        ret["comment"] = "DynamoDB table {0} does not exist".format(name)
+        ret["comment"] = "DynamoDB table {} does not exist".format(name)
         return ret
 
     if __opts__["test"]:
-        ret["comment"] = "DynamoDB table {0} is set to be deleted".format(name)
+        ret["comment"] = "DynamoDB table {} is set to be deleted".format(name)
         ret["result"] = None
         return ret
 
     is_deleted = __salt__["boto_dynamodb.delete"](name, region, key, keyid, profile)
     if is_deleted:
-        ret["comment"] = "Deleted DynamoDB table {0}".format(name)
-        ret["changes"].setdefault("old", "Table {0} exists".format(name))
-        ret["changes"].setdefault("new", "Table {0} deleted".format(name))
+        ret["comment"] = "Deleted DynamoDB table {}".format(name)
+        ret["changes"].setdefault("old", "Table {} exists".format(name))
+        ret["changes"].setdefault("new", "Table {} deleted".format(name))
     else:
-        ret["comment"] = "Failed to delete DynamoDB table {0}".format(name)
+        ret["comment"] = "Failed to delete DynamoDB table {}".format(name)
         ret["result"] = False
     return ret

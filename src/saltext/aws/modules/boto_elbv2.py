@@ -38,7 +38,6 @@ Connection module for Amazon ALB
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
 import logging
 
 import salt.utils.boto3mod
@@ -153,9 +152,7 @@ def create_target_group(
             UnhealthyThresholdCount=unhealthy_threshold_count,
         )
         if alb:
-            log.info(
-                "Created ALB %s: %s", name, alb["TargetGroups"][0]["TargetGroupArn"]
-            )
+            log.info("Created ALB %s: %s", name, alb["TargetGroups"][0]["TargetGroupArn"])
             return True
         else:
             log.error("Failed to create ALB %s", name)
@@ -204,9 +201,7 @@ def delete_target_group(name, region=None, key=None, keyid=None, profile=None):
             log.info("Deleted target group %s ARN %s", name, arn)
         return True
     except ClientError as error:
-        log.error(
-            "Failed to delete target group %s", name, exc_info_on_loglevel=logging.DEBUG
-        )
+        log.error("Failed to delete target group %s", name, exc_info_on_loglevel=logging.DEBUG)
         return False
 
 
@@ -237,9 +232,7 @@ def target_group_exists(name, region=None, key=None, keyid=None, profile=None):
         return False
 
 
-def describe_target_health(
-    name, targets=None, region=None, key=None, keyid=None, profile=None
-):
+def describe_target_health(name, targets=None, region=None, key=None, keyid=None, profile=None):
     """
     Get the curret health check status for targets in a target group.
 
@@ -256,9 +249,7 @@ def describe_target_health(
             targetsdict = []
             for target in targets:
                 targetsdict.append({"Id": target})
-            instances = conn.describe_target_health(
-                TargetGroupArn=name, Targets=targetsdict
-            )
+            instances = conn.describe_target_health(TargetGroupArn=name, Targets=targetsdict)
         else:
             instances = conn.describe_target_health(TargetGroupArn=name)
         ret = {}
@@ -297,9 +288,7 @@ def register_targets(name, targets, region=None, key=None, keyid=None, profile=N
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
 
     try:
-        registered_targets = conn.register_targets(
-            TargetGroupArn=name, Targets=targetsdict
-        )
+        registered_targets = conn.register_targets(TargetGroupArn=name, Targets=targetsdict)
         if registered_targets:
             return True
         return False
@@ -334,9 +323,7 @@ def deregister_targets(name, targets, region=None, key=None, keyid=None, profile
     conn = _get_conn(region=region, key=key, keyid=keyid, profile=profile)
 
     try:
-        registered_targets = conn.deregister_targets(
-            TargetGroupArn=name, Targets=targetsdict
-        )
+        registered_targets = conn.deregister_targets(TargetGroupArn=name, Targets=targetsdict)
         if registered_targets:
             return True
         return False

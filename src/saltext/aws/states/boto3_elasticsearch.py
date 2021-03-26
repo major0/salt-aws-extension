@@ -42,8 +42,6 @@ Manage Elasticsearch Service
 :codeauthor: Herbert Buurman <herbert.buurman@ogd.nl>
 :depends: boto3
 """
-
-
 import logging
 
 import salt.utils.json
@@ -89,8 +87,7 @@ def _check_return_value(ret):
     if ret["result"] == "oops":
         ret["result"] = False
         ret["comment"].append(
-            "An internal error has occurred: The result value was "
-            "not properly changed."
+            "An internal error has occurred: The result value was " "not properly changed."
         )
     return ret
 
@@ -311,12 +308,9 @@ def present(
                 del current_domain["CognitoOptions"]
         if (
             "AdvancedOptions" not in target_conf
-            and "rest.action.multi.allow_explicit_index"
-            in current_domain["AdvancedOptions"]
+            and "rest.action.multi.allow_explicit_index" in current_domain["AdvancedOptions"]
         ):
-            del current_domain["AdvancedOptions"][
-                "rest.action.multi.allow_explicit_index"
-            ]
+            del current_domain["AdvancedOptions"]["rest.action.multi.allow_explicit_index"]
         if not current_domain["AdvancedOptions"]:
             del current_domain["AdvancedOptions"]
 
@@ -333,8 +327,7 @@ def present(
         if __opts__["test"]:
             ret["result"] = None
             ret["comment"].append(
-                'The Elasticsearch Domain "{}" would have been {}d.'
-                "".format(name, action)
+                'The Elasticsearch Domain "{}" would have been {}d.' "".format(name, action)
             )
             ret["changes"] = config_diff
         else:
@@ -469,20 +462,15 @@ def absent(name, blocking=True, region=None, keyid=None, key=None, profile=None)
             if "error" in res:
                 ret["result"] = False
                 ret["comment"].append(
-                    'Error deleting Elasticsearch domain "{}": {}'
-                    "".format(name, res["error"])
+                    'Error deleting Elasticsearch domain "{}": {}' "".format(name, res["error"])
                 )
             else:
                 ret["result"] = True
-                ret["comment"].append(
-                    'Elasticsearch domain "{}" has been deleted.' "".format(name)
-                )
+                ret["comment"].append('Elasticsearch domain "{}" has been deleted.' "".format(name))
                 ret["changes"] = {"old": name, "new": None}
     else:
         ret["result"] = True
-        ret["comment"].append(
-            'Elasticsearch domain "{}" is already absent.' "".format(name)
-        )
+        ret["comment"].append('Elasticsearch domain "{}" is already absent.' "".format(name))
     ret = _check_return_value(ret)
     return ret
 
@@ -527,9 +515,7 @@ def upgraded(
     if not res["result"]:
         ret["result"] = False
         if "ResourceNotFoundException" in res["error"]:
-            ret["comment"].append(
-                'The Elasticsearch domain "{}" does not exist.' "".format(name)
-            )
+            ret["comment"].append('The Elasticsearch domain "{}" does not exist.' "".format(name))
         else:
             ret["comment"].append(res["error"])
     else:
@@ -576,9 +562,7 @@ def upgraded(
                     '"{}" to complete: {}'
                     "".format(name, res2["error"])
                 )
-            elif (
-                res2["response"].get("UpgradeName", "").endswith(elasticsearch_version)
-            ):
+            elif res2["response"].get("UpgradeName", "").endswith(elasticsearch_version):
                 ret["result"] = True
                 ret["comment"].append(
                     'Elasticsearch Domain "{}" is '
@@ -609,8 +593,7 @@ def upgraded(
     if "error" in res:
         ret["result"] = False
         ret["comment"].append(
-            "Error checking upgrade eligibility for "
-            'domain "{}": {}'.format(name, res["error"])
+            "Error checking upgrade eligibility for " 'domain "{}": {}'.format(name, res["error"])
         )
     elif not res["response"]:
         ret["result"] = False
@@ -644,8 +627,7 @@ def upgraded(
             if "error" in res:
                 ret["result"] = False
                 ret["comment"].append(
-                    'Error upgrading Elasticsearch domain "{}": {}'
-                    "".format(name, res["error"])
+                    'Error upgrading Elasticsearch domain "{}": {}' "".format(name, res["error"])
                 )
             else:
                 ret["result"] = True
@@ -721,9 +703,7 @@ def latest(name, minor_only=True, region=None, keyid=None, key=None, profile=Non
         pass
     if not current_version:
         ret["result"] = True
-        ret["comment"].append(
-            'The Elasticsearch domain "{}" can not be upgraded.' "".format(name)
-        )
+        ret["comment"].append('The Elasticsearch domain "{}" can not be upgraded.' "".format(name))
     elif not latest_version:
         ret["result"] = True
         ret["comment"].append(
@@ -775,9 +755,7 @@ def latest(name, minor_only=True, region=None, keyid=None, key=None, profile=Non
     return ret
 
 
-def tagged(
-    name, tags=None, replace=False, region=None, keyid=None, key=None, profile=None
-):
+def tagged(name, tags=None, replace=False, region=None, keyid=None, key=None, profile=None):
     """
     Ensures the Elasticsearch domain has the tags provided.
     Adds tags to the domain unless ``replace`` is set to ``True``, in which
@@ -805,16 +783,13 @@ def tagged(
         if "error" in res:
             ret["result"] = False
             ret["comment"].append(
-                "Error fetching tags of Elasticsearch domain "
-                '"{}": {}'.format(name, res["error"])
+                "Error fetching tags of Elasticsearch domain " '"{}": {}'.format(name, res["error"])
             )
         else:
             current_tags = res["response"] or {}
     else:
         ret["result"] = False
-        ret["comment"].append(
-            'Elasticsearch domain "{}" does not exist.' "".format(name)
-        )
+        ret["comment"].append('Elasticsearch domain "{}" does not exist.' "".format(name))
     if isinstance(ret["result"], bool):
         return ret
 
@@ -865,8 +840,7 @@ def tagged(
             if "error" in res:
                 ret["result"] = False
                 ret["comment"].append(
-                    "Error tagging Elasticsearch domain "
-                    '"{}": {}'.format(name, res["error"])
+                    "Error tagging Elasticsearch domain " '"{}": {}'.format(name, res["error"])
                 )
                 ret["changes"] = {}
             else:

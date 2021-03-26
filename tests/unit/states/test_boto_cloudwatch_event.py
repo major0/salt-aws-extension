@@ -1,30 +1,24 @@
-# -*- coding: utf-8 -*-
-
-# Import Python libs
-from __future__ import absolute_import, print_function, unicode_literals
-
 import logging
 import random
 import string
 
-# Import Salt libs
 import salt.config
 import salt.loader
 import salt.states.boto_cloudwatch_event as boto_cloudwatch_event
 from salt.ext.six.moves import range
 
-# Import Salt Testing libs
 from tests.support.mixins import LoaderModuleMockMixin
-from tests.support.mock import MagicMock, patch
-from tests.support.unit import TestCase, skipIf
-
-# pylint: disable=import-error,no-name-in-module
+from tests.support.mock import MagicMock
+from tests.support.mock import patch
+from tests.support.unit import skipIf
+from tests.support.unit import TestCase
 from tests.unit.modules.test_boto_cloudwatch_event import (
     BotoCloudWatchEventTestCaseMixin,
 )
 
+# pylint: disable=import-error,no-name-in-module
+
 # pylint: disable=unused-import
-# Import 3rd-party libs
 try:
     import boto3
     from botocore.exceptions import ClientError
@@ -46,9 +40,7 @@ conn_parameters = {
     "keyid": secret_key,
     "profile": {},
 }
-error_message = (
-    "An error occurred (101) when calling the {0} operation: Test-defined error"
-)
+error_message = "An error occurred (101) when calling the {0} operation: Test-defined error"
 error_content = {"Error": {"Code": 101, "Message": "Test-defined error"}}
 if HAS_BOTO:
     not_found_error = ClientError(
@@ -159,9 +151,7 @@ class BotoCloudWatchEventTestCase(
         """
         Tests exceptions when checking rule existence
         """
-        self.conn.list_rules.side_effect = ClientError(
-            error_content, "error on list rules"
-        )
+        self.conn.list_rules.side_effect = ClientError(error_content, "error on list rules")
         result = self.salt_states["boto_cloudwatch_event.present"](
             name="test present",
             Name=rule_name,
@@ -170,8 +160,8 @@ class BotoCloudWatchEventTestCase(
             Targets=[{"Id": "target1", "Arn": "arn::::::*"}],
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("error on list rules" in result.get("comment", {}))
+        assert result.get("result") == False
+        assert "error on list rules" in result.get("comment", {})
 
     def test_present_when_failing_to_create_a_new_rule(self):
         """
@@ -188,8 +178,8 @@ class BotoCloudWatchEventTestCase(
             Targets=[{"Id": "target1", "Arn": "arn::::::*"}],
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("put_rule" in result.get("comment", ""))
+        assert result.get("result") == False
+        assert "put_rule" in result.get("comment", "")
 
     def test_present_when_failing_to_describe_the_new_rule(self):
         """
@@ -198,9 +188,7 @@ class BotoCloudWatchEventTestCase(
         """
         self.conn.list_rules.return_value = {"Rules": []}
         self.conn.put_rule.return_value = rule_ret
-        self.conn.describe_rule.side_effect = ClientError(
-            error_content, "describe_rule"
-        )
+        self.conn.describe_rule.side_effect = ClientError(error_content, "describe_rule")
         result = self.salt_states["boto_cloudwatch_event.present"](
             name="test present",
             Name=rule_name,
@@ -209,8 +197,8 @@ class BotoCloudWatchEventTestCase(
             Targets=[{"Id": "target1", "Arn": "arn::::::*"}],
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("describe_rule" in result.get("comment", ""))
+        assert result.get("result") == False
+        assert "describe_rule" in result.get("comment", "")
 
     def test_present_when_failing_to_create_a_new_rules_targets(self):
         """
@@ -229,8 +217,8 @@ class BotoCloudWatchEventTestCase(
             Targets=[{"Id": "target1", "Arn": "arn::::::*"}],
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("put_targets" in result.get("comment", ""))
+        assert result.get("result") == False
+        assert "put_targets" in result.get("comment", "")
 
     def test_present_when_rule_does_not_exist(self):
         """
@@ -249,16 +237,14 @@ class BotoCloudWatchEventTestCase(
             Targets=[{"Id": "target1", "Arn": "arn::::::*"}],
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), True)
+        assert result.get("result") == True
 
     def test_present_when_failing_to_update_an_existing_rule(self):
         """
         Tests present on an existing rule where an error is thrown on updating the pool properties.
         """
         self.conn.list_rules.return_value = {"Rules": [rule_ret]}
-        self.conn.describe_rule.side_effect = ClientError(
-            error_content, "describe_rule"
-        )
+        self.conn.describe_rule.side_effect = ClientError(error_content, "describe_rule")
         result = self.salt_states["boto_cloudwatch_event.present"](
             name="test present",
             Name=rule_name,
@@ -267,8 +253,8 @@ class BotoCloudWatchEventTestCase(
             Targets=[{"Id": "target1", "Arn": "arn::::::*"}],
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("describe_rule" in result.get("comment", ""))
+        assert result.get("result") == False
+        assert "describe_rule" in result.get("comment", "")
 
     def test_present_when_failing_to_get_targets(self):
         """
@@ -278,9 +264,7 @@ class BotoCloudWatchEventTestCase(
         self.conn.list_rules.return_value = {"Rules": [rule_ret]}
         self.conn.put_rule.return_value = rule_ret
         self.conn.describe_rule.return_value = rule_ret
-        self.conn.list_targets_by_rule.side_effect = ClientError(
-            error_content, "list_targets"
-        )
+        self.conn.list_targets_by_rule.side_effect = ClientError(error_content, "list_targets")
         result = self.salt_states["boto_cloudwatch_event.present"](
             name="test present",
             Name=rule_name,
@@ -289,8 +273,8 @@ class BotoCloudWatchEventTestCase(
             Targets=[{"Id": "target1", "Arn": "arn::::::*"}],
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("list_targets" in result.get("comment", ""))
+        assert result.get("result") == False
+        assert "list_targets" in result.get("comment", "")
 
     def test_present_when_failing_to_put_targets(self):
         """
@@ -310,8 +294,8 @@ class BotoCloudWatchEventTestCase(
             Targets=[{"Id": "target1", "Arn": "arn::::::*"}],
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("put_targets" in result.get("comment", ""))
+        assert result.get("result") == False
+        assert "put_targets" in result.get("comment", "")
 
     def test_present_when_putting_targets(self):
         """
@@ -331,7 +315,7 @@ class BotoCloudWatchEventTestCase(
             Targets=[{"Id": "target1", "Arn": "arn::::::*"}],
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), True)
+        assert result.get("result") == True
 
     def test_present_when_removing_targets(self):
         """
@@ -341,9 +325,7 @@ class BotoCloudWatchEventTestCase(
         self.conn.list_rules.return_value = {"Rules": []}
         self.conn.put_rule.return_value = rule_ret
         self.conn.describe_rule.return_value = rule_ret
-        self.conn.list_targets.return_value = {
-            "Targets": [{"Id": "target1"}, {"Id": "target2"}]
-        }
+        self.conn.list_targets.return_value = {"Targets": [{"Id": "target1"}, {"Id": "target2"}]}
         self.conn.put_targets.return_value = {"FailedEntryCount": 0}
         result = self.salt_states["boto_cloudwatch_event.present"](
             name="test present",
@@ -353,20 +335,18 @@ class BotoCloudWatchEventTestCase(
             Targets=[{"Id": "target1", "Arn": "arn::::::*"}],
             **conn_parameters
         )
-        self.assertEqual(result.get("result"), True)
+        assert result.get("result") == True
 
     def test_absent_when_failing_to_describe_rule(self):
         """
         Tests exceptions when checking rule existence
         """
-        self.conn.list_rules.side_effect = ClientError(
-            error_content, "error on list rules"
-        )
+        self.conn.list_rules.side_effect = ClientError(error_content, "error on list rules")
         result = self.salt_states["boto_cloudwatch_event.absent"](
             name="test present", Name=rule_name, **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("error on list rules" in result.get("comment", {}))
+        assert result.get("result") == False
+        assert "error on list rules" in result.get("comment", {})
 
     def test_absent_when_rule_does_not_exist(self):
         """
@@ -376,22 +356,20 @@ class BotoCloudWatchEventTestCase(
         result = self.salt_states["boto_cloudwatch_event.absent"](
             name="test absent", Name=rule_name, **conn_parameters
         )
-        self.assertEqual(result.get("result"), True)
-        self.assertEqual(result["changes"], {})
+        assert result.get("result") == True
+        assert result["changes"] == {}
 
     def test_absent_when_failing_to_list_targets(self):
         """
         Tests absent on an rule when the list_targets call fails
         """
         self.conn.list_rules.return_value = {"Rules": [rule_ret]}
-        self.conn.list_targets_by_rule.side_effect = ClientError(
-            error_content, "list_targets"
-        )
+        self.conn.list_targets_by_rule.side_effect = ClientError(error_content, "list_targets")
         result = self.salt_states["boto_cloudwatch_event.absent"](
             name="test absent", Name=rule_name, **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("list_targets" in result.get("comment", ""))
+        assert result.get("result") == False
+        assert "list_targets" in result.get("comment", "")
 
     def test_absent_when_failing_to_remove_targets_exception(self):
         """
@@ -399,14 +377,12 @@ class BotoCloudWatchEventTestCase(
         """
         self.conn.list_rules.return_value = {"Rules": [rule_ret]}
         self.conn.list_targets_by_rule.return_value = {"Targets": [{"Id": "target1"}]}
-        self.conn.remove_targets.side_effect = ClientError(
-            error_content, "remove_targets"
-        )
+        self.conn.remove_targets.side_effect = ClientError(error_content, "remove_targets")
         result = self.salt_states["boto_cloudwatch_event.absent"](
             name="test absent", Name=rule_name, **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("remove_targets" in result.get("comment", ""))
+        assert result.get("result") == False
+        assert "remove_targets" in result.get("comment", "")
 
     def test_absent_when_failing_to_remove_targets_nonexception(self):
         """
@@ -418,7 +394,7 @@ class BotoCloudWatchEventTestCase(
         result = self.salt_states["boto_cloudwatch_event.absent"](
             name="test absent", Name=rule_name, **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
+        assert result.get("result") == False
 
     def test_absent_when_failing_to_delete_rule(self):
         """
@@ -431,8 +407,8 @@ class BotoCloudWatchEventTestCase(
         result = self.salt_states["boto_cloudwatch_event.absent"](
             name="test absent", Name=rule_name, **conn_parameters
         )
-        self.assertEqual(result.get("result"), False)
-        self.assertTrue("delete_rule" in result.get("comment", ""))
+        assert result.get("result") == False
+        assert "delete_rule" in result.get("comment", "")
 
     def test_absent(self):
         """
@@ -444,4 +420,4 @@ class BotoCloudWatchEventTestCase(
         result = self.salt_states["boto_cloudwatch_event.absent"](
             name="test absent", Name=rule_name, **conn_parameters
         )
-        self.assertEqual(result.get("result"), True)
+        assert result.get("result") == True

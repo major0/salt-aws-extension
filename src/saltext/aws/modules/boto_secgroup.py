@@ -42,13 +42,12 @@ Connection module for Amazon Security Groups
 """
 # keep lint from choking on _get_conn and _cache_id
 # pylint: disable=E0602
-
-
 import logging
 
 import salt.utils.odict as odict
 import salt.utils.versions
-from salt.exceptions import CommandExecutionError, SaltInvocationError
+from salt.exceptions import CommandExecutionError
+from salt.exceptions import SaltInvocationError
 
 log = logging.getLogger(__name__)
 
@@ -75,9 +74,7 @@ def __virtual__():
     # Differences include no group_id attribute in Boto < 2.4.0 and returning
     # a groupId attribute when a GroupOrCIDR object authorizes an IP range
     # Support for Boto < 2.4.0 can be added if needed
-    has_boto_reqs = salt.utils.versions.check_boto_reqs(
-        boto_ver="2.4.0", check_boto3=False
-    )
+    has_boto_reqs = salt.utils.versions.check_boto_reqs(boto_ver="2.4.0", check_boto3=False)
     if has_boto_reqs is True:
         __utils__["boto.assign_funcs"](__name__, "ec2", pack=__salt__)
     return has_boto_reqs
@@ -121,9 +118,7 @@ def exists(
         return False
 
 
-def _vpc_name_to_id(
-    vpc_id=None, vpc_name=None, region=None, key=None, keyid=None, profile=None
-):
+def _vpc_name_to_id(vpc_id=None, vpc_name=None, region=None, key=None, keyid=None, profile=None):
     data = __salt__["boto_vpc.get_id"](
         name=vpc_name, region=region, key=key, keyid=keyid, profile=profile
     )
@@ -174,9 +169,7 @@ def _get_group(
     return None.
     """
     if vpc_name and vpc_id:
-        raise SaltInvocationError(
-            "The params 'vpc_id' and 'vpc_name' " "are mutually exclusive."
-        )
+        raise SaltInvocationError("The params 'vpc_id' and 'vpc_name' " "are mutually exclusive.")
     if vpc_name:
         try:
             vpc_id = _vpc_name_to_id(
@@ -342,9 +335,7 @@ def get_all_security_groups(
         return []
 
 
-def get_group_id(
-    name, vpc_id=None, vpc_name=None, region=None, key=None, keyid=None, profile=None
-):
+def get_group_id(name, vpc_id=None, vpc_name=None, region=None, key=None, keyid=None, profile=None):
     """
     Get a Group ID given a Group Name or Group Name and VPC ID
 
@@ -409,8 +400,7 @@ def convert_to_group_ids(
                 return []
             else:
                 raise CommandExecutionError(
-                    "Could not resolve Security Group name "
-                    "{} to a Group ID".format(group)
+                    "Could not resolve Security Group name " "{} to a Group ID".format(group)
                 )
         else:
             group_ids.append(str(group_id))
@@ -623,9 +613,7 @@ def authorize(
                     src_group_id=source_group_group_id,
                 )
             if added:
-                log.info(
-                    "Added rule to security group %s with id %s", group.name, group.id
-                )
+                log.info("Added rule to security group %s with id %s", group.name, group.id)
                 return True
             else:
                 msg = "Failed to add rule to security group {} with id {}.".format(
@@ -637,9 +625,7 @@ def authorize(
             # if we are trying to add the same rule then we are already in the desired state, return true
             if e.error_code == "InvalidPermission.Duplicate":
                 return True
-            msg = "Failed to add rule to security group {} with id {}.".format(
-                group.name, group.id
-            )
+            msg = "Failed to add rule to security group {} with id {}.".format(group.name, group.id)
             log.error(msg)
             log.error(e)
             return False
@@ -756,8 +742,7 @@ def _find_vpcs(
 
     if not any((vpc_id, vpc_name, tags, cidr)):
         raise SaltInvocationError(
-            "At least one of the following must be "
-            "provided: vpc_id, vpc_name, cidr or tags."
+            "At least one of the following must be " "provided: vpc_id, vpc_name, cidr or tags."
         )
 
     local_get_conn = __utils__["boto.get_connection_func"]("vpc")
@@ -778,9 +763,7 @@ def _find_vpcs(
             filter_parameters["filters"]["tag:{}".format(tag_name)] = tag_value
 
     vpcs = conn.get_all_vpcs(**filter_parameters)
-    log.debug(
-        "The filters criteria %s matched the following VPCs:%s", filter_parameters, vpcs
-    )
+    log.debug("The filters criteria %s matched the following VPCs:%s", filter_parameters, vpcs)
 
     if vpcs:
         return [vpc.id for vpc in vpcs]
