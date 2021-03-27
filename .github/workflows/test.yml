@@ -23,6 +23,8 @@ jobs:
         path: ~/.cache/pre-commit
         key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
     - uses: pre-commit/action@v1.0.1
+      env:
+        EXTRA_REQUIREMENTS_INSTALL: pylint saltpylint
 
   Docs:
     runs-on: ubuntu-latest
